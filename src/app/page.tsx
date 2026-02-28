@@ -278,10 +278,15 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
 
   const handleAddCart = () => {
     if (!cObj) return;
+    const key = `custom_${Date.now()}`;
     onAddCart({
-      product: { id: `custom_${Date.now()}`, name: "이형 후레싱", desc: `${pts.length}점 ${dims.length}구간 · ${dims.map(d=>d+"mm").join("+")}`, category: "이형", image: "", sizes: [], availableColors: [] },
-      sizeLabel: `W${calcW}mm`, colorName: cObj.name + (cSub ? ` (${cSub})` : "") + (cObj.hasSide ? ` · ${side==="ext"?"외부":"내부"}` : ""),
-      qty, unitPrice: unit,
+      key,
+      productId: key,
+      productName: "이형 후레싱",
+      size: `W${calcW}mm (${dims.map(d=>d+"mm").join("+")})`,
+      color: cObj.name + (cSub ? ` (${cSub})` : "") + (cObj.hasSide ? ` · ${side==="ext"?"외부":"내부"}` : ""),
+      retailPrice: unit,
+      qty,
     });
     onClose();
   };
