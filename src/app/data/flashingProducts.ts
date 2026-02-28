@@ -3,7 +3,7 @@ export const RETAIL_MULTIPLIER = 1.5;
 export const COLOR_DETAILS: Record<string, { label: string; subColors?: string[]; hex: string }> = {
   "아이보리": { label: "아이보리", hex: "#F5F0E1" },
   "청색": { label: "청색", hex: "#1E5FA6" },
-  "기성단색": { label: "기성단색", subColors: ["은회색", "백색", "군청색"], hex: "#607D8B" },
+  "기성단색": { label: "기성단색", subColors: ["청색", "은회색", "백색", "군청색"], hex: "#607D8B" },
   "특이단색": { label: "특이단색", subColors: ["진회색", "티타늄실버"], hex: "#424242" },
   "프린트": { label: "프린트", subColors: ["징크블랙", "리얼징크", "유니스톤"], hex: "#2C2C2C" },
   "아연1.0T": { label: "아연 1.0T", hex: "#B0BEC5" },
@@ -125,7 +125,7 @@ export const FLASHING_PRODUCTS: FlashingProduct[] = [
   {
     id: "yongmaru", name: "용마루(상)", desc: "지붕 꼭대기 상부 마감",
     category: "지붕마감", image: "/products/yongmaru.jpg",
-    availableColors: ["아이보리", "청색", "기성단색", "특이단색", "프린트"],
+    availableColors: ["청색", "아이보리", "기성단색", "특이단색", "프린트"],
     sizes: [
       { label: "150×150", wholesale: { "아이보리": 6900, "청색": 6900, "기성단색": 8300, "특이단색": 9000, "프린트": 15180 } },
       { label: "200×200", wholesale: { "아이보리": 8400, "청색": 8400, "기성단색": 10100, "특이단색": 11000, "프린트": 18480 } },
@@ -134,7 +134,7 @@ export const FLASHING_PRODUCTS: FlashingProduct[] = [
   {
     id: "buchak", name: "부착물도이", desc: "지붕 부착물 주변 빗물 차단",
     category: "지붕마감", image: "/products/buchak.jpg",
-    availableColors: ["아이보리", "청색", "기성단색", "특이단색", "프린트"],
+    availableColors: ["청색", "아이보리", "기성단색", "특이단색", "프린트"],
     sizes: [
       { label: "50T", wholesale: { "아이보리": 7300, "청색": 7300, "기성단색": 8800, "특이단색": 9500, "프린트": 16060 } },
       { label: "75T", wholesale: { "아이보리": 7700, "청색": 7700, "기성단색": 9300, "특이단색": 10100, "프린트": 16940 } },
@@ -145,7 +145,7 @@ export const FLASHING_PRODUCTS: FlashingProduct[] = [
   {
     id: "muldoi150", name: "물도이 150용", desc: "빗침대 150mm용 물도이",
     category: "지붕마감", image: "/products/muldoi150.jpg",
-    availableColors: ["아이보리", "청색", "기성단색", "특이단색", "프린트"],
+    availableColors: ["청색", "아이보리", "기성단색", "특이단색", "프린트"],
     sizes: [
       { label: "100T", wholesale: { "아이보리": 10500, "청색": 10500, "기성단색": 12600, "특이단색": 13700, "프린트": 23100 } },
     ],
@@ -153,7 +153,7 @@ export const FLASHING_PRODUCTS: FlashingProduct[] = [
   {
     id: "muldoi200", name: "물도이 200용", desc: "빗침대 200mm용 물도이",
     category: "지붕마감", image: "/products/muldoi200.jpg",
-    availableColors: ["아이보리", "청색", "기성단색", "특이단색", "프린트"],
+    availableColors: ["청색", "아이보리", "기성단색", "특이단색", "프린트"],
     sizes: [
       { label: "100T", wholesale: { "아이보리": 11000, "청색": 11000, "기성단색": 13200, "특이단색": 14300, "프린트": 24200 } },
       { label: "150T", wholesale: { "아이보리": 11500, "청색": 11500, "기성단색": 13800, "특이단색": 15000, "프린트": 25300 } },
@@ -164,7 +164,7 @@ export const FLASHING_PRODUCTS: FlashingProduct[] = [
   {
     id: "dolchul", name: "돌출박공", desc: "지붕 박공 돌출부 마감",
     category: "지붕마감", image: "/products/dolchul.jpg",
-    availableColors: ["아이보리", "청색", "기성단색", "특이단색", "프린트"],
+    availableColors: ["청색", "아이보리", "기성단색", "특이단색", "프린트"],
     sizes: [
       { label: "50T", wholesale: { "아이보리": 6100, "청색": 6100, "기성단색": 7400, "특이단색": 8000, "프린트": 13420 } },
       { label: "75T", wholesale: { "아이보리": 6700, "청색": 6700, "기성단색": 8100, "특이단색": 8800, "프린트": 14740 } },
@@ -175,7 +175,7 @@ export const FLASHING_PRODUCTS: FlashingProduct[] = [
   {
     id: "midolchul", name: "미돌출박공", desc: "지붕 박공 비돌출 마감",
     category: "지붕마감", image: "/products/midolchul.jpg",
-    availableColors: ["아이보리", "청색", "기성단색", "특이단색", "프린트"],
+    availableColors: ["청색", "아이보리", "기성단색", "특이단색", "프린트"],
     sizes: [
       { label: "125T", wholesale: { "아이보리": 7200, "청색": 7200, "기성단색": 8700, "특이단색": 9400, "프린트": 15840 } },
     ],
