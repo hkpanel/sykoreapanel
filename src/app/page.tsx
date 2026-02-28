@@ -350,7 +350,7 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
           {/* STEP 2 */}
           {step===2 && (
             <div style={{ background:"#fff",borderRadius:16,overflow:"hidden" }}>
-              <canvas ref={cvs} width={600} height={140} style={{ width:"100%",height:140,display:"block" }}/>
+              <canvas ref={cvs} width={600} height={240} style={{ width:"100%",height:240,display:"block" }}/>
               <div style={{ padding:"12px 16px" }}>
                 <div style={{ fontSize:14,fontWeight:700,marginBottom:8 }}>각 구간 치수 (mm)</div>
                 {dims.map((d,i) => (
@@ -406,9 +406,30 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
                   <div style={{ display:"flex",gap:8 }}>
                     {[{id:"ext",label:"외부",desc:"색상면 바깥"},{id:"int",label:"내부",desc:"색상면 안쪽"}].map(s => (
                       <button key={s.id} onClick={()=>setSide(s.id)} style={{ flex:1,padding:12,borderRadius:12,border:`2px solid ${side===s.id?"#7b5ea7":"#eee"}`,background:side===s.id?"rgba(123,94,167,0.04)":"#fff",cursor:"pointer",textAlign:"center" }}>
-                        <svg width="60" height="40" viewBox="0 0 60 40" style={{ display:"block",margin:"0 auto 6px" }}>
-                          <polyline points="8,4 8,34 52,34" fill="none" stroke="#333" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          {s.id==="ext" ? (<><line x1="11" y1="4" x2="11" y2="32" stroke={cObj?.hex||"#7b5ea7"} strokeWidth="3" opacity="0.7"/><line x1="11" y1="32" x2="52" y2="32" stroke={cObj?.hex||"#7b5ea7"} strokeWidth="3" opacity="0.7"/><line x1="20" y1="14" x2="40" y2="30" stroke="#e74c3c" strokeWidth="2.5"/><polygon points="40,30 32,30 37,23" fill="#e74c3c"/><text x="18" y="11" fontSize="7" fill="#e74c3c" fontWeight="bold">색상</text></>) : (<><line x1="5" y1="6" x2="5" y2="34" stroke={cObj?.hex||"#7b5ea7"} strokeWidth="3" opacity="0.7"/><line x1="5" y1="37" x2="50" y2="37" stroke={cObj?.hex||"#7b5ea7"} strokeWidth="3" opacity="0.7"/><line x1="42" y1="30" x2="22" y2="14" stroke="#e74c3c" strokeWidth="2.5"/><polygon points="22,14 30,14 25,21" fill="#e74c3c"/><text x="32" y="11" fontSize="7" fill="#e74c3c" fontWeight="bold">색상</text></>)}
+                        <svg width="120" height="90" viewBox="0 0 120 90" style={{ display:"block",margin:"0 auto 8px" }}>
+                          {s.id==="ext" ? (<>
+                            {/* 외부: ㄱ자 단면 + 바깥쪽에 빨간 색상면 표시 */}
+                            <line x1="20" y1="10" x2="20" y2="70" stroke="#333" strokeWidth="3" strokeLinecap="round"/>
+                            <line x1="20" y1="70" x2="100" y2="70" stroke="#333" strokeWidth="3" strokeLinecap="round"/>
+                            {/* 색상면 - 바깥쪽(오른쪽/아래쪽) 빨간 굵은 선 */}
+                            <line x1="24" y1="10" x2="24" y2="67" stroke="#e74c3c" strokeWidth="5" opacity="0.6"/>
+                            <line x1="24" y1="67" x2="100" y2="67" stroke="#e74c3c" strokeWidth="5" opacity="0.6"/>
+                            {/* 큰 빨간 화살표 - 안에서 바깥으로 ↘ */}
+                            <line x1="40" y1="30" x2="72" y2="55" stroke="#e74c3c" strokeWidth="3"/>
+                            <polygon points="72,55 62,50 67,42" fill="#e74c3c"/>
+                            <text x="45" y="25" fontSize="11" fill="#e74c3c" fontWeight="bold">색상면</text>
+                          </>) : (<>
+                            {/* 내부: ㄱ자 단면 + 안쪽에 빨간 색상면 표시 */}
+                            <line x1="20" y1="10" x2="20" y2="70" stroke="#333" strokeWidth="3" strokeLinecap="round"/>
+                            <line x1="20" y1="70" x2="100" y2="70" stroke="#333" strokeWidth="3" strokeLinecap="round"/>
+                            {/* 색상면 - 안쪽(왼쪽/위쪽) 빨간 굵은 선 */}
+                            <line x1="16" y1="13" x2="16" y2="70" stroke="#e74c3c" strokeWidth="5" opacity="0.6"/>
+                            <line x1="16" y1="74" x2="97" y2="74" stroke="#e74c3c" strokeWidth="5" opacity="0.6"/>
+                            {/* 큰 빨간 화살표 - 바깥에서 안으로 ↙ */}
+                            <line x1="75" y1="25" x2="38" y2="50" stroke="#e74c3c" strokeWidth="3"/>
+                            <polygon points="38,50 46,44 48,52" fill="#e74c3c"/>
+                            <text x="55" y="20" fontSize="11" fill="#e74c3c" fontWeight="bold">색상면</text>
+                          </>)}
                         </svg>
                         <div style={{ fontSize:14,fontWeight:700,color:side===s.id?"#7b5ea7":"#1d1d1f" }}>{s.label}</div>
                         <div style={{ fontSize:11,color:"#86868b" }}>{s.desc}</div>
@@ -427,7 +448,7 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
           {/* STEP 4 */}
           {step===4 && cObj && (
             <div style={{ background:"#fff",borderRadius:16,overflow:"hidden" }}>
-              <canvas ref={cvs} width={600} height={120} style={{ width:"100%",height:120,display:"block" }}/>
+              <canvas ref={cvs} width={600} height={240} style={{ width:"100%",height:240,display:"block" }}/>
               <div style={{ padding:"12px 16px" }}>
                 <div style={{ fontSize:16,fontWeight:800,marginBottom:10 }}>견적 요약</div>
                 <div style={{ background:"#f5f5f7",borderRadius:12,padding:12,fontSize:13,marginBottom:12 }}>
