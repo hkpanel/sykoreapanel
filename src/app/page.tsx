@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import {
   FLASHING_PRODUCTS, FLASHING_CATEGORIES, COLOR_DETAILS,
@@ -207,6 +207,268 @@ function ProductDetail({ product, onClose, onAddCart }: {
   );
 }
 
+const CUSTOM_COLORS = [
+  { id: "ivory", name: "아이보리", price: 35, hex: "#F5F0E1", jjambap: true, hasSide: true },
+  { id: "standard", name: "기성단색", price: 40, hex: "#607D8B", sub: ["은회색", "백색", "군청색"], jjambap: true, hasSide: true },
+  { id: "special", name: "특이단색", price: 45, hex: "#424242", sub: ["진회색", "티타늄실버"], jjambap: true, hasSide: true },
+  { id: "print", name: "프린트", price: 50, hex: "#2C2C2C", sub: ["징크블랙", "리얼징크", "유니스톤"], jjambap: true, hasSide: true },
+  { id: "galv10", name: "아연 1.0T", price: 70, hex: "#B0BEC5", jjambap: false, hasSide: false },
+  { id: "galv12", name: "아연 1.2T", price: 90, hex: "#90A4AE", jjambap: false, hasSide: false },
+  { id: "steel", name: "스틸 1.0T", price: 80, hex: "#546E7A", jjambap: false, hasSide: true },
+];
+
+function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAddCart: (item: CartItem) => void }) {
+  const [step, setStep] = useState(0);
+  const [pts, setPts] = useState<{x:number;y:number}[]>([]);
+  const [dims, setDims] = useState<string[]>([]);
+  const [cId, setCId] = useState<string|null>(null);
+  const [cSub, setCSub] = useState("");
+  const [side, setSide] = useState("ext");
+  const [qty, setQty] = useState(1);
+  const [hov, setHov] = useState<{x:number;y:number}|null>(null);
+  const cvs = useRef<HTMLCanvasElement>(null);
+
+  const draw = useCallback(() => {
+    const c = cvs.current; if (!c) return;
+    const ctx = c.getContext("2d")!;
+    const W = c.width, H = c.height;
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = "rgba(0,0,0,0.04)"; ctx.lineWidth = 1;
+    for (let x = 0; x < W; x += 20) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+    for (let y = 0; y < H; y += 20) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+    if (!pts.length) return;
+    ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.strokeStyle = "#7b5ea7"; ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.stroke();
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p1 = pts[i], p2 = pts[i+1], mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2, d = dims[i]||"";
+      ctx.save(); ctx.font = "bold 11px sans-serif";
+      const t = d ? `${d}mm` : "?", tw = ctx.measureText(t).width;
+      ctx.fillStyle = d ? "rgba(123,94,167,0.9)" : "rgba(180,180,180,0.9)";
+      ctx.beginPath(); ctx.roundRect(mx-tw/2-6, my-8, tw+12, 16, 4); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(t, mx, my); ctx.restore();
+    }
+    pts.forEach((p, i) => {
+      ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI*2);
+      ctx.fillStyle = i===0 ? "#3ee6c4" : "#7b5ea7"; ctx.fill(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = "#fff"; ctx.font = "bold 9px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(i+1), p.x, p.y);
+    });
+    if (hov && pts.length > 0 && step === 1) {
+      const last = pts[pts.length-1];
+      ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(hov.x, hov.y);
+      ctx.strokeStyle = "rgba(123,94,167,0.3)"; ctx.lineWidth = 2; ctx.setLineDash([6,3]); ctx.stroke(); ctx.setLineDash([]);
+    }
+  }, [pts, dims, hov, step]);
+
+  useEffect(() => { draw(); }, [draw]);
+
+  const click = (e: React.MouseEvent) => { if (step!==1||!cvs.current) return; const r = cvs.current.getBoundingClientRect(); const x = (e.clientX-r.left)*(cvs.current.width/r.width); const y = (e.clientY-r.top)*(cvs.current.height/r.height); setPts(p=>[...p,{x,y}]); if(pts.length>0) setDims(p=>[...p,""]); };
+  const mv = (e: React.MouseEvent) => { if(step!==1||!cvs.current) return; const r = cvs.current.getBoundingClientRect(); setHov({x:(e.clientX-r.left)*(cvs.current.width/r.width),y:(e.clientY-r.top)*(cvs.current.height/r.height)}); };
+  const dimCh = (i:number,v:string) => setDims(p => { const n=[...p]; n[i]=v.replace(/[^0-9]/g,""); return n; });
+  const undo = () => { if(pts.length<=1){setPts([]);setDims([]);}else{setPts(p=>p.slice(0,-1));setDims(p=>p.slice(0,-1));} };
+  const reset = () => { setPts([]);setDims([]);setCId(null);setCSub("");setSide("ext");setQty(1);setStep(1); };
+
+  const totalW = dims.reduce((s,d) => s+(parseInt(d)||0), 0);
+  const cObj = CUSTOM_COLORS.find(c => c.id===cId);
+  const jjW = cObj?.jjambap ? 20 : 0;
+  const calcW = totalW + jjW;
+  const unit = cObj ? calcW * cObj.price : 0;
+  const total = unit * qty;
+  const allOk = dims.length > 0 && dims.every(d => d && parseInt(d)>0);
+
+  const handleAddCart = () => {
+    if (!cObj) return;
+    onAddCart({
+      product: { id: `custom_${Date.now()}`, name: "이형 후레싱", desc: `${pts.length}점 ${dims.length}구간 · ${dims.map(d=>d+"mm").join("+")}`, category: "이형", image: "", sizes: [], availableColors: [] },
+      sizeLabel: `W${calcW}mm`, colorName: cObj.name + (cSub ? ` (${cSub})` : "") + (cObj.hasSide ? ` · ${side==="ext"?"외부":"내부"}` : ""),
+      qty, unitPrice: unit,
+    });
+    onClose();
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", justifyContent: "center", alignItems: "center" }} onClick={onClose}>
+      <div style={{ background: "#f5f5f7", borderRadius: 24, width: "calc(100% - 32px)", maxWidth: 500, height: "85vh", display: "flex", flexDirection: "column", position: "relative" }} onClick={e => e.stopPropagation()}>
+        {/* 헤더 */}
+        <div style={{ background: "linear-gradient(135deg, #1a1a2e, #0a2540)", padding: "16px 20px", borderRadius: "24px 24px 0 0", color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
+          <div>
+            <span style={{ fontSize: 11, color: "#3ee6c4", fontWeight: 600 }}>이형 후레싱</span>
+            <div style={{ fontSize: 16, fontWeight: 800 }}>맞춤 절곡 주문</div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 11, color: "#86868b" }}>Step {step+1}/5</span>
+            <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: 16, border: "none", background: "rgba(255,255,255,0.1)", color: "#fff", fontSize: 18, cursor: "pointer" }}>✕</button>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 2, padding: "8px 20px 0", flexShrink: 0 }}>
+          {[0,1,2,3,4].map(i => <div key={i} style={{ flex:1, height:3, borderRadius:2, background: i<=step ? "linear-gradient(135deg,#7b5ea7,#3ee6c4)" : "#ddd" }}/>)}
+        </div>
+
+        <div style={{ padding: "12px 20px 24px", flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
+          {/* STEP 0 */}
+          {step===0 && (
+            <div style={{ background: "#fff", borderRadius: 16, padding: 16 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 800, marginTop: 0, marginBottom: 12 }}>주문 방법</h3>
+              {["캔버스에 점을 클릭해서 절곡 단면을 그려요","각 구간의 치수(mm)를 입력해요","색상 + 외부/내부 선택 → 자동 견적!","확인 후 장바구니에 담으세요"].map((t,i) => (
+                <div key={i} style={{ display:"flex",gap:10,padding:"6px 0",alignItems:"center" }}>
+                  <div style={{ width:24,height:24,borderRadius:7,background:"linear-gradient(135deg,#7b5ea7,#3ee6c4)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,flexShrink:0 }}>{i+1}</div>
+                  <span style={{ fontSize:13 }}>{t}</span>
+                </div>
+              ))}
+              <div style={{ marginTop:10,padding:8,background:"rgba(62,230,196,0.06)",borderRadius:8,fontSize:11,color:"#0f8a6c",lineHeight:1.5 }}>
+                💡 절곡 단면을 옆에서 본 형태대로 꺾이는 지점마다 점을 찍으세요<br/>💡 C/S는 양끝 짬밥 10mm×2 = +20mm 자동 추가
+              </div>
+              <button onClick={()=>setStep(1)} style={{ width:"100%",marginTop:12,padding:"12px 0",border:"none",borderRadius:12,background:"linear-gradient(135deg,#7b5ea7,#3ee6c4)",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer" }}>시작하기</button>
+            </div>
+          )}
+
+          {/* STEP 1 */}
+          {step===1 && (
+            <div style={{ background:"#fff",borderRadius:16,overflow:"hidden" }}>
+              <div style={{ padding:"8px 16px",borderBottom:"1px solid #f0f0f2",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
+                <span style={{ fontSize:12,color:"#6e6e73" }}>점 <b style={{color:"#7b5ea7"}}>{pts.length}</b>개 · 구간 <b style={{color:"#7b5ea7"}}>{Math.max(0,pts.length-1)}</b>개</span>
+                <div style={{ display:"flex",gap:6 }}>
+                  <button onClick={undo} disabled={!pts.length} style={{ padding:"4px 10px",borderRadius:6,border:"1px solid #e0e0e0",background:"#fff",fontSize:11,cursor:"pointer",opacity:pts.length?1:0.4 }}>↩ 되돌리기</button>
+                  <button onClick={reset} style={{ padding:"4px 10px",borderRadius:6,border:"1px solid #e0e0e0",background:"#fff",fontSize:11,cursor:"pointer" }}>🗑 초기화</button>
+                </div>
+              </div>
+              <div style={{ position:"relative",cursor:"crosshair" }}>
+                <canvas ref={cvs} width={600} height={240} onClick={click} onMouseMove={mv} onMouseLeave={()=>setHov(null)} style={{ width:"100%",height:240,display:"block" }}/>
+                {!pts.length && <div style={{ position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none",color:"#86868b",textAlign:"center" }}><div><div style={{fontSize:28,marginBottom:4}}>👆</div><div style={{fontSize:13,fontWeight:600}}>클릭해서 시작점을 찍으세요</div></div></div>}
+              </div>
+              <div style={{ padding:12 }}>
+                <button onClick={()=>{if(pts.length>=2)setStep(2);}} disabled={pts.length<2} style={{ width:"100%",padding:"10px 0",border:"none",borderRadius:10,background:pts.length>=2?"linear-gradient(135deg,#7b5ea7,#3ee6c4)":"#e0e0e0",color:"#fff",fontSize:13,fontWeight:700,cursor:pts.length>=2?"pointer":"default" }}>다음: 치수 입력 →</button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2 */}
+          {step===2 && (
+            <div style={{ background:"#fff",borderRadius:16,overflow:"hidden" }}>
+              <canvas ref={cvs} width={600} height={140} style={{ width:"100%",height:140,display:"block" }}/>
+              <div style={{ padding:"12px 16px" }}>
+                <div style={{ fontSize:14,fontWeight:700,marginBottom:8 }}>각 구간 치수 (mm)</div>
+                {dims.map((d,i) => (
+                  <div key={i} style={{ display:"flex",alignItems:"center",gap:8,padding:"6px 10px",background:"#f5f5f7",borderRadius:10,marginBottom:6 }}>
+                    <div style={{ width:22,height:22,borderRadius:6,background:"#7b5ea7",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800 }}>{i+1}</div>
+                    <span style={{ fontSize:12,color:"#6e6e73",flex:1 }}>점{i+1}→점{i+2}</span>
+                    <input type="text" inputMode="numeric" value={d} onChange={e=>dimCh(i,e.target.value)} placeholder="0"
+                      style={{ width:70,padding:"6px 10px",borderRadius:8,border:`2px solid ${d?"#7b5ea7":"#e0e0e0"}`,fontSize:15,fontWeight:700,textAlign:"right",outline:"none" }}/>
+                    <span style={{ fontSize:11,color:"#86868b" }}>mm</span>
+                  </div>
+                ))}
+                <div style={{ marginTop:8,padding:10,background:"rgba(123,94,167,0.06)",borderRadius:10,display:"flex",justifyContent:"space-between",alignItems:"center" }}>
+                  <span style={{ fontSize:13,fontWeight:600 }}>총 사용폭 (W)</span>
+                  <span style={{ fontSize:20,fontWeight:800,color:"#7b5ea7" }}>{totalW.toLocaleString()} mm</span>
+                </div>
+                <div style={{ display:"flex",gap:8,marginTop:10 }}>
+                  <button onClick={()=>setStep(1)} style={{ flex:1,padding:"10px 0",borderRadius:10,border:"2px solid #e0e0e0",background:"#fff",fontSize:13,fontWeight:600,cursor:"pointer" }}>← 다시 그리기</button>
+                  <button onClick={()=>{if(allOk)setStep(3);}} disabled={!allOk} style={{ flex:2,padding:"10px 0",border:"none",borderRadius:10,background:allOk?"linear-gradient(135deg,#7b5ea7,#3ee6c4)":"#e0e0e0",color:"#fff",fontSize:13,fontWeight:700,cursor:allOk?"pointer":"default" }}>다음: 옵션 선택 →</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3 */}
+          {step===3 && (
+            <div style={{ background:"#fff",borderRadius:16,padding:16 }}>
+              <div style={{ fontSize:14,fontWeight:700,marginBottom:4 }}>색상 / 소재</div>
+              <div style={{ fontSize:12,color:"#86868b",marginBottom:10 }}>총폭 {totalW}mm × mm당 단가</div>
+              {CUSTOM_COLORS.map(c => (
+                <div key={c.id} style={{ marginBottom:4 }}>
+                  <button onClick={()=>{setCId(c.id);setCSub("");}} style={{ width:"100%",padding:"10px 14px",borderRadius:10,border:`2px solid ${cId===c.id?"#7b5ea7":"#eee"}`,background:cId===c.id?"rgba(123,94,167,0.04)":"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between" }}>
+                    <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+                      <div style={{ width:18,height:18,borderRadius:9,background:c.hex,border:"1px solid rgba(0,0,0,0.1)" }}/>
+                      <span style={{ fontSize:13,fontWeight:600,color:cId===c.id?"#7b5ea7":"#1d1d1f" }}>{c.name}</span>
+                      {c.jjambap && <span style={{ fontSize:9,color:"#86868b",background:"#f0f0f2",padding:"1px 5px",borderRadius:4 }}>+짬밥20</span>}
+                    </div>
+                    <div style={{ textAlign:"right" }}>
+                      <span style={{ fontSize:13,fontWeight:700,color:cId===c.id?"#7b5ea7":"#1d1d1f" }}>₩{((totalW+(c.jjambap?20:0))*c.price).toLocaleString()}</span>
+                      <span style={{ fontSize:10,color:"#86868b",marginLeft:4 }}>@{c.price}/mm</span>
+                    </div>
+                  </button>
+                  {cId===c.id && c.sub && (
+                    <div style={{ display:"flex",gap:4,marginTop:4,marginLeft:26,flexWrap:"wrap" }}>
+                      {c.sub.map(s => <button key={s} onClick={()=>setCSub(s)} style={{ padding:"4px 10px",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",border:`1.5px solid ${cSub===s?"#3ee6c4":"#eee"}`,background:cSub===s?"rgba(62,230,196,0.06)":"#fafafa",color:cSub===s?"#0f8a6c":"#6e6e73" }}>{s}</button>)}
+                    </div>
+                  )}
+                </div>
+              ))}
+              {cObj?.jjambap && <div style={{ marginTop:8,padding:8,background:"rgba(62,230,196,0.06)",borderRadius:8,fontSize:11,color:"#0f8a6c",lineHeight:1.5 }}>📐 C/S 짬밥 +20mm → 계산폭: {totalW}+20 = <b>{totalW+20}mm</b></div>}
+              {cObj?.hasSide && (
+                <div style={{ marginTop:12 }}>
+                  <div style={{ fontSize:14,fontWeight:700,marginBottom:8 }}>마감 방향</div>
+                  <div style={{ display:"flex",gap:8 }}>
+                    {[{id:"ext",label:"외부",desc:"색상면 바깥"},{id:"int",label:"내부",desc:"색상면 안쪽"}].map(s => (
+                      <button key={s.id} onClick={()=>setSide(s.id)} style={{ flex:1,padding:12,borderRadius:12,border:`2px solid ${side===s.id?"#7b5ea7":"#eee"}`,background:side===s.id?"rgba(123,94,167,0.04)":"#fff",cursor:"pointer",textAlign:"center" }}>
+                        <svg width="60" height="40" viewBox="0 0 60 40" style={{ display:"block",margin:"0 auto 6px" }}>
+                          <polyline points="8,4 8,34 52,34" fill="none" stroke="#333" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          {s.id==="ext" ? (<><line x1="11" y1="4" x2="11" y2="32" stroke={cObj?.hex||"#7b5ea7"} strokeWidth="3" opacity="0.7"/><line x1="11" y1="32" x2="52" y2="32" stroke={cObj?.hex||"#7b5ea7"} strokeWidth="3" opacity="0.7"/><line x1="20" y1="14" x2="40" y2="30" stroke="#e74c3c" strokeWidth="2.5"/><polygon points="40,30 32,30 37,23" fill="#e74c3c"/><text x="18" y="11" fontSize="7" fill="#e74c3c" fontWeight="bold">색상</text></>) : (<><line x1="5" y1="6" x2="5" y2="34" stroke={cObj?.hex||"#7b5ea7"} strokeWidth="3" opacity="0.7"/><line x1="5" y1="37" x2="50" y2="37" stroke={cObj?.hex||"#7b5ea7"} strokeWidth="3" opacity="0.7"/><line x1="42" y1="30" x2="22" y2="14" stroke="#e74c3c" strokeWidth="2.5"/><polygon points="22,14 30,14 25,21" fill="#e74c3c"/><text x="32" y="11" fontSize="7" fill="#e74c3c" fontWeight="bold">색상</text></>)}
+                        </svg>
+                        <div style={{ fontSize:14,fontWeight:700,color:side===s.id?"#7b5ea7":"#1d1d1f" }}>{s.label}</div>
+                        <div style={{ fontSize:11,color:"#86868b" }}>{s.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div style={{ display:"flex",gap:8,marginTop:14 }}>
+                <button onClick={()=>setStep(2)} style={{ flex:1,padding:"10px 0",borderRadius:10,border:"2px solid #e0e0e0",background:"#fff",fontSize:13,fontWeight:600,cursor:"pointer" }}>← 치수</button>
+                <button onClick={()=>{if(cId)setStep(4);}} disabled={!cId} style={{ flex:2,padding:"10px 0",border:"none",borderRadius:10,background:cId?"linear-gradient(135deg,#7b5ea7,#3ee6c4)":"#e0e0e0",color:"#fff",fontSize:13,fontWeight:700,cursor:cId?"pointer":"default" }}>다음: 견적 확인 →</button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 4 */}
+          {step===4 && cObj && (
+            <div style={{ background:"#fff",borderRadius:16,overflow:"hidden" }}>
+              <canvas ref={cvs} width={600} height={120} style={{ width:"100%",height:120,display:"block" }}/>
+              <div style={{ padding:"12px 16px" }}>
+                <div style={{ fontSize:16,fontWeight:800,marginBottom:10 }}>견적 요약</div>
+                <div style={{ background:"#f5f5f7",borderRadius:12,padding:12,fontSize:13,marginBottom:12 }}>
+                  {[
+                    ["형태",`이형 · ${pts.length}점 ${dims.length}구간`],
+                    ["치수",dims.map(d=>d+"mm").join(" + ")],
+                    ["총폭",`${totalW} mm`],
+                    ...(cObj.jjambap?[["짬밥","+20mm"]]:[] as string[][]),
+                    ["계산폭 (W)",`${calcW} mm`],
+                    ["색상",`${cObj.name}${cSub?` (${cSub})`:""}${cObj.hasSide?` · ${side==="ext"?"외부":"내부"}`:""}`],
+                    ["단가",`${calcW} × ₩${cObj.price} = ₩${unit.toLocaleString()}`],
+                  ].map(([k,v],i,a) => (
+                    <div key={i} style={{ display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:i<a.length-1?"1px solid #eee":"none" }}>
+                      <span style={{ color:"#6e6e73" }}>{k}</span><span style={{ fontWeight:600 }}>{v}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12 }}>
+                  <span style={{ fontSize:13,fontWeight:600 }}>수량</span>
+                  <div style={{ display:"flex",alignItems:"center",background:"#f5f5f7",borderRadius:8 }}>
+                    <button onClick={()=>setQty(Math.max(1,qty-1))} style={{ width:34,height:34,border:"none",background:"none",cursor:"pointer",fontSize:18,fontWeight:700 }}>−</button>
+                    <span style={{ width:36,textAlign:"center",fontSize:16,fontWeight:700 }}>{qty}</span>
+                    <button onClick={()=>setQty(qty+1)} style={{ width:34,height:34,border:"none",background:"none",cursor:"pointer",fontSize:18,fontWeight:700 }}>+</button>
+                  </div>
+                </div>
+                <div style={{ background:"linear-gradient(135deg,rgba(123,94,167,0.06),rgba(62,230,196,0.06))",borderRadius:12,padding:14,marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"baseline" }}>
+                  <span style={{ fontSize:15,fontWeight:700 }}>합계</span>
+                  <div style={{ textAlign:"right" }}>
+                    <div style={{ fontSize:24,fontWeight:800 }}>₩{total.toLocaleString()}</div>
+                    <div style={{ fontSize:12,fontWeight:700,color:"#7b5ea7" }}>{Math.round(total/100).toLocaleString()} SYC</div>
+                  </div>
+                </div>
+                <div style={{ display:"flex",gap:8 }}>
+                  <button onClick={()=>setStep(3)} style={{ flex:1,padding:"10px 0",borderRadius:10,border:"2px solid #e0e0e0",background:"#fff",fontSize:13,fontWeight:600,cursor:"pointer" }}>← 옵션</button>
+                  <button onClick={handleAddCart} style={{ flex:2,padding:"12px 0",border:"none",borderRadius:12,background:"linear-gradient(135deg,#7b5ea7,#3ee6c4)",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer",boxShadow:"0 4px 20px rgba(123,94,167,0.3)" }}>장바구니 담기</button>
+                </div>
+                <button onClick={reset} style={{ width:"100%",marginTop:6,padding:8,border:"none",background:"none",fontSize:12,color:"#86868b",cursor:"pointer" }}>새로운 이형 주문하기</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [cat, setCat] = useState("전체");
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -216,6 +478,7 @@ export default function Home() {
   const [pay, setPay] = useState("krw");
   const [detail, setDetail] = useState<FlashingProduct | null>(null);
   const [search, setSearch] = useState("");
+  const [showCustom, setShowCustom] = useState(false);
 
   useEffect(() => {
     setVis(true);
@@ -319,7 +582,7 @@ export default function Home() {
       <section id="products" style={{ maxWidth: 1200, margin: "0 auto", padding: "60px 32px 80px" }}>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
           <h2 style={{ fontSize: 36, fontWeight: 800, color: "#1d1d1f", letterSpacing: -0.8, marginBottom: 12 }}>후레싱 제품</h2>
-          <p style={{ fontSize: 15, color: "#86868b" }}>기성 후레싱 {FLASHING_PRODUCTS.length}종 · 규격 · 색상 선택 후 주문</p>
+          <p style={{ fontSize: 15, color: "#86868b" }}>기성 {FLASHING_PRODUCTS.length}종 + 이형 맞춤 절곡 · 규격 · 색상 선택 후 주문</p>
           <div style={{ maxWidth: 400, margin: "20px auto 0" }}>
             <input
               type="text" placeholder="제품명 검색 (예: 유바, 엘바, 물도이...)"
@@ -345,6 +608,30 @@ export default function Home() {
           ))}
         </div>
         <div className="product-grid">
+          {(cat === "전체" || cat === "이형") && (
+            <div onClick={() => setShowCustom(true)} style={{ cursor: "pointer", borderRadius: 20, overflow: "hidden", background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", transition: "all 0.3s", border: "2px solid transparent" }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 8px 30px rgba(123,94,167,0.15)"; e.currentTarget.style.borderColor = "#7b5ea7"; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.06)"; e.currentTarget.style.borderColor = "transparent"; }}>
+              <div style={{ aspectRatio: "1", background: "linear-gradient(135deg, #1a1a2e, #0a2540)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+                <div style={{ position: "absolute", inset: 0, opacity: 0.1, background: "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)" }} />
+                <div style={{ textAlign: "center", color: "#fff", zIndex: 1 }}>
+                  <div style={{ fontSize: 40, marginBottom: 8 }}>✏️</div>
+                  <div style={{ fontSize: 18, fontWeight: 800 }}>맞춤 절곡</div>
+                  <div style={{ fontSize: 12, color: "#3ee6c4", fontWeight: 600, marginTop: 4 }}>단면도 직접 그리기</div>
+                </div>
+              </div>
+              <div style={{ padding: "16px 20px" }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: "#3ee6c4", letterSpacing: 1.5, marginBottom: 4 }}>이형</div>
+                <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>이형 후레싱 주문</div>
+                <div style={{ fontSize: 13, color: "#6e6e73", marginBottom: 12 }}>원하는 형태 · 치수로 맞춤 제작</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <div><span style={{ fontSize: 12, color: "#86868b" }}>mm당 </span><span style={{ fontSize: 20, fontWeight: 800 }}>₩35~</span></div>
+                  <div style={{ fontSize: 12, color: "#86868b" }}>7소재</div>
+                </div>
+                <div style={{ width: "100%", padding: "12px 0", borderRadius: 14, background: "linear-gradient(135deg, #7b5ea7, #3ee6c4)", color: "#fff", fontSize: 14, fontWeight: 700, textAlign: "center" }}>주문하기</div>
+              </div>
+            </div>
+          )}
           {filtered.map(p => <ProductCard key={p.id} product={p} onClick={() => setDetail(p)} />)}
         </div>
         {filtered.length === 0 && (
@@ -506,6 +793,7 @@ export default function Home() {
       )}
 
       {detail && <ProductDetail product={detail} onClose={() => setDetail(null)} onAddCart={addToCart} />}
+      {showCustom && <CustomFlashingModal onClose={() => setShowCustom(false)} onAddCart={(item) => { setCart(prev => [...prev, item]); setShowCustom(false); }} />}
     </div>
   );
 }
