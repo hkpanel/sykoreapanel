@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-sans);
+  background: #f5f5f7;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: #c1c1c4; border-radius: 3px; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.anim-fadeUp { animation: fadeUp 0.6s ease both; }
+.anim-fadeUp-1 { animation: fadeUp 0.6s ease 0.15s both; }
+.anim-fadeUp-2 { animation: fadeUp 0.6s ease 0.3s both; }
+.anim-fadeUp-3 { animation: fadeUp 0.6s ease 0.45s both; }
+.anim-fadeUp-4 { animation: fadeUp 0.6s ease 0.6s both; }
+.anim-shimmer {
+  background: linear-gradient(90deg, #7b5ea7, #3ee6c4, #7b5ea7);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 3s linear infinite;
+}
+.anim-slideIn { animation: slideIn 0.3s ease; }
+.anim-float { animation: float 3s ease infinite; }
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+@media (max-width: 900px) { .product-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 580px) { .product-grid { grid-template-columns: 1fr; } }
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+@media (max-width: 800px) { .feature-grid { grid-template-columns: repeat(2, 1fr); } }
