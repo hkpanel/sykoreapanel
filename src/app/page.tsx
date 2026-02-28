@@ -1,16 +1,19 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import {
   FLASHING_PRODUCTS, FLASHING_CATEGORIES, COLOR_DETAILS,
   getRetailPrice, getMinRetailPrice,
   type FlashingProduct,
 } from "./data/flashingProducts";
+import HangaDoorEstimator from "./components/HangaDoorEstimator";
+import SwingDoorEstimator from "./components/SwingDoorEstimator";
 
 interface CartItem {
   key: string; productId: string; productName: string;
   size: string; color: string; colorSub?: string;
   retailPrice: number; qty: number;
+  image?: string;
 }
 
 function AnimatedNumber({ value, suffix = "" }: { value: number; suffix?: string }) {
@@ -221,12 +224,26 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
   const [step, setStep] = useState(0);
   const [pts, setPts] = useState<{x:number;y:number}[]>([]);
   const [dims, setDims] = useState<string[]>([]);
+  const [angles, setAngles] = useState<string[]>([]);
   const [cId, setCId] = useState<string|null>(null);
   const [cSub, setCSub] = useState("");
   const [side, setSide] = useState("ext");
   const [qty, setQty] = useState(1);
   const [hov, setHov] = useState<{x:number;y:number}|null>(null);
   const cvs = useRef<HTMLCanvasElement>(null);
+
+  const calcAngleDeg = (p1:{x:number;y:number}, p2:{x:number;y:number}, p3:{x:number;y:number}) => {
+    const a = { x: p1.x - p2.x, y: p1.y - p2.y };
+    const b = { x: p3.x - p2.x, y: p3.y - p2.y };
+    const dot = a.x * b.x + a.y * b.y;
+    const magA = Math.sqrt(a.x * a.x + a.y * a.y);
+    const magB = Math.sqrt(b.x * b.x + b.y * b.y);
+    if (magA === 0 || magB === 0) return 0;
+    const raw = Math.round(Math.acos(Math.max(-1, Math.min(1, dot / (magA * magB)))) * 180 / Math.PI);
+    // 75~105도 범위면 90도로 스냅
+    if (raw >= 75 && raw <= 105) return 90;
+    return raw;
+  };
 
   const draw = useCallback(() => {
     const c = cvs.current; if (!c) return;
@@ -253,20 +270,51 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
       ctx.fillStyle = i===0 ? "#3ee6c4" : "#7b5ea7"; ctx.fill(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
       ctx.fillStyle = "#fff"; ctx.font = "bold 9px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(i+1), p.x, p.y);
     });
+    // 각도 표시 (90도 아닌 경우만 빨간색으로)
+    for (let i = 1; i < pts.length - 1; i++) {
+      const deg = angles[i-1] && parseInt(angles[i-1]) > 0 ? parseInt(angles[i-1]) : calcAngleDeg(pts[i-1], pts[i], pts[i+1]);
+      if (deg === 0 || deg === 90) continue;  // 90도는 표시 안 함
+      const p = pts[i];
+      const a1 = Math.atan2(pts[i-1].y - p.y, pts[i-1].x - p.x);
+      const a2 = Math.atan2(pts[i+1].y - p.y, pts[i+1].x - p.x);
+      ctx.save();
+      const r = 22;
+      // 안쪽(좁은 각도)에 호 그리기
+      const normDiff = ((a2 - a1) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
+      const ccw = normDiff > Math.PI;
+      ctx.beginPath(); ctx.moveTo(p.x, p.y);
+      ctx.arc(p.x, p.y, r, a1, a2, ccw);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(220,38,38,0.12)";
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r, a1, a2, ccw);
+      ctx.strokeStyle = "#dc2626"; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.font = "bold 11px sans-serif";
+      ctx.fillStyle = "#dc2626";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      // 호의 중간점에 텍스트
+      const midA = ccw
+        ? a1 - ((2*Math.PI - normDiff) / 2)
+        : a1 + (normDiff / 2);
+      ctx.fillText(`${deg}°`, p.x + Math.cos(midA) * (r + 14), p.y + Math.sin(midA) * (r + 14));
+      ctx.restore();
+    }
     if (hov && pts.length > 0 && step === 1) {
       const last = pts[pts.length-1];
       ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(hov.x, hov.y);
       ctx.strokeStyle = "rgba(123,94,167,0.3)"; ctx.lineWidth = 2; ctx.setLineDash([6,3]); ctx.stroke(); ctx.setLineDash([]);
     }
-  }, [pts, dims, hov, step]);
+  }, [pts, dims, angles, hov, step]);
 
   useEffect(() => { draw(); }, [draw]);
 
-  const click = (e: React.MouseEvent) => { if (step!==1||!cvs.current) return; const r = cvs.current.getBoundingClientRect(); const x = (e.clientX-r.left)*(cvs.current.width/r.width); const y = (e.clientY-r.top)*(cvs.current.height/r.height); setPts(p=>[...p,{x,y}]); if(pts.length>0) setDims(p=>[...p,""]); };
+  const click = (e: React.MouseEvent) => { if (step!==1||!cvs.current) return; const r = cvs.current.getBoundingClientRect(); const x = (e.clientX-r.left)*(cvs.current.width/r.width); const y = (e.clientY-r.top)*(cvs.current.height/r.height); setPts(p=>[...p,{x,y}]); if(pts.length>0) setDims(p=>[...p,""]); if(pts.length>1) setAngles(p=>[...p,""]); };
   const mv = (e: React.MouseEvent) => { if(step!==1||!cvs.current) return; const r = cvs.current.getBoundingClientRect(); setHov({x:(e.clientX-r.left)*(cvs.current.width/r.width),y:(e.clientY-r.top)*(cvs.current.height/r.height)}); };
   const dimCh = (i:number,v:string) => setDims(p => { const n=[...p]; n[i]=v.replace(/[^0-9]/g,""); return n; });
-  const undo = () => { if(pts.length<=1){setPts([]);setDims([]);}else{setPts(p=>p.slice(0,-1));setDims(p=>p.slice(0,-1));} };
-  const reset = () => { setPts([]);setDims([]);setCId(null);setCSub("");setSide("ext");setQty(1);setStep(1); };
+  const angleCh = (i:number,v:string) => setAngles(p => { const n=[...p]; n[i]=v.replace(/[^0-9]/g,""); return n; });
+  const undo = () => { if(pts.length<=1){setPts([]);setDims([]);setAngles([]);}else{setPts(p=>p.slice(0,-1));setDims(p=>p.slice(0,-1));if(angles.length>0)setAngles(p=>p.slice(0,-1));} };
+  const reset = () => { setPts([]);setDims([]);setAngles([]);setCId(null);setCSub("");setSide("ext");setQty(1);setStep(1); };
 
   const totalW = dims.reduce((s,d) => s+(parseInt(d)||0), 0);
   const cObj = CUSTOM_COLORS.find(c => c.id===cId);
@@ -279,14 +327,22 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
   const handleAddCart = () => {
     if (!cObj) return;
     const key = `custom_${Date.now()}`;
+    const canvasImage = cvs.current ? cvs.current.toDataURL("image/png") : undefined;
+    const angleInfo = angles.length > 0 ? angles.map((a,i) => {
+      const deg = a && parseInt(a) > 0 ? parseInt(a) : calcAngleDeg(pts[i], pts[i+1], pts[i+2]);
+      return deg;
+    }) : [];
+    const hasNon90 = angleInfo.some(d => d !== 90);
+    const angleStr = hasNon90 ? ` [${angleInfo.map((d,i) => d !== 90 ? `점${i+2}:${d}°` : "").filter(Boolean).join(",")}]` : "";
     onAddCart({
       key,
       productId: key,
       productName: "이형 후레싱",
-      size: `W${calcW}mm (${dims.map(d=>d+"mm").join("+")})`,
+      size: `W${calcW}mm (${dims.map(d=>d+"mm").join("+")})${angleStr}`,
       color: cObj.name + (cSub ? ` (${cSub})` : "") + (cObj.hasSide ? ` · ${side==="ext"?"외부":"내부"}` : ""),
       retailPrice: unit,
       qty,
+      image: canvasImage,
     });
     onClose();
   };
@@ -362,6 +418,29 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
                     <span style={{ fontSize:11,color:"#86868b" }}>mm</span>
                   </div>
                 ))}
+                {/* 각도 입력 */}
+                {pts.length >= 3 && (
+                  <>
+                    <div style={{ fontSize:14,fontWeight:700,marginTop:16,marginBottom:8,display:"flex",alignItems:"center",gap:6 }}>
+                      <span>꺾임 각도</span>
+                      <span style={{ fontSize:11,color:"#86868b",fontWeight:400 }}>90°가 아닌 경우만 수정하세요</span>
+                    </div>
+                    {angles.map((a,i) => {
+                      const autoDeg = calcAngleDeg(pts[i], pts[i+1], pts[i+2]);
+                      const effectiveDeg = a && parseInt(a) > 0 ? parseInt(a) : autoDeg;
+                      const isNot90 = effectiveDeg !== 90;
+                      return (
+                        <div key={`a${i}`} style={{ display:"flex",alignItems:"center",gap:8,padding:"6px 10px",background: isNot90 ? "rgba(220,38,38,0.04)" : "#f5f5f7",borderRadius:10,marginBottom:6,border: isNot90 ? "1px solid rgba(220,38,38,0.2)" : "1px solid transparent" }}>
+                          <div style={{ width:22,height:22,borderRadius:6,background: isNot90 ? "#dc2626" : "#86868b",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800 }}>∠</div>
+                          <span style={{ fontSize:12,color:"#6e6e73",flex:1 }}>점{i+2} 꺾임</span>
+                          <input type="text" inputMode="numeric" value={a} onChange={e=>angleCh(i,e.target.value)} placeholder={String(autoDeg)}
+                            style={{ width:56,padding:"6px 8px",borderRadius:8,border:`2px solid ${isNot90?"#dc2626":"#e0e0e0"}`,fontSize:15,fontWeight:700,textAlign:"right",outline:"none",color: isNot90 ? "#dc2626" : "#1d1d1f" }}/>
+                          <span style={{ fontSize:11,color: isNot90 ? "#dc2626" : "#86868b" }}>°</span>
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
                 <div style={{ marginTop:8,padding:10,background:"rgba(123,94,167,0.06)",borderRadius:10,display:"flex",justifyContent:"space-between",alignItems:"center" }}>
                   <span style={{ fontSize:13,fontWeight:600 }}>총 사용폭 (W)</span>
                   <span style={{ fontSize:20,fontWeight:800,color:"#7b5ea7" }}>{totalW.toLocaleString()} mm</span>
@@ -455,6 +534,7 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
                   {[
                     ["형태",`이형 · ${pts.length}점 ${dims.length}구간`],
                     ["치수",dims.map(d=>d+"mm").join(" + ")],
+                    ...(angles.length > 0 ? [["각도", angles.map((a,i) => { const deg = a && parseInt(a) > 0 ? parseInt(a) : calcAngleDeg(pts[i], pts[i+1], pts[i+2]); return `점${i+2}:${deg}°`; }).join(", ")]] : [] as string[][]),
                     ["총폭",`${totalW} mm`],
                     ...(cObj.jjambap?[["짬밥","+20mm"]]:[] as string[][]),
                     ["계산폭 (W)",`${calcW} mm`],
@@ -505,6 +585,7 @@ export default function Home() {
   const [detail, setDetail] = useState<FlashingProduct | null>(null);
   const [search, setSearch] = useState("");
   const [showCustom, setShowCustom] = useState(false);
+  const [mainTab, setMainTab] = useState<"후레싱" | "행가도어" | "스윙도어">("후레싱");
 
   useEffect(() => {
     setVis(true);
@@ -541,7 +622,7 @@ export default function Home() {
         borderBottom: scrolled ? "1px solid rgba(0,0,0,0.06)" : "1px solid rgba(255,255,255,0.06)",
       }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 32px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
             <Image src="/syc-logo.png" alt="SY" width={32} height={32} style={{ borderRadius: "50%" }} />
             <span style={{ fontSize: 17, fontWeight: 700, color: scrolled ? "#1d1d1f" : "#f5f5f7", transition: "color 0.4s" }}>SY Korea Panel</span>
           </div>
@@ -558,60 +639,84 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* HERO */}
-      <section style={{ background: "linear-gradient(180deg, #1a1a2e 0%, #12122a 100%)", padding: "80px 32px 60px", textAlign: "center", opacity: vis ? 1 : 0, transition: "opacity 0.8s" }}>
+      {/* HERO + SYC + TAB 통합 (시안 C) */}
+      <section style={{ background: "linear-gradient(180deg, #1a1a2e 0%, #12122a 100%)", padding: "36px 32px 28px", textAlign: "center", opacity: vis ? 1 : 0, transition: "opacity 0.8s" }}>
         <div style={{ maxWidth: 800, margin: "0 auto" }}>
-          <div className="anim-fadeUp" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 700, color: "#3ee6c4", background: "rgba(62,230,196,0.08)", border: "1px solid rgba(62,230,196,0.15)", padding: "8px 18px", borderRadius: 24, marginBottom: 28 }}>
-            <Image src="/syc-logo.png" alt="SYC" width={20} height={20} style={{ borderRadius: "50%" }} className="anim-float" />
-            SYC 코인으로 결제하면 최대 10% 할인
-          </div>
-          <h1 className="anim-fadeUp-1" style={{ fontSize: "clamp(36px, 5vw, 56px)", fontWeight: 800, color: "#f5f5f7", lineHeight: 1.15, letterSpacing: -1.5, marginBottom: 16 }}>
-            건축의 시작,<br /><span className="anim-shimmer">SY Korea Panel</span>
+          <h1 className="anim-fadeUp" style={{ fontSize: "clamp(28px, 4vw, 42px)", fontWeight: 800, color: "#f5f5f7", lineHeight: 1.2, letterSpacing: -1, marginBottom: 10 }}>
+            건축의 시작, <span className="anim-shimmer">SY Korea Panel</span>
           </h1>
-          <p className="anim-fadeUp-2" style={{ fontSize: 17, color: "#86868b", lineHeight: 1.6, maxWidth: 520, margin: "0 auto 36px" }}>
-            스윙도어 · 행가도어 · 조립식판넬 · 후레싱<br />제조부터 납품까지, 대한민국 건축자재 전문기업
+          <p className="anim-fadeUp-1" style={{ fontSize: 14, color: "#86868b", marginBottom: 20 }}>
+            스윙도어 · 행가도어 · 조립식판넬 · 후레싱 — 제조부터 납품까지
           </p>
-          <div className="anim-fadeUp-3" style={{ display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
-            <a href="#products" style={{ padding: "14px 32px", borderRadius: 12, background: "linear-gradient(135deg, #7b5ea7, #3ee6c4)", color: "#fff", fontSize: 15, fontWeight: 700, textDecoration: "none" }}>제품 보기</a>
-            <a href="#about" style={{ padding: "14px 32px", borderRadius: 12, color: "#f5f5f7", fontSize: 15, fontWeight: 700, textDecoration: "none", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)" }}>회사 소개</a>
+          {/* 통계 + SYC 인라인 */}
+          <div className="anim-fadeUp-2" style={{ display: "inline-flex", alignItems: "center", gap: 24, padding: "12px 28px", borderRadius: 16, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 24, flexWrap: "wrap", justifyContent: "center" }}>
+            {[{ v: "15년+", l: "" }, { v: "2,400+", l: "현장" }, { v: "85종", l: "" }].map((s, i) => (
+              <span key={i} style={{ fontSize: 13, fontWeight: 800, color: "#f5f5f7" }}>{s.v}{s.l ? ` ${s.l}` : ""}</span>
+            )).reduce<React.ReactNode[]>((a, c, i) => i === 0 ? [c] : [...a, <span key={`d${i}`} style={{ color: "rgba(255,255,255,0.15)" }}>·</span>, c], [])}
+            <span style={{ color: "rgba(255,255,255,0.15)" }}>|</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "#3ee6c4" }}>SYC 결제 5~10% 할인</span>
           </div>
         </div>
-        <div className="anim-fadeUp-4" style={{ display: "flex", justifyContent: "center", gap: 48, marginTop: 56, flexWrap: "wrap" }}>
-          {[{ label: "제조 경력", value: 15, suffix: "년+" }, { label: "납품 현장", value: 2400, suffix: "+" }, { label: "등록 제품", value: 85, suffix: "종" }].map((s, i) => (
-            <div key={i} style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 36, fontWeight: 800, color: "#f5f5f7" }}><AnimatedNumber value={s.value} suffix={s.suffix} /></div>
-              <div style={{ fontSize: 13, color: "#86868b", marginTop: 4 }}>{s.label}</div>
-            </div>
+      </section>
+
+      {/* 카테고리 탭 (세그먼트 컨트롤) */}
+      <div id="products" style={{ background: "#fff", padding: "16px 20px 8px", borderBottom: "1px solid #e8e8ed" }}>
+        <div style={{ maxWidth: 480, margin: "0 auto", display: "flex", gap: 4, background: "#f0f0f2", borderRadius: 14, padding: 4 }}>
+          {([
+            { id: "후레싱" as const, label: "후레싱",
+              icon: (active: boolean) => (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M4 5 L4 17 C4 18.1 4.9 19 6 19 L18 19 C19.1 19 20 18.1 20 17 L20 5" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )
+            },
+            { id: "행가도어" as const, label: "행가도어",
+              icon: (active: boolean) => (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <line x1="3" y1="4" x2="21" y2="4" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="2.5" strokeLinecap="round"/>
+                  <rect x="3" y="6" width="8" height="14" rx="1" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.8" fill="none"/>
+                  <rect x="13" y="6" width="8" height="14" rx="1" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.8" fill="none"/>
+                </svg>
+              )
+            },
+            { id: "스윙도어" as const, label: "스윙도어",
+              icon: (active: boolean) => (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <rect x="4" y="3" width="12" height="18" rx="1" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.8" fill="none"/>
+                  <circle cx="14" cy="12" r="1.5" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.3" fill="none"/>
+                  <line x1="14" y1="12" x2="17" y2="11" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.3" strokeLinecap="round"/>
+                </svg>
+              )
+            },
+          ]).map(tab => (
+            <button key={tab.id} onClick={() => setMainTab(tab.id)}
+              style={{
+                flex: 1, padding: "11px 6px", border: "none", cursor: "pointer",
+                borderRadius: 11,
+                background: mainTab === tab.id ? "#fff" : "transparent",
+                boxShadow: mainTab === tab.id ? "0 1px 8px rgba(0,0,0,0.1)" : "none",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                transition: "all 0.25s",
+              }}>
+              {tab.icon(mainTab === tab.id)}
+              <span style={{
+                fontSize: 14, fontWeight: 700,
+                color: mainTab === tab.id ? "#7b5ea7" : "#9a9a9f",
+              }}>{tab.label}</span>
+            </button>
           ))}
         </div>
-      </section>
+      </div>
 
-      {/* SYC BANNER */}
-      <section style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #0f1b3d 50%, #0a2540 100%)", padding: "40px 32px", borderTop: "1px solid rgba(62,230,196,0.08)", borderBottom: "1px solid rgba(62,230,196,0.08)" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 24 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-            <Image src="/syc-logo.png" alt="SYC" width={56} height={56} style={{ borderRadius: "50%", boxShadow: "0 0 30px rgba(123,94,167,0.3)" }} />
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: "#f5f5f7" }}>SYC 코인 결제 지원</div>
-              <div style={{ fontSize: 13, color: "#86868b", marginTop: 2 }}>BSC (BEP-20) · MetaMask · Trust Wallet 연동</div>
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            {["코인 결제 시 5~10% 할인", "구매 시 SYC 리워드 적립", "VIP 홀더 우선 납품"].map((t, i) => (
-              <div key={i} style={{ padding: "8px 16px", borderRadius: 10, background: "rgba(62,230,196,0.06)", border: "1px solid rgba(62,230,196,0.12)", fontSize: 12, fontWeight: 600, color: "#3ee6c4" }}>✦ {t}</div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* PRODUCTS */}
-      <section id="products" style={{ maxWidth: 1200, margin: "0 auto", padding: "60px 32px 80px" }}>
+      {/* 후레싱 탭 */}
+      {mainTab === "후레싱" && (
+      <section style={{ maxWidth: 1200, margin: "0 auto", padding: "60px 32px 80px" }}>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
           <h2 style={{ fontSize: 36, fontWeight: 800, color: "#1d1d1f", letterSpacing: -0.8, marginBottom: 12 }}>후레싱 제품</h2>
           <p style={{ fontSize: 15, color: "#86868b" }}>기성 {FLASHING_PRODUCTS.length}종 + 이형 맞춤 절곡 · 규격 · 색상 선택 후 주문</p>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 12, background: "#1a1a2e", padding: "8px 20px", borderRadius: 24 }}>
-            <span style={{ fontSize: 12, fontWeight: 800, color: "#f1c40f" }}>100% 국산 0.5T 코일만 사용</span>
-            <span style={{ fontSize: 11, color: "#86868b" }}>(0.35T 중국산 저가 코일 절대 사용하지 않습니다)</span>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 12, background: "#1a1a2e", padding: "12px 28px", borderRadius: 24 }}>
+            <span style={{ fontSize: 18, fontWeight: 800, color: "#f1c40f" }}>100% 국산 0.5T 코일만 사용</span>
+            <span style={{ fontSize: 16, color: "#86868b" }}>(0.35T 중국산 저가 코일 절대 사용하지 않습니다)</span>
           </div>
           <div style={{ maxWidth: 400, margin: "20px auto 0" }}>
             <input
@@ -682,6 +787,29 @@ export default function Home() {
           </div>
         )}
       </section>
+      )}
+
+      {/* 행가도어 탭 */}
+      {mainTab === "행가도어" && (
+        <HangaDoorEstimator onAddCart={(item) => {
+          setCart(prev => {
+            const ex = prev.find(i => i.key === item.key);
+            if (ex) return prev.map(i => i.key === item.key ? { ...i, qty: i.qty + item.qty } : i);
+            return [...prev, item];
+          });
+        }} />
+      )}
+
+      {/* 스윙도어 탭 */}
+      {mainTab === "스윙도어" && (
+        <SwingDoorEstimator onAddCart={(item) => {
+          setCart(prev => {
+            const ex = prev.find(i => i.key === item.key);
+            if (ex) return prev.map(i => i.key === item.key ? { ...i, qty: i.qty + item.qty } : i);
+            return [...prev, item];
+          });
+        }} />
+      )}
 
       {/* GALLERY */}
       <section style={{ background: "#fff", padding: "60px 32px", borderTop: "1px solid rgba(0,0,0,0.06)" }}>
@@ -768,8 +896,14 @@ export default function Home() {
                   <div style={{ fontSize: 48, marginBottom: 16 }}>🛒</div><div>장바구니가 비어있어요</div>
                 </div>
               ) : cart.map(item => (
-                <div key={item.key} style={{ display: "flex", gap: 16, padding: "18px 0", borderBottom: "1px solid #f0f0f2", alignItems: "center" }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                <div key={item.key} style={{ padding: "18px 0", borderBottom: "1px solid #f0f0f2" }}>
+                  {item.image && (
+                    <div style={{ background: "#fff", borderRadius: 12, padding: 8, marginBottom: 10, border: "1px solid #e8e8ed" }}>
+                      <img src={item.image} alt="절곡 도면" style={{ width: "100%", height: "auto", borderRadius: 8 }} />
+                    </div>
+                  )}
+                  <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: "#1d1d1f", marginBottom: 3 }}>{item.productName}</div>
                     <div style={{ fontSize: 12, color: "#86868b", marginBottom: 6 }}>{item.size} / {item.color}{item.colorSub ? ` (${item.colorSub})` : ""}</div>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -784,6 +918,7 @@ export default function Home() {
                   <div style={{ textAlign: "right", flexShrink: 0 }}>
                     <div style={{ fontSize: 15, fontWeight: 800 }}>₩{(item.retailPrice * item.qty).toLocaleString()}</div>
                     <div style={{ fontSize: 12, fontWeight: 700, color: "#7b5ea7", marginTop: 2 }}>{Math.round(item.retailPrice * item.qty / 100).toLocaleString()} SYC</div>
+                  </div>
                   </div>
                 </div>
               ))}
