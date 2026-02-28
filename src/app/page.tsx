@@ -408,27 +408,27 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
                       <button key={s.id} onClick={()=>setSide(s.id)} style={{ flex:1,padding:12,borderRadius:12,border:`2px solid ${side===s.id?"#7b5ea7":"#eee"}`,background:side===s.id?"rgba(123,94,167,0.04)":"#fff",cursor:"pointer",textAlign:"center" }}>
                         <svg width="120" height="90" viewBox="0 0 120 90" style={{ display:"block",margin:"0 auto 8px" }}>
                           {s.id==="ext" ? (<>
-                            {/* 외부: ㄱ자 단면 + 바깥쪽에 빨간 색상면 표시 */}
-                            <line x1="20" y1="10" x2="20" y2="70" stroke="#333" strokeWidth="3" strokeLinecap="round"/>
-                            <line x1="20" y1="70" x2="100" y2="70" stroke="#333" strokeWidth="3" strokeLinecap="round"/>
-                            {/* 색상면 - 바깥쪽(오른쪽/아래쪽) 빨간 굵은 선 */}
-                            <line x1="24" y1="10" x2="24" y2="67" stroke="#e74c3c" strokeWidth="5" opacity="0.6"/>
-                            <line x1="24" y1="67" x2="100" y2="67" stroke="#e74c3c" strokeWidth="5" opacity="0.6"/>
-                            {/* 큰 빨간 화살표 - 안에서 바깥으로 ↘ */}
-                            <line x1="40" y1="30" x2="72" y2="55" stroke="#e74c3c" strokeWidth="3"/>
-                            <polygon points="72,55 62,50 67,42" fill="#e74c3c"/>
-                            <text x="45" y="25" fontSize="11" fill="#e74c3c" fontWeight="bold">색상면</text>
+                            {/* 외부: 검은 ㄱ자 */}
+                            <line x1="30" y1="8" x2="30" y2="60" stroke="#222" strokeWidth="3"/>
+                            <line x1="30" y1="60" x2="105" y2="60" stroke="#222" strokeWidth="3"/>
+                            {/* 노란 색상면 - 바깥쪽(왼쪽+아래) */}
+                            <line x1="26" y1="8" x2="26" y2="63" stroke="#f1c40f" strokeWidth="5"/>
+                            <line x1="26" y1="64" x2="105" y2="64" stroke="#f1c40f" strokeWidth="5"/>
+                            {/* 빨간 화살표 - 왼쪽 아래 바깥에서 가리킴 */}
+                            <line x1="8" y1="82" x2="22" y2="68" stroke="#e74c3c" strokeWidth="3"/>
+                            <polygon points="22,68 14,70 18,78" fill="#e74c3c"/>
+                            <text x="0" y="55" fontSize="0" fill="none"/>
                           </>) : (<>
-                            {/* 내부: ㄱ자 단면 + 안쪽에 빨간 색상면 표시 */}
-                            <line x1="20" y1="10" x2="20" y2="70" stroke="#333" strokeWidth="3" strokeLinecap="round"/>
-                            <line x1="20" y1="70" x2="100" y2="70" stroke="#333" strokeWidth="3" strokeLinecap="round"/>
-                            {/* 색상면 - 안쪽(왼쪽/위쪽) 빨간 굵은 선 */}
-                            <line x1="16" y1="13" x2="16" y2="70" stroke="#e74c3c" strokeWidth="5" opacity="0.6"/>
-                            <line x1="16" y1="74" x2="97" y2="74" stroke="#e74c3c" strokeWidth="5" opacity="0.6"/>
-                            {/* 큰 빨간 화살표 - 바깥에서 안으로 ↙ */}
-                            <line x1="75" y1="25" x2="38" y2="50" stroke="#e74c3c" strokeWidth="3"/>
-                            <polygon points="38,50 46,44 48,52" fill="#e74c3c"/>
-                            <text x="55" y="20" fontSize="11" fill="#e74c3c" fontWeight="bold">색상면</text>
+                            {/* 내부: 검은 ㄱ자 */}
+                            <line x1="30" y1="8" x2="30" y2="60" stroke="#222" strokeWidth="3"/>
+                            <line x1="30" y1="60" x2="105" y2="60" stroke="#222" strokeWidth="3"/>
+                            {/* 노란 색상면 - 안쪽(오른쪽+위) */}
+                            <line x1="34" y1="8" x2="34" y2="57" stroke="#f1c40f" strokeWidth="5"/>
+                            <line x1="34" y1="56" x2="105" y2="56" stroke="#f1c40f" strokeWidth="5"/>
+                            {/* 빨간 화살표 - 안쪽에서 아래로 가리킴 */}
+                            <line x1="60" y1="25" x2="42" y2="48" stroke="#e74c3c" strokeWidth="3"/>
+                            <polygon points="42,48 44,38 52,43" fill="#e74c3c"/>
+                            <text x="0" y="55" fontSize="0" fill="none"/>
                           </>)}
                         </svg>
                         <div style={{ fontSize:14,fontWeight:700,color:side===s.id?"#7b5ea7":"#1d1d1f" }}>{s.label}</div>
