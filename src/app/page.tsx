@@ -605,6 +605,36 @@ export default function Home() {
       </section>
 
       {/* PRODUCTS */}
+      {/* 국산 코일 배너 */}
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 32px" }}>
+        <div style={{
+          background: "linear-gradient(135deg, #1a1a2e, #0a2540)", borderRadius: 20,
+          padding: "28px 32px", display: "flex", alignItems: "center", justifyContent: "space-between",
+          flexWrap: "wrap", gap: 20, marginTop: -20,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{ textAlign: "center", flexShrink: 0 }}>
+              <div style={{ fontSize: 11, color: "#86868b", fontWeight: 600, marginBottom: 4 }}>자신있는 품질 보장</div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: "#fff" }}>100% <span style={{ color: "#f1c40f" }}>국내산 코일</span> 사용</div>
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+            {[
+              { name: "SY STEEL", color: "#4A90D9" },
+              { name: "POSCO", color: "#E44D2E" },
+              { name: "KG스틸", color: "#2E86C1" },
+            ].map((co, i) => (
+              <div key={i} style={{ background: "rgba(255,255,255,0.08)", borderRadius: 12, padding: "10px 20px", border: "1px solid rgba(255,255,255,0.1)" }}>
+                <span style={{ fontSize: 15, fontWeight: 800, color: co.color }}>{co.name}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize: 12, color: "#86868b", width: "100%", textAlign: "center", marginTop: -8 }}>
+            SY한국판넬은 100% 국내산 코일만을 사용하며, 에스와이·포스코·KG스틸 등 보장된 품질의 자재 사용을 철칙으로 합니다.
+          </div>
+        </div>
+      </div>
+
       <section id="products" style={{ maxWidth: 1200, margin: "0 auto", padding: "60px 32px 80px" }}>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
           <h2 style={{ fontSize: 36, fontWeight: 800, color: "#1d1d1f", letterSpacing: -0.8, marginBottom: 12 }}>후레싱 제품</h2>
@@ -638,18 +668,29 @@ export default function Home() {
             <div onClick={() => setShowCustom(true)} style={{ cursor: "pointer", borderRadius: 20, overflow: "hidden", background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", transition: "all 0.3s", border: "2px solid transparent" }}
               onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 8px 30px rgba(123,94,167,0.15)"; e.currentTarget.style.borderColor = "#7b5ea7"; }}
               onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.06)"; e.currentTarget.style.borderColor = "transparent"; }}>
-              <div style={{ aspectRatio: "1", background: "linear-gradient(135deg, #1a1a2e, #0a2540)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
-                <div style={{ position: "absolute", inset: 0, opacity: 0.1, background: "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)" }} />
-                <div style={{ textAlign: "center", color: "#fff", zIndex: 1 }}>
-                  <div style={{ fontSize: 40, marginBottom: 8 }}>✏️</div>
-                  <div style={{ fontSize: 18, fontWeight: 800 }}>맞춤 절곡</div>
-                  <div style={{ fontSize: 12, color: "#3ee6c4", fontWeight: 600, marginTop: 4 }}>단면도 직접 그리기</div>
+              <div style={{ aspectRatio: "1", background: "linear-gradient(135deg, #0a0a1a 0%, #1a1040 40%, #0a2540 100%)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+                <div style={{ position: "absolute", inset: 0, opacity: 0.06, backgroundImage: "linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px)", backgroundSize: "30px 30px" }} />
+                <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle, rgba(123,94,167,0.3), transparent 70%)", top: "20%", left: "30%" }} />
+                <div style={{ textAlign: "center", zIndex: 1, color: "#fff", padding: "0 16px" }}>
+                  <div style={{ display: "inline-block", background: "rgba(227,64,64,0.9)", padding: "4px 14px", borderRadius: 20, fontSize: 11, fontWeight: 800, marginBottom: 14, letterSpacing: 1 }}>🏆 업계 최초</div>
+                  <div style={{ fontSize: 26, fontWeight: 900, marginBottom: 8, lineHeight: 1.3 }}>내가 그린 절곡<br/>그대로 제작</div>
+                  <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 12 }}>
+                    {[{icon:"✏️",label:"그리기"},{icon:"📐",label:"치수입력"},{icon:"💰",label:"즉시견적"}].map((s,i) => (
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <div style={{ width: 48, height: 48, borderRadius: 12, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                          <div style={{ fontSize: 18 }}>{s.icon}</div>
+                          <div style={{ fontSize: 8, fontWeight: 700, color: "#3ee6c4", marginTop: 2 }}>{s.label}</div>
+                        </div>
+                        {i < 2 && <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 14 }}>→</span>}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
               <div style={{ padding: "16px 20px" }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: "#3ee6c4", letterSpacing: 1.5, marginBottom: 4 }}>이형</div>
-                <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>이형 후레싱 주문</div>
-                <div style={{ fontSize: 13, color: "#6e6e73", marginBottom: 12 }}>원하는 형태 · 치수로 맞춤 제작</div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: "#e74c3c", letterSpacing: 1.5, marginBottom: 4 }}>🔥 업계최초</div>
+                <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>이형 후레싱 맞춤 주문</div>
+                <div style={{ fontSize: 13, color: "#6e6e73", marginBottom: 12 }}>단면도 직접 그리고 바로 견적확인</div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                   <div><span style={{ fontSize: 12, color: "#86868b" }}>mm당 </span><span style={{ fontSize: 20, fontWeight: 800 }}>₩35~</span></div>
                   <div style={{ fontSize: 12, color: "#86868b" }}>7소재</div>
