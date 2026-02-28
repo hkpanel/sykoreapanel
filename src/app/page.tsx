@@ -1,6 +1,9 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
+import { supabase } from "@/lib/supabase";
+import type { User } from "@supabase/supabase-js";
+import AuthModal from "./components/AuthModal";
 import {
   FLASHING_PRODUCTS, FLASHING_CATEGORIES, COLOR_DETAILS,
   getRetailPrice, getMinRetailPrice,
@@ -586,12 +589,22 @@ export default function Home() {
   const [search, setSearch] = useState("");
   const [showCustom, setShowCustom] = useState(false);
   const [mainTab, setMainTab] = useState<"후레싱" | "행가도어" | "스윙도어">("후레싱");
+  const [user, setUser] = useState<User | null>(null);
+  const [showAuth, setShowAuth] = useState(false);
 
   useEffect(() => {
     setVis(true);
     const h = () => setScrolled(window.scrollY > 60);
     window.addEventListener("scroll", h);
-    return () => window.removeEventListener("scroll", h);
+    // 로그인 상태 확인
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+    // 로그인/로그아웃 상태 변경 리스너
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => { window.removeEventListener("scroll", h); subscription.unsubscribe(); };
   }, []);
 
   const filtered = FLASHING_PRODUCTS.filter(p => {
@@ -626,11 +639,40 @@ export default function Home() {
             <Image src="/syc-logo.png" alt="SY" width={32} height={32} style={{ borderRadius: "50%" }} />
             <span style={{ fontSize: 17, fontWeight: 700, color: scrolled ? "#1d1d1f" : "#f5f5f7", transition: "color 0.4s" }}>SY Korea Panel</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(62,230,196,0.1)", padding: "6px 14px", borderRadius: 20, border: "1px solid rgba(62,230,196,0.2)" }}>
               <Image src="/syc-logo.png" alt="SYC" width={18} height={18} style={{ borderRadius: "50%" }} />
               <span style={{ fontSize: 13, fontWeight: 700, color: "#3ee6c4" }}>SYC 결제 가능</span>
             </div>
+            {user ? (
+              <div style={{ position: "relative" }}>
+                <button onClick={() => setShowAuth(!showAuth)}
+                  style={{ display: "flex", alignItems: "center", gap: 6, background: scrolled ? "#f5f5f7" : "rgba(255,255,255,0.1)", padding: "6px 12px", borderRadius: 20, border: "none", cursor: "pointer", transition: "all 0.3s" }}>
+                  <div style={{ width: 24, height: 24, borderRadius: 12, background: "linear-gradient(135deg, #7b5ea7, #3ee6c4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: 800 }}>
+                    {(user.user_metadata?.name || user.email || "U").charAt(0).toUpperCase()}
+                  </div>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: scrolled ? "#1d1d1f" : "#f5f5f7", maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {user.user_metadata?.name || user.email?.split("@")[0] || "회원"}
+                  </span>
+                </button>
+                {showAuth && (
+                  <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "#fff", borderRadius: 16, boxShadow: "0 4px 24px rgba(0,0,0,0.12)", padding: 8, minWidth: 180, zIndex: 100 }}>
+                    <div style={{ padding: "10px 14px", fontSize: 12, color: "#86868b", borderBottom: "1px solid #f0f0f2" }}>
+                      {user.email}
+                    </div>
+                    <button onClick={() => { supabase.auth.signOut(); setShowAuth(false); }}
+                      style={{ width: "100%", padding: "10px 14px", border: "none", background: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#e34040", textAlign: "left", borderRadius: 10 }}>
+                      로그아웃
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button onClick={() => setShowAuth(true)}
+                style={{ padding: "6px 14px", borderRadius: 20, border: scrolled ? "2px solid #e8e8ed" : "2px solid rgba(255,255,255,0.15)", background: "none", cursor: "pointer", fontSize: 13, fontWeight: 700, color: scrolled ? "#1d1d1f" : "#f5f5f7", transition: "all 0.3s" }}>
+                로그인
+              </button>
+            )}
             <button onClick={() => setShowCart(!showCart)} style={{ position: "relative", background: "none", border: "none", cursor: "pointer", fontSize: 20, padding: 4, color: scrolled ? "#1d1d1f" : "#f5f5f7" }}>
               🛒
               {cartCount > 0 && <span style={{ position: "absolute", top: -4, right: -8, background: "#7b5ea7", color: "#fff", fontSize: 10, fontWeight: 800, width: 18, height: 18, borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center" }}>{cartCount}</span>}
@@ -970,6 +1012,7 @@ export default function Home() {
 
       {detail && <ProductDetail product={detail} onClose={() => setDetail(null)} onAddCart={addToCart} />}
       {showCustom && <CustomFlashingModal onClose={() => setShowCustom(false)} onAddCart={(item) => { setCart(prev => [...prev, item]); setShowCustom(false); }} />}
+      {showAuth && !user && <AuthModal onClose={() => setShowAuth(false)} onLogin={() => setShowAuth(false)} />}
     </div>
   );
 }
