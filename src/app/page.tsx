@@ -605,40 +605,17 @@ export default function Home() {
       </section>
 
       {/* PRODUCTS */}
-      {/* 국산 코일 배너 */}
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 32px" }}>
-        <div style={{
-          background: "linear-gradient(135deg, #1a1a2e, #0a2540)", borderRadius: 20,
-          padding: "28px 32px", display: "flex", alignItems: "center", justifyContent: "space-between",
-          flexWrap: "wrap", gap: 20, marginTop: -20,
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{ textAlign: "center", flexShrink: 0 }}>
-              <div style={{ fontSize: 11, color: "#86868b", fontWeight: 600, marginBottom: 4 }}>자신있는 품질 보장</div>
-              <div style={{ fontSize: 22, fontWeight: 900, color: "#fff" }}>100% <span style={{ color: "#f1c40f" }}>국내산 코일</span> 사용</div>
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-            {[
-              { name: "SY STEEL", color: "#4A90D9" },
-              { name: "POSCO", color: "#E44D2E" },
-              { name: "KG스틸", color: "#2E86C1" },
-            ].map((co, i) => (
-              <div key={i} style={{ background: "rgba(255,255,255,0.08)", borderRadius: 12, padding: "10px 20px", border: "1px solid rgba(255,255,255,0.1)" }}>
-                <span style={{ fontSize: 15, fontWeight: 800, color: co.color }}>{co.name}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{ fontSize: 12, color: "#86868b", width: "100%", textAlign: "center", marginTop: -8 }}>
-            SY한국판넬은 100% 국내산 코일만을 사용하며, 에스와이·포스코·KG스틸 등 보장된 품질의 자재 사용을 철칙으로 합니다.
-          </div>
-        </div>
-      </div>
-
       <section id="products" style={{ maxWidth: 1200, margin: "0 auto", padding: "60px 32px 80px" }}>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
           <h2 style={{ fontSize: 36, fontWeight: 800, color: "#1d1d1f", letterSpacing: -0.8, marginBottom: 12 }}>후레싱 제품</h2>
           <p style={{ fontSize: 15, color: "#86868b" }}>기성 {FLASHING_PRODUCTS.length}종 + 이형 맞춤 절곡 · 규격 · 색상 선택 후 주문</p>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 12, background: "#1a1a2e", padding: "8px 20px", borderRadius: 24 }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color: "#f1c40f" }}>100% 국내산 코일 사용</span>
+            <span style={{ fontSize: 11, color: "#86868b" }}>·</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#4A90D9" }}>SY STEEL</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#E44D2E" }}>POSCO</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#2E86C1" }}>KG스틸</span>
+          </div>
           <div style={{ maxWidth: 400, margin: "20px auto 0" }}>
             <input
               type="text" placeholder="제품명 검색 (예: 유바, 엘바, 물도이...)"
