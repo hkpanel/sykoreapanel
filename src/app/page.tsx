@@ -850,18 +850,22 @@ export default function Home() {
           .hero-stats span { font-size: 11px !important; }
           .section-title { font-size: 22px !important; }
           .section-sub { font-size: 13px !important; }
-          .coil-banner { padding: 6px 12px !important; white-space: nowrap !important; }
+          .coil-banner { padding: 6px 12px !important; white-space: normal !important; text-align: center !important; }
           .coil-banner span { font-size: 10px !important; }
           .product-grid {
             grid-template-columns: repeat(2, 1fr) !important;
             gap: 10px !important;
           }
-          .product-card-img { height: 130px !important; }
+          .product-card-img { height: 160px !important; }
           .product-card-info { padding: 10px 12px 14px !important; }
           .product-card-name { font-size: 13px !important; }
           .product-card-desc { font-size: 10px !important; min-height: 24px !important; margin-bottom: 6px !important; }
           .product-card-price { font-size: 15px !important; }
           .product-card-btn { padding: 9px 0 !important; font-size: 11px !important; border-radius: 8px !important; }
+          .custom-card-hero { aspect-ratio: auto !important; padding: 24px 12px !important; }
+          .custom-card-hero .custom-title { font-size: 18px !important; }
+          .custom-card-info { padding: 12px !important; }
+          .custom-card-info div { font-size: 13px !important; }
           .filter-section { gap: 6px !important; margin-bottom: 24px !important; }
           .filter-section button { padding: 8px 14px !important; font-size: 12px !important; }
           .product-section { padding: 32px 10px 48px !important; }
@@ -1044,12 +1048,12 @@ export default function Home() {
             <div onClick={() => setShowCustom(true)} style={{ cursor: "pointer", borderRadius: 20, overflow: "hidden", background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", transition: "all 0.3s", border: "2px solid transparent" }}
               onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 8px 30px rgba(123,94,167,0.15)"; e.currentTarget.style.borderColor = "#7b5ea7"; }}
               onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.06)"; e.currentTarget.style.borderColor = "transparent"; }}>
-              <div style={{ aspectRatio: "1", background: "linear-gradient(135deg, #0a0a1a 0%, #1a1040 40%, #0a2540 100%)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+              <div className="custom-card-hero" style={{ aspectRatio: "1", background: "linear-gradient(135deg, #0a0a1a 0%, #1a1040 40%, #0a2540 100%)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
                 <div style={{ position: "absolute", inset: 0, opacity: 0.06, backgroundImage: "linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px)", backgroundSize: "30px 30px" }} />
                 <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle, rgba(123,94,167,0.3), transparent 70%)", top: "20%", left: "30%" }} />
                 <div style={{ textAlign: "center", zIndex: 1, color: "#fff", padding: "0 16px" }}>
                   <div style={{ display: "inline-block", background: "rgba(227,64,64,0.9)", padding: "4px 14px", borderRadius: 20, fontSize: 11, fontWeight: 800, marginBottom: 14, letterSpacing: 1 }}>🏆 업계 최초</div>
-                  <div style={{ fontSize: 26, fontWeight: 900, marginBottom: 8, lineHeight: 1.3 }}>내가 그린 절곡<br/>그대로 제작</div>
+                  <div className="custom-title" style={{ fontSize: 26, fontWeight: 900, marginBottom: 8, lineHeight: 1.3 }}>내가 그린 절곡<br/>그대로 제작</div>
                   <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 12 }}>
                     {[{icon:"✏️",label:"그리기"},{icon:"📐",label:"치수입력"},{icon:"💰",label:"즉시견적"}].map((s,i) => (
                       <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -1063,7 +1067,7 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              <div style={{ padding: "16px 20px" }}>
+              <div className="custom-card-info" style={{ padding: "16px 20px" }}>
                 <div style={{ fontSize: 11, fontWeight: 600, color: "#e74c3c", letterSpacing: 1.5, marginBottom: 4 }}>🔥 업계최초</div>
                 <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>이형 후레싱 맞춤 주문</div>
                 <div style={{ fontSize: 13, color: "#6e6e73", marginBottom: 12 }}>단면도 직접 그리고 바로 견적확인</div>
