@@ -897,10 +897,11 @@ export default function Home() {
       <section style={{ background: "linear-gradient(180deg, #1a1a2e 0%, #12122a 100%)", padding: "36px 32px 28px", textAlign: "center", opacity: vis ? 1 : 0, transition: "opacity 0.8s" }}>
         <div style={{ maxWidth: 800, margin: "0 auto" }}>
           <h1 className="anim-fadeUp" style={{ fontSize: "clamp(28px, 4vw, 42px)", fontWeight: 800, color: "#f5f5f7", lineHeight: 1.2, letterSpacing: -1, marginBottom: 10 }}>
-            건축의 시작, <span className="anim-shimmer">SY Korea Panel</span>
+            건축자재의 새로운 가치,<br /><span className="anim-shimmer">SY Korea Panel</span>
           </h1>
           <p className="anim-fadeUp-1" style={{ fontSize: 14, color: "#86868b", marginBottom: 20 }}>
-            스윙도어 · 행가도어 · 조립식판넬 · 후레싱 — 제조부터 납품까지
+            후레싱 · 스윙도어 · 행가도어 — 제조부터 납품까지<br />
+            <span style={{ color: "#3ee6c4", fontWeight: 600 }}>SYC 토큰</span> 결제 시 5~10% 할인
           </p>
           {/* 통계 + SYC 인라인 */}
           <div className="anim-fadeUp-2" style={{ display: "inline-flex", alignItems: "center", gap: 24, padding: "12px 28px", borderRadius: 16, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 24, flexWrap: "wrap", justifyContent: "center" }}>
@@ -908,7 +909,7 @@ export default function Home() {
               <span key={i} style={{ fontSize: 13, fontWeight: 800, color: "#f5f5f7" }}>{s.v}{s.l ? ` ${s.l}` : ""}</span>
             )).reduce<React.ReactNode[]>((a, c, i) => i === 0 ? [c] : [...a, <span key={`d${i}`} style={{ color: "rgba(255,255,255,0.15)" }}>·</span>, c], [])}
             <span style={{ color: "rgba(255,255,255,0.15)" }}>|</span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "#3ee6c4" }}>SYC 결제 5~10% 할인</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "#3ee6c4" }}>💰 SYC 토큰 구매</span>
           </div>
         </div>
       </section>
@@ -968,9 +969,9 @@ export default function Home() {
         <div style={{ textAlign: "center", marginBottom: 48 }}>
           <h2 style={{ fontSize: 36, fontWeight: 800, color: "#1d1d1f", letterSpacing: -0.8, marginBottom: 12 }}>후레싱 제품</h2>
           <p style={{ fontSize: 15, color: "#86868b" }}>기성 {FLASHING_PRODUCTS.length}종 + 이형 맞춤 절곡 · 규격 · 색상 선택 후 주문</p>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 12, background: "#1a1a2e", padding: "12px 28px", borderRadius: 24 }}>
-            <span style={{ fontSize: 18, fontWeight: 800, color: "#f1c40f" }}>100% 국산 0.5T 코일만 사용</span>
-            <span style={{ fontSize: 16, color: "#86868b" }}>(0.35T 중국산 저가 코일 절대 사용하지 않습니다)</span>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 12, background: "#1a1a2e", padding: "8px 20px", borderRadius: 20 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#f1c40f" }}>100% 국산 0.5T 코일만 사용</span>
+            <span style={{ fontSize: 12, color: "#86868b" }}>(0.35T 중국산 저가 코일 절대 사용하지 않습니다)</span>
           </div>
           <div style={{ maxWidth: 400, margin: "20px auto 0" }}>
             <input
@@ -1076,7 +1077,7 @@ export default function Home() {
         <div style={{ maxWidth: 800, margin: "0 auto", textAlign: "center" }}>
           <h2 style={{ fontSize: 36, fontWeight: 800, color: "#1d1d1f", marginBottom: 16 }}>SY한국판넬</h2>
           <p style={{ fontSize: 16, color: "#6e6e73", lineHeight: 1.8, marginBottom: 40 }}>
-            평택 소재 건축자재 제조 전문기업으로, 조립식판넬 · 스윙도어 · 행가도어 · 후레싱을 직접 생산하여 전국 현장에 납품하고 있습니다.
+            평택 소재 건축자재 전문기업으로, 후레싱 · 스윙도어 · 행가도어를 직접 생산하여 전국 현장에 납품하고 있습니다.
           </p>
           <div className="feature-grid">
             {[
@@ -1109,7 +1110,7 @@ export default function Home() {
             <div style={{ display: "flex", gap: 40 }}>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#f5f5f7", marginBottom: 12 }}>제품</div>
-                <div style={{ lineHeight: 2.2 }}>후레싱<br />스윙도어<br />행가도어<br />조립식판넬</div>
+                <div style={{ lineHeight: 2.2 }}>후레싱<br />스윙도어<br />행가도어</div>
               </div>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#f5f5f7", marginBottom: 12 }}>SYC 코인</div>

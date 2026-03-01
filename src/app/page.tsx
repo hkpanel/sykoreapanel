@@ -1364,6 +1364,17 @@ export default function Home() {
                   {pay === "syc" && <Image src="/syc-logo.png" alt="" width={20} height={20} style={{ borderRadius: "50%" }} />}
                   {pay === "syc" ? "지갑 연결 후 결제" : "💳 결제하기"}
                 </button>
+                <button onClick={() => {
+                  const items = cart.map(i => `• ${i.productName} (${i.size}/${i.color}) x${i.qty} = ₩${(i.retailPrice * i.qty).toLocaleString()}`).join("\n");
+                  const msg = `[SY한국판넬 주문문의]\n\n${items}\n\n합계: ₩${cartTotal.toLocaleString()} (부가세별도)\n\n배송/결제 상담 부탁드립니다.`;
+                  window.open(`http://pf.kakao.com/_vDxfmn/chat?text=${encodeURIComponent(msg)}`, "_blank");
+                }} style={{
+                  width: "100%", padding: "14px 0", border: "2px solid #FAE100", borderRadius: 14,
+                  background: "#FAE100", color: "#3C1E1E", fontSize: 15, fontWeight: 800, cursor: "pointer", marginTop: 8,
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                }}>
+                  💬 카톡으로 주문 문의
+                </button>
               </div>
             )}
           </div>
@@ -1374,6 +1385,23 @@ export default function Home() {
       {showCustom && <CustomFlashingModal onClose={() => setShowCustom(false)} onAddCart={(item) => { addToCart(item); setShowCustom(false); }} />}
       {showAuth && !user && <AuthModal onClose={() => setShowAuth(false)} onLogin={() => setShowAuth(false)} />}
       {showMyPage && user && <MyPageModal user={user} initialTab={showMyPage} onClose={() => setShowMyPage(false)} />}
+
+      {/* 플로팅 카톡 문의 버튼 */}
+      <a href="http://pf.kakao.com/_vDxfmn/chat" target="_blank" rel="noopener noreferrer"
+        style={{
+          position: "fixed", bottom: 24, right: 24, zIndex: 150,
+          width: 56, height: 56, borderRadius: 28,
+          background: "#FAE100", color: "#3C1E1E",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+          textDecoration: "none", fontSize: 28,
+          transition: "transform 0.2s",
+        }}
+        onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.1)")}
+        onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
+      >
+        💬
+      </a>
 
       {/* 장바구니 추가 확인 모달 */}
       {cartAddedItem && (
