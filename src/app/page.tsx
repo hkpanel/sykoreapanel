@@ -4,6 +4,7 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 import AuthModal from "./components/AuthModal";
+import MyPageModal from "./components/MyPageModal";
 import {
   FLASHING_PRODUCTS, FLASHING_CATEGORIES, COLOR_DETAILS,
   getRetailPrice, getMinRetailPrice,
@@ -1024,6 +1025,7 @@ export default function Home() {
       {detail && <ProductDetail product={detail} onClose={() => setDetail(null)} onAddCart={addToCart} />}
       {showCustom && <CustomFlashingModal onClose={() => setShowCustom(false)} onAddCart={(item) => { setCart(prev => [...prev, item]); setShowCustom(false); }} />}
       {showAuth && !user && <AuthModal onClose={() => setShowAuth(false)} onLogin={() => setShowAuth(false)} />}
+      {showMyPage && user && <MyPageModal user={user} onClose={() => setShowMyPage(false)} />}
     </div>
   );
 }
