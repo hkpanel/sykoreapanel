@@ -16,11 +16,12 @@ interface Address {
 
 interface MyPageModalProps {
   user: User;
+  initialTab?: "info" | "address";
   onClose: () => void;
 }
 
-export default function MyPageModal({ user, onClose }: MyPageModalProps) {
-  const [tab, setTab] = useState<"info" | "address">("info");
+export default function MyPageModal({ user, initialTab = "info", onClose }: MyPageModalProps) {
+  const [tab, setTab] = useState<"info" | "address">(initialTab);
   const [name, setName] = useState(user.user_metadata?.name || user.user_metadata?.full_name || "");
   const [phone, setPhone] = useState(user.user_metadata?.phone || "");
   const [saving, setSaving] = useState(false);

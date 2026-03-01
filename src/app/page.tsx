@@ -592,7 +592,7 @@ export default function Home() {
   const [mainTab, setMainTab] = useState<"후레싱" | "행가도어" | "스윙도어">("후레싱");
   const [user, setUser] = useState<User | null>(null);
   const [showAuth, setShowAuth] = useState(false);
-  const [showMyPage, setShowMyPage] = useState(false);
+  const [showMyPage, setShowMyPage] = useState<false | "info" | "address">(false);
 
   useEffect(() => {
     setVis(true);
@@ -658,16 +658,18 @@ export default function Home() {
                   </span>
                 </button>
                 {showAuth && (
+                  <>
+                  <div style={{ position: "fixed", inset: 0, zIndex: 99 }} onClick={() => setShowAuth(false)} />
                   <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "#fff", borderRadius: 16, boxShadow: "0 4px 24px rgba(0,0,0,0.12)", padding: 8, minWidth: 180, zIndex: 100 }}>
                     <div style={{ padding: "10px 14px", fontSize: 12, color: "#86868b", borderBottom: "1px solid #f0f0f2" }}>
                       {user.user_metadata?.name || user.email?.split("@")[0] || "회원"}
                       <div style={{ fontSize: 11, color: "#aaa", marginTop: 2 }}>{user.email || "이메일 없음"}</div>
                     </div>
-                    <button onClick={() => { setShowAuth(false); setShowMyPage(true); }}
+                    <button onClick={() => { setShowAuth(false); setShowMyPage("info"); }}
                       style={{ width: "100%", padding: "10px 14px", border: "none", background: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#1d1d1f", textAlign: "left", borderRadius: 10, display: "flex", alignItems: "center", gap: 8 }}>
                       👤 회원정보
                     </button>
-                    <button onClick={() => { setShowAuth(false); setShowMyPage(true); }}
+                    <button onClick={() => { setShowAuth(false); setShowMyPage("address"); }}
                       style={{ width: "100%", padding: "10px 14px", border: "none", background: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#1d1d1f", textAlign: "left", borderRadius: 10, display: "flex", alignItems: "center", gap: 8 }}>
                       📦 배송지 관리
                     </button>
@@ -677,6 +679,7 @@ export default function Home() {
                       🚪 로그아웃
                     </button>
                   </div>
+                  </>
                 )}
               </div>
             ) : (
@@ -1025,7 +1028,7 @@ export default function Home() {
       {detail && <ProductDetail product={detail} onClose={() => setDetail(null)} onAddCart={addToCart} />}
       {showCustom && <CustomFlashingModal onClose={() => setShowCustom(false)} onAddCart={(item) => { setCart(prev => [...prev, item]); setShowCustom(false); }} />}
       {showAuth && !user && <AuthModal onClose={() => setShowAuth(false)} onLogin={() => setShowAuth(false)} />}
-      {showMyPage && user && <MyPageModal user={user} onClose={() => setShowMyPage(false)} />}
+      {showMyPage && user && <MyPageModal user={user} initialTab={showMyPage} onClose={() => setShowMyPage(false)} />}
     </div>
   );
 }
