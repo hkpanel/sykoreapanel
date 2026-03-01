@@ -6,6 +6,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   GoogleAuthProvider,
@@ -16,13 +18,41 @@ import {
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
-// ─── 구글 로그인 ───
+// ─── 모바일 감지 ───
+function isMobile(): boolean {
+  if (typeof window === "undefined") return false;
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+}
+
+// ─── 구글 로그인 (PC: 팝업 / 모바일: 리다이렉트) ───
 const googleProvider = new GoogleAuthProvider();
 
 export async function signInWithGoogle() {
-  const result = await signInWithPopup(auth, googleProvider);
-  await ensureUserProfile(result.user);
-  return result.user;
+  if (isMobile()) {
+    // 모바일 → 리다이렉트 방식 (팝업이 안 먹힘)
+    await signInWithRedirect(auth, googleProvider);
+    // 리다이렉트 후 돌아오면 handleRedirectResult()에서 처리
+    return null;
+  } else {
+    // PC → 팝업 방식
+    const result = await signInWithPopup(auth, googleProvider);
+    await ensureUserProfile(result.user);
+    return result.user;
+  }
+}
+
+// ─── 리다이렉트 결과 처리 (모바일 구글 로그인 후 복귀 시) ───
+export async function handleRedirectResult() {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result?.user) {
+      await ensureUserProfile(result.user);
+      return result.user;
+    }
+  } catch (err) {
+    console.error("리다이렉트 로그인 처리 에러:", err);
+  }
+  return null;
 }
 
 // ─── 이메일/비밀번호 회원가입 ───
@@ -100,6 +130,14 @@ export async function getUserProfile(uid: string) {
   const ref = doc(db, "users", uid);
   const snap = await getDoc(ref);
   return snap.exists() ? snap.data() : null;
+}
+
+// ─── 카카오 로그인 (리다이렉트 방식) ───
+export function signInWithKakao() {
+  const kakaoClientId = process.env.NEXT_PUBLIC_KAKAO_REST_API_KEY;
+  const redirectUri = `${window.location.origin}/auth/kakao`;
+  const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${kakaoClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`;
+  window.location.href = kakaoAuthUrl;
 }
 
 // ─── 에러 메시지 한글화 ───
