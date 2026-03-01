@@ -587,6 +587,7 @@ export default function Home() {
   const [cat, setCat] = useState("전체");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
+  const [cartAddedItem, setCartAddedItem] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [vis, setVis] = useState(false);
   const [pay, setPay] = useState("krw");
@@ -649,6 +650,7 @@ export default function Home() {
       if (ex) return prev.map(i => i.key === item.key ? { ...i, qty: i.qty + item.qty } : i);
       return [...prev, item];
     });
+    setCartAddedItem(item.productName);
   };
   const removeFromCart = (key: string) => setCart(prev => prev.filter(i => i.key !== key));
   const updateQty = (key: string, d: number) => setCart(prev => prev.map(i => i.key === key ? { ...i, qty: Math.max(1, i.qty + d) } : i));
@@ -1003,6 +1005,7 @@ export default function Home() {
             if (ex) return prev.map(i => i.key === itemWithCat.key ? { ...i, qty: i.qty + itemWithCat.qty } : i);
             return [...prev, itemWithCat];
           });
+          setCartAddedItem(item.productName);
         }} />
       )}
 
@@ -1015,6 +1018,7 @@ export default function Home() {
             if (ex) return prev.map(i => i.key === itemWithCat.key ? { ...i, qty: i.qty + itemWithCat.qty } : i);
             return [...prev, itemWithCat];
           });
+          setCartAddedItem(item.productName);
         }} />
       )}
 
@@ -1065,7 +1069,7 @@ export default function Home() {
                 <Image src="/syc-logo.png" alt="SYC" width={28} height={28} style={{ borderRadius: "50%" }} />
                 <span style={{ fontSize: 16, fontWeight: 700, color: "#f5f5f7" }}>SY한국판넬</span>
               </div>
-              <div style={{ lineHeight: 2 }}>경기도 평택시 | 사업자등록번호: XXX-XX-XXXXX<br />대표전화: 031-XXX-XXXX | info@sykoreapanel.com</div>
+              <div style={{ lineHeight: 2 }}>경기도 평택시 삼봉로 77-9<br />사업자등록번호: 459-51-00067 | 통신판매업: 2019-경기송탄-0091<br />대표전화: 031-666-8404 | info@sykoreapanel.com</div>
             </div>
             <div style={{ display: "flex", gap: 40 }}>
               <div>
@@ -1329,9 +1333,34 @@ export default function Home() {
       )}
 
       {detail && <ProductDetail product={detail} onClose={() => setDetail(null)} onAddCart={addToCart} />}
-      {showCustom && <CustomFlashingModal onClose={() => setShowCustom(false)} onAddCart={(item) => { setCart(prev => [...prev, item]); setShowCustom(false); }} />}
+      {showCustom && <CustomFlashingModal onClose={() => setShowCustom(false)} onAddCart={(item) => { setCart(prev => [...prev, item]); setShowCustom(false); setCartAddedItem(item.productName); }} />}
       {showAuth && !user && <AuthModal onClose={() => setShowAuth(false)} onLogin={() => setShowAuth(false)} />}
       {showMyPage && user && <MyPageModal user={user} initialTab={showMyPage} onClose={() => { setShowMyPage(false); loadAddresses(); }} />}
+
+      {/* 장바구니 추가 확인 모달 */}
+      {cartAddedItem && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center" }}
+          onClick={() => setCartAddedItem(null)}>
+          <div onClick={e => e.stopPropagation()} className="anim-slideIn" style={{
+            background: "#fff", borderRadius: 20, padding: "36px 28px", width: "min(360px, 88vw)",
+            textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+          }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🛒</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: "#1d1d1f", marginBottom: 6 }}>장바구니에 담았습니다!</div>
+            <div style={{ fontSize: 14, color: "#86868b", marginBottom: 24 }}>{cartAddedItem}</div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setCartAddedItem(null)} style={{
+                flex: 1, padding: "14px 0", borderRadius: 12, border: "2px solid #e8e8ed",
+                background: "#fff", fontSize: 14, fontWeight: 700, color: "#1d1d1f", cursor: "pointer",
+              }}>계속 쇼핑하기</button>
+              <button onClick={() => { setCartAddedItem(null); setShowCart(true); }} style={{
+                flex: 1, padding: "14px 0", borderRadius: 12, border: "none",
+                background: "linear-gradient(135deg, #7b5ea7, #9b59b6)", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer",
+              }}>장바구니 보기</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
