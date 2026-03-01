@@ -103,6 +103,15 @@ export function signInWithKakao() {
   window.location.href = kakaoAuthUrl;
 }
 
+// ─── 네이버 로그인 ───
+export function signInWithNaver() {
+  const clientId = process.env.NEXT_PUBLIC_NAVER_CLIENT_ID;
+  const redirectUri = `${window.location.origin}/auth/naver`;
+  const state = Math.random().toString(36).substring(2);
+  const naverAuthUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
+  window.location.href = naverAuthUrl;
+}
+
 // ─── 에러 메시지 한글화 ───
 export function getAuthErrorMessage(code: string): string {
   const messages: Record<string, string> = {

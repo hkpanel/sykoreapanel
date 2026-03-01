@@ -6,6 +6,7 @@ import {
   signInWithEmail,
   signUpWithEmail,
   signInWithKakao,
+  signInWithNaver,
   getAuthErrorMessage,
 } from "@/lib/auth";
 
@@ -55,7 +56,8 @@ export default function AuthModal({ onClose, onLogin }: AuthModalProps) {
   };
 
   const handleNaver = () => {
-    setError("네이버 로그인은 준비 중이에요! 구글 또는 이메일로 이용해주세요.");
+    setLoading(true);
+    signInWithNaver(); // 네이버 페이지로 리다이렉트
   };
 
   const inputStyle = {
