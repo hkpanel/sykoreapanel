@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import type { User } from "firebase/auth";
-import { onAuthChange, signOut, handleRedirectResult } from "@/lib/auth";
+import { onAuthChange, signOut } from "@/lib/auth";
 import {
   subscribeCart, setCartItem, removeCartItem,
   subscribeAddresses, migrateLocalData,
@@ -651,9 +651,6 @@ export default function Home() {
         await migrateLocalData(firebaseUser.uid);
       }
     });
-
-    // 모바일 구글 로그인 리다이렉트 복귀 처리
-    handleRedirectResult();
 
     return () => { window.removeEventListener("scroll", h); unsub(); };
   }, []);

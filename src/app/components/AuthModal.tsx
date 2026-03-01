@@ -44,20 +44,9 @@ export default function AuthModal({ onClose, onLogin }: AuthModalProps) {
     setLoading(false);
   };
 
-  const handleGoogle = async () => {
+  const handleGoogle = () => {
     setLoading(true);
-    setError("");
-    try {
-      const user = await signInWithGoogle();
-      if (user) {
-        onLogin();
-        onClose();
-      }
-    } catch (err: unknown) {
-      const code = (err as { code?: string })?.code || "";
-      setError(getAuthErrorMessage(code));
-    }
-    setLoading(false);
+    signInWithGoogle(); // 구글 페이지로 리다이렉트
   };
 
   const handleKakao = () => {

@@ -4,12 +4,8 @@
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
   signOut as firebaseSignOut,
   onAuthStateChanged,
-  GoogleAuthProvider,
   updateProfile,
   type User,
   type Unsubscribe,
@@ -17,38 +13,12 @@ import {
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
-// ─── 모바일 감지 ───
-function isMobile(): boolean {
-  if (typeof window === "undefined") return false;
-  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-}
-
-// ─── 구글 로그인 (PC: 팝업 / 모바일: 리다이렉트) ───
-const googleProvider = new GoogleAuthProvider();
-
-export async function signInWithGoogle() {
-  if (isMobile()) {
-    await signInWithRedirect(auth, googleProvider);
-    return null;
-  } else {
-    const result = await signInWithPopup(auth, googleProvider);
-    await ensureUserProfile(result.user);
-    return result.user;
-  }
-}
-
-// ─── 리다이렉트 결과 처리 (모바일 구글 로그인 복귀 시) ───
-export async function handleRedirectResult() {
-  try {
-    const result = await getRedirectResult(auth);
-    if (result?.user) {
-      await ensureUserProfile(result.user);
-      return result.user;
-    }
-  } catch (err) {
-    console.error("리다이렉트 로그인 에러:", err);
-  }
-  return null;
+// ─── 구글 로그인 (카카오처럼 직접 OAuth 리다이렉트) ───
+export function signInWithGoogle() {
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const redirectUri = `${window.location.origin}/auth/google`;
+  const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20email%20profile&prompt=select_account`;
+  window.location.href = googleAuthUrl;
 }
 
 // ─── 이메일/비밀번호 회원가입 ───
