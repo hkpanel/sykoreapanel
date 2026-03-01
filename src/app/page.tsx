@@ -12,6 +12,7 @@ import {
 } from "./data/flashingProducts";
 import HangaDoorEstimator from "./components/HangaDoorEstimator";
 import SwingDoorEstimator from "./components/SwingDoorEstimator";
+import { TRUCK_FEES, calcTruckOptions } from "./data/truckFees";
 
 interface CartItem {
   key: string; productId: string; productName: string;
@@ -645,25 +646,36 @@ export default function Home() {
 
   // 배송
   const [delivery, setDelivery] = useState<"self" | "parcel" | "truck">("parcel");
+  const [truckRegion, setTruckRegion] = useState("평택시");
+  const [selectedTruck, setSelectedTruck] = useState(0);
 
   // 택배비 계산
   const hasHanga = cart.some(i => i.category === "hanga");
   const calcParcelFee = () => {
     if (hasHanga) return null; // 행가도어 포함 시 택배 불가
     let fee = 0;
-    // 후레싱: 10개당 25,000원 (올림)
     const flashingQty = cart.filter(i => i.category === "flashing").reduce((s, i) => s + i.qty, 0);
     if (flashingQty > 0) fee += Math.ceil(flashingQty / 10) * 25000;
-    // 스윙도어: 편개 1조당 30,000원 (양개=편개2조)
     cart.filter(i => i.category === "swing").forEach(i => {
       const isDouble = i.productName.includes("양개");
-      const panels = isDouble ? 2 : 1; // 양개=편개2조
+      const panels = isDouble ? 2 : 1;
       fee += panels * i.qty * 30000;
     });
     return fee;
   };
   const parcelFee = calcParcelFee();
-  const deliveryFee = delivery === "self" ? 0 : delivery === "parcel" ? (parcelFee ?? 0) : 0;
+
+  // 용차 옵션 계산
+  const truckOptions = calcTruckOptions(cart, truckRegion);
+
+  // 배송비 최종 계산
+  const calcDeliveryFee = () => {
+    if (delivery === "self") return 0;
+    if (delivery === "parcel") return parcelFee ?? 0;
+    if (delivery === "truck" && truckOptions[selectedTruck]) return truckOptions[selectedTruck].totalFee;
+    return 0;
+  };
+  const deliveryFee = calcDeliveryFee();
 
   // 행가도어 포함 시 택배 선택 불가 → 자동 전환
   useEffect(() => {
@@ -1029,11 +1041,11 @@ export default function Home() {
                   <div style={{ fontSize: 13, fontWeight: 700, color: "#1d1d1f", marginBottom: 8 }}>배송방법</div>
                   <div style={{ display: "flex", gap: 6 }}>
                     {([
-                      { key: "self", label: "🚗 자차방문", desc: "무료" },
-                      { key: "parcel", label: "🚚 택배", desc: parcelFee === null ? "불가" : `₩${parcelFee.toLocaleString()}` },
-                      { key: "truck", label: "🏗️ 용차", desc: "별도문의" },
-                    ] as const).map(m => {
-                      const disabled = m.key === "parcel" && parcelFee === null;
+                      { key: "self" as const, label: "🚗 자차방문", desc: "무료" },
+                      { key: "parcel" as const, label: "📦 택배", desc: parcelFee === null ? "불가" : parcelFee === 0 ? "무료" : `₩${parcelFee.toLocaleString()}` },
+                      { key: "truck" as const, label: "🚛 용차", desc: truckOptions.length > 0 && truckOptions[0].type !== "inquiry" ? `₩${truckOptions[selectedTruck]?.totalFee.toLocaleString() ?? "—"}` : "문의" },
+                    ]).map(m => {
+                      const disabled = (m.key === "parcel" && parcelFee === null);
                       const selected = delivery === m.key;
                       return (
                         <button key={m.key} onClick={() => !disabled && setDelivery(m.key)}
@@ -1042,8 +1054,7 @@ export default function Home() {
                             border: selected ? "2px solid #7b5ea7" : "2px solid #e8e8ed",
                             background: disabled ? "#f0f0f2" : selected ? "rgba(123,94,167,0.06)" : "#fff",
                             cursor: disabled ? "not-allowed" : "pointer",
-                            opacity: disabled ? 0.5 : 1,
-                            textAlign: "center",
+                            opacity: disabled ? 0.5 : 1, textAlign: "center",
                           }}>
                           <div style={{ fontSize: 13, fontWeight: 700, color: disabled ? "#aaa" : selected ? "#7b5ea7" : "#1d1d1f" }}>{m.label}</div>
                           <div style={{ fontSize: 11, fontWeight: 600, color: disabled ? "#ccc" : m.key === "self" ? "#0f8a6c" : selected ? "#7b5ea7" : "#86868b", marginTop: 2 }}>{m.desc}</div>
@@ -1051,14 +1062,52 @@ export default function Home() {
                       );
                     })}
                   </div>
-                  {hasHanga && delivery !== "self" && (
+
+                  {/* 택배 안내 */}
+                  {hasHanga && delivery !== "self" && delivery !== "truck" && (
                     <div style={{ fontSize: 11, color: "#e34040", fontWeight: 600, marginTop: 6 }}>
-                      ⚠️ 행가도어 포함 주문은 택배 발송이 불가합니다 (용차 또는 자차방문)
+                      ⚠️ 행가도어 포함 시 택배 불가 (용차 또는 자차방문)
                     </div>
                   )}
                   {delivery === "parcel" && parcelFee !== null && parcelFee > 0 && (
                     <div style={{ fontSize: 11, color: "#86868b", marginTop: 6 }}>
                       후레싱 10개당 ₩25,000 · 스윙도어 편개 1조당 ₩30,000 (부가세별도)
+                    </div>
+                  )}
+
+                  {/* 용차 선택 시: 지역 + 차량옵션 */}
+                  {delivery === "truck" && (
+                    <div style={{ marginTop: 10 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "#86868b", marginBottom: 4 }}>배송지역</div>
+                      <select value={truckRegion} onChange={e => { setTruckRegion(e.target.value); setSelectedTruck(0); }}
+                        style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "2px solid #e8e8ed", fontSize: 14, fontWeight: 600, background: "#fff", cursor: "pointer" }}>
+                        {TRUCK_FEES.map(r => (
+                          <option key={r.city} value={r.city}>{r.city}</option>
+                        ))}
+                      </select>
+
+                      {/* 차량 옵션 */}
+                      {truckOptions.length > 0 && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>
+                          {truckOptions.map((opt, idx) => (
+                            <button key={idx} onClick={() => opt.type !== "inquiry" && setSelectedTruck(idx)}
+                              style={{
+                                padding: "12px 14px", borderRadius: 12, textAlign: "left",
+                                border: opt.type === "inquiry" ? "2px solid #fde8e8" : selectedTruck === idx ? "2px solid #7b5ea7" : "2px solid #e8e8ed",
+                                background: opt.type === "inquiry" ? "#fef2f2" : selectedTruck === idx ? "rgba(123,94,167,0.06)" : "#fff",
+                                cursor: opt.type === "inquiry" ? "default" : "pointer",
+                              }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <span style={{ fontSize: 13, fontWeight: 700, color: opt.type === "inquiry" ? "#e34040" : "#1d1d1f" }}>{opt.label}</span>
+                                <span style={{ fontSize: 14, fontWeight: 800, color: opt.type === "inquiry" ? "#e34040" : "#7b5ea7" }}>
+                                  {opt.type === "inquiry" ? "문의 필요" : `₩${opt.totalFee.toLocaleString()}`}
+                                </span>
+                              </div>
+                              <div style={{ fontSize: 11, color: "#86868b", marginTop: 2 }}>{opt.desc}</div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1083,44 +1132,30 @@ export default function Home() {
                   <span>상품 소계</span>
                   <span>{pay === "syc" ? `${cartSyc.toLocaleString()} SYC` : `₩${cartTotal.toLocaleString()}`}</span>
                 </div>
-                {delivery !== "truck" && (
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14, color: "#6e6e73" }}>
-                    <span>배송비</span>
-                    <span style={{ color: deliveryFee === 0 ? "#0f8a6c" : "#1d1d1f", fontWeight: 600 }}>
-                      {deliveryFee === 0 ? "무료" : `₩${deliveryFee.toLocaleString()}`}
-                    </span>
-                  </div>
-                )}
-                {delivery === "truck" && (
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14, color: "#e67e22" }}>
-                    <span>배송비 (용차)</span>
-                    <span style={{ fontWeight: 600 }}>별도 협의</span>
-                  </div>
-                )}
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14, color: "#6e6e73" }}>
+                  <span>배송비{delivery === "truck" ? ` (${truckRegion})` : ""}</span>
+                  <span style={{ color: deliveryFee === 0 ? "#0f8a6c" : "#1d1d1f", fontWeight: 600 }}>
+                    {deliveryFee === 0 ? "무료" : `₩${deliveryFee.toLocaleString()}`}
+                  </span>
+                </div>
                 {pay === "syc" && (
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, color: "#3ee6c4", fontWeight: 600 }}>
                     <span>SYC 할인 (10%)</span><span>-{Math.floor(cartSyc * 0.1).toLocaleString()} SYC</span>
                   </div>
                 )}
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, fontSize: 14, color: "#6e6e73", padding: "8px 0", borderTop: "1px solid #e8e8ed" }}>
-                  <span>공급가액 합계</span>
-                  <span>{pay === "syc"
-                    ? `${Math.floor(cartSyc * 0.9 + (delivery === "self" ? 0 : delivery === "parcel" ? Math.round((parcelFee ?? 0) / 100) : 0)).toLocaleString()} SYC`
-                    : `₩${(cartTotal + deliveryFee).toLocaleString()}`}
-                  </span>
+                  <span>공급가액</span>
+                  <span>₩{(cartTotal + deliveryFee).toLocaleString()}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, color: "#86868b" }}>
                   <span>부가세 (10%)</span>
-                  <span>{pay === "syc"
-                    ? `${Math.floor((cartSyc * 0.9 + (delivery === "self" ? 0 : delivery === "parcel" ? Math.round((parcelFee ?? 0) / 100) : 0)) * 0.1).toLocaleString()} SYC`
-                    : `₩${Math.floor((cartTotal + deliveryFee) * 0.1).toLocaleString()}`}
-                  </span>
+                  <span>₩{Math.floor((cartTotal + deliveryFee) * 0.1).toLocaleString()}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 20, fontWeight: 800, color: "#1d1d1f", padding: "12px 0", borderTop: "2px solid #1d1d1f", marginTop: 4 }}>
                   <span>총 결제금액</span>
                   <span style={{ color: pay === "syc" ? "#7b5ea7" : "#1d1d1f" }}>
                     {pay === "syc"
-                      ? `${Math.floor((cartSyc * 0.9 + (delivery === "self" ? 0 : delivery === "parcel" ? Math.round((parcelFee ?? 0) / 100) : 0)) * 1.1).toLocaleString()} SYC`
+                      ? `${Math.floor((cartSyc * 0.9 + Math.round(deliveryFee / 100)) * 1.1).toLocaleString()} SYC`
                       : `₩${Math.floor((cartTotal + deliveryFee) * 1.1).toLocaleString()}`}
                   </span>
                 </div>
