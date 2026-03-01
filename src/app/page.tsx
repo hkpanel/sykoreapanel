@@ -40,7 +40,7 @@ function ProductCard({ product, onClick }: { product: FlashingProduct; onClick: 
         transform: h ? "translateY(-8px)" : "translateY(0)",
         boxShadow: h ? "0 24px 48px rgba(0,0,0,0.12)" : "0 2px 12px rgba(0,0,0,0.04)",
       }}>
-      <div style={{
+      <div className="product-card-img" style={{
         height: 220, display: "flex", alignItems: "center", justifyContent: "center",
         background: "linear-gradient(145deg, #f5f5f7, #e8e8ed)", overflow: "hidden",
         transition: "transform 0.4s", transform: h ? "scale(1.05)" : "scale(1)",
@@ -48,16 +48,16 @@ function ProductCard({ product, onClick }: { product: FlashingProduct; onClick: 
         <Image src={product.image} alt={product.name} width={200} height={200}
           style={{ objectFit: "contain", width: "70%", height: "70%" }} />
       </div>
-      <div style={{ padding: "20px 24px 24px" }}>
+      <div className="product-card-info" style={{ padding: "20px 24px 24px" }}>
         <div style={{ fontSize: 11, fontWeight: 600, color: "#6e6e73", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>
           {product.category}
         </div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: "#1d1d1f", marginBottom: 4 }}>{product.name}</div>
-        <div style={{ fontSize: 13, color: "#86868b", marginBottom: 16, lineHeight: 1.5, minHeight: 40 }}>{product.desc}</div>
+        <div className="product-card-name" style={{ fontSize: 18, fontWeight: 700, color: "#1d1d1f", marginBottom: 4 }}>{product.name}</div>
+        <div className="product-card-desc" style={{ fontSize: 13, color: "#86868b", marginBottom: 16, lineHeight: 1.5, minHeight: 40 }}>{product.desc}</div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
           <div>
             <span style={{ fontSize: 13, color: "#86868b" }}>최저 </span>
-            <span style={{ fontSize: 22, fontWeight: 800, color: "#1d1d1f" }}>₩{minPrice.toLocaleString()}</span>
+            <span className="product-card-price" style={{ fontSize: 22, fontWeight: 800, color: "#1d1d1f" }}>₩{minPrice.toLocaleString()}</span>
           </div>
           <div style={{ fontSize: 12, color: "#86868b" }}>
             {product.sizes.length}규격 · {product.availableColors.reduce((sum, c) => {
@@ -66,7 +66,7 @@ function ProductCard({ product, onClick }: { product: FlashingProduct; onClick: 
             }, 0)}색상
           </div>
         </div>
-        <button style={{
+        <button className="product-card-btn" style={{
           width: "100%", padding: "13px 0", border: "none", borderRadius: 12, color: "#fff",
           fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.3s",
           background: h ? "linear-gradient(135deg, #7b5ea7, #3ee6c4)" : "#1d1d1f",
@@ -829,6 +829,42 @@ export default function Home() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#f5f5f7" }}>
+      {/* 모바일 반응형 스타일 */}
+      <style>{`
+        .product-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 24px;
+        }
+        @media (max-width: 767px) {
+          .hero-title { font-size: 22px !important; }
+          .hero-sub { font-size: 12px !important; }
+          .hero-section { padding: 24px 16px 16px !important; }
+          .hero-stats { gap: 12px !important; padding: 8px 16px !important; }
+          .hero-stats span { font-size: 11px !important; }
+          .section-title { font-size: 22px !important; }
+          .section-sub { font-size: 13px !important; }
+          .coil-banner { padding: 6px 14px !important; flex-wrap: nowrap !important; }
+          .coil-banner span { font-size: 11px !important; }
+          .product-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 10px !important;
+          }
+          .product-card-img { height: 130px !important; }
+          .product-card-info { padding: 10px 12px 14px !important; }
+          .product-card-name { font-size: 13px !important; }
+          .product-card-desc { font-size: 10px !important; min-height: 24px !important; margin-bottom: 6px !important; }
+          .product-card-price { font-size: 15px !important; }
+          .product-card-btn { padding: 9px 0 !important; font-size: 11px !important; border-radius: 8px !important; }
+          .filter-section { gap: 6px !important; margin-bottom: 24px !important; }
+          .filter-section button { padding: 8px 14px !important; font-size: 12px !important; }
+          .product-section { padding: 32px 10px 48px !important; }
+          .product-section .section-header { margin-bottom: 24px !important; }
+          /* 행가도어/스윙도어 견적 카드 세로 배치 */
+          .estimator-layout { flex-direction: column !important; }
+          .estimator-card { width: 100% !important; min-width: 0 !important; max-width: 100% !important; }
+        }
+      `}</style>
       {/* NAV */}
       <nav style={{
         position: "sticky", top: 0, zIndex: 100, transition: "all 0.4s",
@@ -894,17 +930,17 @@ export default function Home() {
       </nav>
 
       {/* HERO + SYC + TAB 통합 (시안 C) */}
-      <section style={{ background: "linear-gradient(180deg, #1a1a2e 0%, #12122a 100%)", padding: "36px 32px 28px", textAlign: "center", opacity: vis ? 1 : 0, transition: "opacity 0.8s" }}>
+      <section className="hero-section" style={{ background: "linear-gradient(180deg, #1a1a2e 0%, #12122a 100%)", padding: "36px 32px 28px", textAlign: "center", opacity: vis ? 1 : 0, transition: "opacity 0.8s" }}>
         <div style={{ maxWidth: 800, margin: "0 auto" }}>
-          <h1 className="anim-fadeUp" style={{ fontSize: "clamp(28px, 4vw, 42px)", fontWeight: 800, color: "#f5f5f7", lineHeight: 1.2, letterSpacing: -1, marginBottom: 10 }}>
+          <h1 className="anim-fadeUp hero-title" style={{ fontSize: "clamp(22px, 4vw, 42px)", fontWeight: 800, color: "#f5f5f7", lineHeight: 1.2, letterSpacing: -1, marginBottom: 10 }}>
             건축자재의 새로운 가치,<br /><span className="anim-shimmer">SY Korea Panel</span>
           </h1>
-          <p className="anim-fadeUp-1" style={{ fontSize: 14, color: "#86868b", marginBottom: 20 }}>
+          <p className="anim-fadeUp-1 hero-sub" style={{ fontSize: 14, color: "#86868b", marginBottom: 20 }}>
             후레싱 · 스윙도어 · 행가도어 — 제조부터 납품까지<br />
             <span style={{ color: "#3ee6c4", fontWeight: 600 }}>SYC 토큰</span> 결제 시 5~10% 할인
           </p>
           {/* 통계 + SYC 인라인 */}
-          <div className="anim-fadeUp-2" style={{ display: "inline-flex", alignItems: "center", gap: 24, padding: "12px 28px", borderRadius: 16, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 24, flexWrap: "wrap", justifyContent: "center" }}>
+          <div className="anim-fadeUp-2 hero-stats" style={{ display: "inline-flex", alignItems: "center", gap: 24, padding: "12px 28px", borderRadius: 16, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 24, flexWrap: "wrap", justifyContent: "center" }}>
             {[{ v: "15년+", l: "" }, { v: "2,400+", l: "현장" }, { v: "85종", l: "" }].map((s, i) => (
               <span key={i} style={{ fontSize: 13, fontWeight: 800, color: "#f5f5f7" }}>{s.v}{s.l ? ` ${s.l}` : ""}</span>
             )).reduce<React.ReactNode[]>((a, c, i) => i === 0 ? [c] : [...a, <span key={`d${i}`} style={{ color: "rgba(255,255,255,0.15)" }}>·</span>, c], [])}
@@ -965,11 +1001,11 @@ export default function Home() {
 
       {/* 후레싱 탭 */}
       {mainTab === "후레싱" && (
-      <section style={{ maxWidth: 1200, margin: "0 auto", padding: "60px 32px 80px" }}>
-        <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <h2 style={{ fontSize: 36, fontWeight: 800, color: "#1d1d1f", letterSpacing: -0.8, marginBottom: 12 }}>후레싱 제품</h2>
-          <p style={{ fontSize: 15, color: "#86868b" }}>기성 {FLASHING_PRODUCTS.length}종 + 이형 맞춤 절곡 · 규격 · 색상 선택 후 주문</p>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 12, background: "#1a1a2e", padding: "8px 20px", borderRadius: 20 }}>
+      <section className="product-section" style={{ maxWidth: 1200, margin: "0 auto", padding: "60px 32px 80px" }}>
+        <div className="section-header" style={{ textAlign: "center", marginBottom: 48 }}>
+          <h2 className="section-title" style={{ fontSize: 36, fontWeight: 800, color: "#1d1d1f", letterSpacing: -0.8, marginBottom: 12 }}>후레싱 제품</h2>
+          <p className="section-sub" style={{ fontSize: 15, color: "#86868b" }}>기성 {FLASHING_PRODUCTS.length}종 + 이형 맞춤 절곡 · 규격 · 색상 선택 후 주문</p>
+          <div className="coil-banner" style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 12, background: "#1a1a2e", padding: "8px 20px", borderRadius: 20 }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: "#f1c40f" }}>100% 국산 0.5T 코일만 사용</span>
             <span style={{ fontSize: 12, color: "#86868b" }}>(0.35T 중국산 저가 코일 절대 사용하지 않습니다)</span>
           </div>
@@ -987,7 +1023,7 @@ export default function Home() {
             />
           </div>
         </div>
-        <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 40, flexWrap: "wrap" }}>
+        <div className="filter-section" style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 40, flexWrap: "wrap" }}>
           {FLASHING_CATEGORIES.map(c => (
             <button key={c} onClick={() => setCat(c)} style={{
               padding: "10px 22px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 600, transition: "all 0.3s",
@@ -1364,10 +1400,12 @@ export default function Home() {
                   {pay === "syc" && <Image src="/syc-logo.png" alt="" width={20} height={20} style={{ borderRadius: "50%" }} />}
                   {pay === "syc" ? "지갑 연결 후 결제" : "💳 결제하기"}
                 </button>
-                <button onClick={() => {
+                <button onClick={async () => {
                   const items = cart.map(i => `• ${i.productName} (${i.size}/${i.color}) x${i.qty} = ₩${(i.retailPrice * i.qty).toLocaleString()}`).join("\n");
                   const msg = `[SY한국판넬 주문문의]\n\n${items}\n\n합계: ₩${cartTotal.toLocaleString()} (부가세별도)\n\n배송/결제 상담 부탁드립니다.`;
-                  window.open(`http://pf.kakao.com/_vDxfmn/chat?text=${encodeURIComponent(msg)}`, "_blank");
+                  try { await navigator.clipboard.writeText(msg); } catch { /* fallback */ }
+                  alert("장바구니 내용이 복사되었습니다!\n카톡 채팅창에 붙여넣기(Ctrl+V) 해주세요.");
+                  window.open("http://pf.kakao.com/_vDxfmn/chat", "_blank");
                 }} style={{
                   width: "100%", padding: "14px 0", border: "2px solid #FAE100", borderRadius: 14,
                   background: "#FAE100", color: "#3C1E1E", fontSize: 15, fontWeight: 800, cursor: "pointer", marginTop: 8,
