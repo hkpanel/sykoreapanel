@@ -897,7 +897,7 @@ export default function Home() {
       <section style={{ background: "linear-gradient(180deg, #1a1a2e 0%, #12122a 100%)", padding: "36px 32px 28px", textAlign: "center", opacity: vis ? 1 : 0, transition: "opacity 0.8s" }}>
         <div style={{ maxWidth: 800, margin: "0 auto" }}>
           <h1 className="anim-fadeUp" style={{ fontSize: "clamp(28px, 4vw, 42px)", fontWeight: 800, color: "#f5f5f7", lineHeight: 1.2, letterSpacing: -1, marginBottom: 10 }}>
-            건축자재의 새로운 가치, <span className="anim-shimmer">SY Korea Panel</span>
+            건축자재의 새로운 가치,<br /><span className="anim-shimmer">SY Korea Panel</span>
           </h1>
           <p className="anim-fadeUp-1" style={{ fontSize: 14, color: "#86868b", marginBottom: 20 }}>
             후레싱 · 스윙도어 · 행가도어 — 제조부터 납품까지<br />
