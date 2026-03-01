@@ -203,6 +203,25 @@ function AddressForm({ addr, onSave, onCancel }: { addr: Address | null; onSave:
     boxSizing: "border-box" as const,
   };
 
+  const openPostcode = () => {
+    const script = document.createElement("script");
+    script.src = "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
+    script.onload = () => {
+      new (window as any).daum.Postcode({
+        oncomplete: (data: any) => {
+          setZipcode(data.zonecode);
+          setAddress1(data.roadAddress || data.jibunAddress);
+          // 상세주소 입력란에 포커스
+          setTimeout(() => {
+            const el = document.getElementById("addr2-input");
+            if (el) el.focus();
+          }, 100);
+        },
+      }).open();
+    };
+    document.body.appendChild(script);
+  };
+
   const handleSubmit = () => {
     if (!label || !name || !phone || !address1) return;
     onSave({
@@ -237,16 +256,15 @@ function AddressForm({ addr, onSave, onCancel }: { addr: Address | null; onSave:
         <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="010-0000-0000" style={inputStyle} />
       </div>
       <div>
-        <label style={{ fontSize: 12, fontWeight: 700, color: "#86868b", marginBottom: 4, display: "block" }}>우편번호</label>
-        <input type="text" value={zipcode} onChange={e => setZipcode(e.target.value)} placeholder="우편번호" style={inputStyle} />
-      </div>
-      <div>
         <label style={{ fontSize: 12, fontWeight: 700, color: "#86868b", marginBottom: 4, display: "block" }}>주소 *</label>
-        <input type="text" value={address1} onChange={e => setAddress1(e.target.value)} placeholder="도로명 주소" style={inputStyle} />
+        <button onClick={openPostcode}
+          style={{ width: "100%", padding: "12px 14px", borderRadius: 10, border: "2px solid #7b5ea7", background: "rgba(123,94,167,0.04)", cursor: "pointer", fontSize: 14, fontWeight: 700, color: "#7b5ea7", textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}>
+          🔍 {zipcode ? `(${zipcode}) ${address1}` : "주소 검색하기"}
+        </button>
       </div>
       <div>
         <label style={{ fontSize: 12, fontWeight: 700, color: "#86868b", marginBottom: 4, display: "block" }}>상세주소</label>
-        <input type="text" value={address2} onChange={e => setAddress2(e.target.value)} placeholder="상세주소" style={inputStyle} />
+        <input id="addr2-input" type="text" value={address2} onChange={e => setAddress2(e.target.value)} placeholder="동/호수, 건물명 등" style={inputStyle} />
       </div>
       <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#1d1d1f" }}>
         <input type="checkbox" checked={isDefault} onChange={e => setIsDefault(e.target.checked)} style={{ width: 18, height: 18, accentColor: "#7b5ea7" }} />
