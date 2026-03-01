@@ -3,7 +3,6 @@ import { adminAuth } from "@/lib/firebase-admin";
 
 /**
  * 구글 로그인 API 라우트 (서버사이드 OAuth)
- * Firebase 팝업/리다이렉트 안 씀 → 모바일 100% 동작
  */
 export async function POST(req: NextRequest) {
   try {
@@ -38,23 +37,22 @@ export async function POST(req: NextRequest) {
     });
 
     const googleUser = await userRes.json();
-    const googleId = String(googleUser.id);
     const name = googleUser.name || "";
     const email = googleUser.email || "";
 
-    // 3단계: Firebase Custom Token 발급
-    const firebaseUid = `google_${googleId}`;
-    const customToken = await adminAuth.createCustomToken(firebaseUid);
-
-    // Firebase Auth 유저 생성/업데이트
+    // 3단계: 기존 유저 찾기 (이메일로)
+    let firebaseUid: string;
     try {
-      await adminAuth.getUser(firebaseUid);
+      // 이미 이 이메일로 가입한 유저가 있으면 그 유저 사용
+      const existingUser = await adminAuth.getUserByEmail(email);
+      firebaseUid = existingUser.uid;
       await adminAuth.updateUser(firebaseUid, {
         displayName: name,
-        email,
         photoURL: googleUser.picture || undefined,
       });
     } catch {
+      // 없으면 새로 만들기
+      firebaseUid = `google_${googleUser.id}`;
       await adminAuth.createUser({
         uid: firebaseUid,
         displayName: name,
@@ -62,6 +60,9 @@ export async function POST(req: NextRequest) {
         photoURL: googleUser.picture || undefined,
       });
     }
+
+    // 4단계: Firebase Custom Token 발급
+    const customToken = await adminAuth.createCustomToken(firebaseUid);
 
     return NextResponse.json({
       customToken,
