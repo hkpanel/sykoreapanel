@@ -751,8 +751,10 @@ export default function Home() {
   const cheapestTruck = truckOptions.find(o => o.type === "1t" || o.type === "5t");
   const deliveryTip = (() => {
     if (!parcelFee || !cheapestTruck) return null;
-    const diff = parcelFee - cheapestTruck.totalFee;
-    if (diff >= -30000 && parcelFee > 0) {
+    if (cheapestTruck.totalFee <= parcelFee) {
+      return "truck_cheaper" as const; // 용차가 택배보다 싸거나 같음
+    }
+    if (cheapestTruck.totalFee - parcelFee <= 30000) {
       return "recommend_truck" as const; // 택배-용차 차이 3만원 이내 → 용차 추천
     }
     return null;
@@ -1213,12 +1215,20 @@ export default function Home() {
                   )}
 
                   {/* 💡 배송 추천 팁 */}
+                  {delivery === "parcel" && deliveryTip === "truck_cheaper" && cheapestTruck && (
+                    <div style={{ marginTop: 8, padding: "10px 12px", borderRadius: 10, background: "#e8f5e9", border: "1px solid #a5d6a7" }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "#2e7d32", marginBottom: 4 }}>💡 용차가 더 저렴합니다!</div>
+                      <div style={{ fontSize: 11, color: "#1b5e20", lineHeight: 1.6 }}>
+                        택배비 ₩{parcelFee!.toLocaleString()} &gt; 용차 ₩{cheapestTruck.totalFee.toLocaleString()}
+                        <br /><b>용차로 보내시면 됩니다.</b> 더 안전하고 더 저렴해요!
+                      </div>
+                    </div>
+                  )}
                   {delivery === "parcel" && deliveryTip === "recommend_truck" && cheapestTruck && (
                     <div style={{ marginTop: 8, padding: "10px 12px", borderRadius: 10, background: "#fff8e1", border: "1px solid #ffe082" }}>
                       <div style={{ fontSize: 12, fontWeight: 700, color: "#e65100", marginBottom: 4 }}>💡 배송 추천</div>
                       <div style={{ fontSize: 11, color: "#6d4c00", lineHeight: 1.6 }}>
-                        택배비 ₩{parcelFee!.toLocaleString()} / 용차({cheapestTruck.label.replace(/[^\d톤]/g, "")}) ₩{cheapestTruck.totalFee.toLocaleString()} — 차이 ₩{Math.abs(parcelFee! - cheapestTruck.totalFee).toLocaleString()}
-                        <br />택배는 포장을 신경써서 보내드리고 있으나 파손의 위험이 있기 때문에 <b>용차를 추천</b>드립니다.
+                        택배는 포장을 신경써서 보내드리고 있으나 파손의 위험이 있기 때문에 <b>용차를 추천</b>드립니다.
                       </div>
                     </div>
                   )}

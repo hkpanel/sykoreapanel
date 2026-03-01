@@ -115,7 +115,12 @@ export default function SwingDoorEstimator({ onAddCart }: {
             <h3 style={{ fontSize: 16, fontWeight: 800, color: "#1d1d1f", marginBottom: 16, paddingBottom: 8, borderBottom: "2px solid #f0f0f2" }}>🚪 도어 기본</h3>
             <div style={{ marginBottom: 12 }}>
               <label style={LABEL_STYLE}>타입</label>
-              <PillSelect options={SWING_DOOR_TYPES.map(t => ({ id: t, label: t === "편개" ? "편개 (1짝)" : "양개 (2짝)" }))} value={doorType} onChange={v => setDoorType(v as "편개" | "양개")} />
+              <PillSelect options={SWING_DOOR_TYPES.map(t => ({ id: t, label: t === "편개" ? "편개 (1짝)" : "양개 (2짝)" }))} value={doorType} onChange={v => {
+                const newType = v as "편개" | "양개";
+                setDoorType(newType);
+                if (newType === "양개") { setWidthStr("1800"); setHeightStr("2100"); }
+                else { setWidthStr("900"); setHeightStr("2100"); }
+              }} />
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <div>

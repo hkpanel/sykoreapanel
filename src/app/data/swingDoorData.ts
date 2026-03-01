@@ -48,7 +48,7 @@ const AL_KG: Record<string, number> = {
 };
 
 // ─── 옵션 정의 (UI용) ───
-export const SWING_DOOR_TYPES = ["양개", "편개"] as const;
+export const SWING_DOOR_TYPES = ["편개", "양개"] as const;
 
 export const SWING_MATERIALS = [
   { id: "EPS", label: "EPS" },
