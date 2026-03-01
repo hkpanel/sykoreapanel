@@ -1,8 +1,13 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
-import { supabase } from "@/lib/supabase";
-import type { User } from "@supabase/supabase-js";
+import type { User } from "firebase/auth";
+import { onAuthChange, signOut } from "@/lib/auth";
+import {
+  subscribeCart, setCartItem, removeCartItem,
+  subscribeAddresses, migrateLocalData,
+  type CartItem,
+} from "@/lib/db";
 import AuthModal from "./components/AuthModal";
 import MyPageModal from "./components/MyPageModal";
 import {
@@ -13,14 +18,6 @@ import {
 import HangaDoorEstimator from "./components/HangaDoorEstimator";
 import SwingDoorEstimator from "./components/SwingDoorEstimator";
 import { TRUCK_FEES, calcTruckOptions } from "./data/truckFees";
-
-interface CartItem {
-  key: string; productId: string; productName: string;
-  size: string; color: string; colorSub?: string;
-  retailPrice: number; qty: number;
-  image?: string;
-  category?: "flashing" | "swing" | "hanga";
-}
 
 function AnimatedNumber({ value, suffix = "" }: { value: number; suffix?: string }) {
   const [d, setD] = useState(0);
@@ -604,17 +601,31 @@ export default function Home() {
   const [showMyPage, setShowMyPage] = useState<false | "info" | "address">(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // 장바구니 localStorage 복원
+  // ═══ Firestore 장바구니 실시간 동기화 ═══
+  // 로그인 시: Firestore에서 실시간 구독 (PC↔모바일 동기화!)
+  // 비로그인 시: localStorage 폴백 (게스트 사용자 지원)
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("sy_cart");
-      if (saved) setCart(JSON.parse(saved));
-    } catch {}
-  }, []);
-  // 장바구니 변경 시 localStorage 저장
+    if (user) {
+      // 로그인 → Firestore 실시간 구독
+      const unsub = subscribeCart(user.uid, (items) => {
+        setCart(items);
+      });
+      return () => unsub();
+    } else {
+      // 비로그인 → localStorage 폴백
+      try {
+        const saved = localStorage.getItem("sy_cart");
+        if (saved) setCart(JSON.parse(saved));
+      } catch {}
+    }
+  }, [user]);
+
+  // 비로그인 상태에서만 localStorage 백업
   useEffect(() => {
-    try { localStorage.setItem("sy_cart", JSON.stringify(cart)); } catch {}
-  }, [cart]);
+    if (!user) {
+      try { localStorage.setItem("sy_cart", JSON.stringify(cart)); } catch {}
+    }
+  }, [cart, user]);
 
   // 드롭다운 바깥 클릭 시 닫기
   useEffect(() => {
@@ -632,15 +643,17 @@ export default function Home() {
     setVis(true);
     const h = () => setScrolled(window.scrollY > 60);
     window.addEventListener("scroll", h);
-    // 로그인 상태 확인
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+
+    // Firebase 로그인 상태 감지 (+ 마이그레이션)
+    const unsub = onAuthChange(async (firebaseUser) => {
+      setUser(firebaseUser);
+      if (firebaseUser) {
+        // 기존 localStorage 데이터가 있으면 Firestore로 마이그레이션
+        await migrateLocalData(firebaseUser.uid);
+      }
     });
-    // 로그인/로그아웃 상태 변경 리스너
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-    return () => { window.removeEventListener("scroll", h); subscription.unsubscribe(); };
+
+    return () => { window.removeEventListener("scroll", h); unsub(); };
   }, []);
 
   const filtered = FLASHING_PRODUCTS.filter(p => {
@@ -649,16 +662,48 @@ export default function Home() {
     return catMatch && searchMatch;
   });
   const addToCart = (item: CartItem) => {
-    setCart(prev => {
-      const ex = prev.find(i => i.key === item.key);
-      if (ex) return prev.map(i => i.key === item.key ? { ...i, qty: i.qty + item.qty } : i);
-      return [...prev, item];
-    });
+    if (user) {
+      // 로그인 → Firestore에 저장 (subscribeCart가 자동으로 state 업데이트)
+      const existing = cart.find(i => i.key === item.key);
+      const newItem = existing ? { ...existing, qty: existing.qty + item.qty } : item;
+      setCartItem(user.uid, newItem);
+    } else {
+      // 비로그인 → localStorage만
+      setCart(prev => {
+        const ex = prev.find(i => i.key === item.key);
+        if (ex) return prev.map(i => i.key === item.key ? { ...i, qty: i.qty + item.qty } : i);
+        return [...prev, item];
+      });
+    }
     setCartAddedItem(item.productName);
   };
-  const removeFromCart = (key: string) => setCart(prev => prev.filter(i => i.key !== key));
-  const updateQty = (key: string, d: number) => setCart(prev => prev.map(i => i.key === key ? { ...i, qty: Math.max(1, i.qty + d) } : i));
-  const setItemQty = (key: string, q: number) => setCart(prev => prev.map(i => i.key === key ? { ...i, qty: Math.max(1, q) } : i));
+  const removeFromCart = (key: string) => {
+    if (user) {
+      removeCartItem(user.uid, key);
+    } else {
+      setCart(prev => prev.filter(i => i.key !== key));
+    }
+  };
+  const updateQty = (key: string, d: number) => {
+    const item = cart.find(i => i.key === key);
+    if (!item) return;
+    const newQty = Math.max(1, item.qty + d);
+    if (user) {
+      setCartItem(user.uid, { ...item, qty: newQty });
+    } else {
+      setCart(prev => prev.map(i => i.key === key ? { ...i, qty: newQty } : i));
+    }
+  };
+  const setItemQty = (key: string, q: number) => {
+    const item = cart.find(i => i.key === key);
+    if (!item) return;
+    const newQty = Math.max(1, q);
+    if (user) {
+      setCartItem(user.uid, { ...item, qty: newQty });
+    } else {
+      setCart(prev => prev.map(i => i.key === key ? { ...i, qty: newQty } : i));
+    }
+  };
   const cartTotal = cart.reduce((s, i) => s + i.retailPrice * i.qty, 0);
   const cartSyc = Math.round(cartTotal / 100);
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
@@ -704,25 +749,23 @@ export default function Home() {
     return "";
   }, []);
 
-  // 배송지 불러오기
-  const loadAddresses = useCallback(() => {
-    if (!user) return;
-    try {
-      const stored = localStorage.getItem(`addresses_${user.id}`);
-      if (!stored) return;
-      const addrs = JSON.parse(stored);
+  // ═══ Firestore 배송지 실시간 동기화 ═══
+  useEffect(() => {
+    if (!user) { setSavedAddresses([]); return; }
+    const unsub = subscribeAddresses(user.uid, (addrs) => {
       setSavedAddresses(addrs);
-      // 기본 배송지 자동 선택
-      const def = addrs.find((a: { isDefault: boolean }) => a.isDefault) || addrs[0];
-      if (def && !selectedAddrId) {
-        setSelectedAddrId(def.id);
-        const city = matchRegion(def.address1);
-        if (city) setTruckRegion(city);
+      // 기본 배송지 자동 선택 (첫 로드 시)
+      if (addrs.length > 0 && !selectedAddrId) {
+        const def = addrs.find(a => a.isDefault) || addrs[0];
+        if (def) {
+          setSelectedAddrId(def.id);
+          const city = matchRegion(def.address1);
+          if (city) setTruckRegion(city);
+        }
       }
-    } catch {}
+    });
+    return () => unsub();
   }, [user, selectedAddrId, matchRegion]);
-
-  useEffect(() => { loadAddresses(); }, [loadAddresses]);
 
   // 배송지 선택 시 지역 매칭
   const selectAddr = (addrId: string) => {
@@ -809,16 +852,16 @@ export default function Home() {
                 <button onClick={() => setShowAuth(!showAuth)}
                   style={{ display: "flex", alignItems: "center", gap: 6, background: scrolled ? "#f5f5f7" : "rgba(255,255,255,0.1)", padding: "6px 10px", borderRadius: 20, border: "none", cursor: "pointer", transition: "all 0.3s" }}>
                   <div style={{ width: 24, height: 24, borderRadius: 12, background: "linear-gradient(135deg, #7b5ea7, #3ee6c4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: 800 }}>
-                    {(user.user_metadata?.name || user.email || "U").charAt(0).toUpperCase()}
+                    {(user.displayName || user.email || "U").charAt(0).toUpperCase()}
                   </div>
                   <span className="hide-mobile" style={{ fontSize: 12, fontWeight: 700, color: scrolled ? "#1d1d1f" : "#f5f5f7", maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {user.user_metadata?.name || user.email?.split("@")[0] || "회원"}
+                    {user.displayName || user.email?.split("@")[0] || "회원"}
                   </span>
                 </button>
                 {showAuth && (
                   <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "#fff", borderRadius: 16, boxShadow: "0 4px 24px rgba(0,0,0,0.12)", padding: 8, minWidth: 180, zIndex: 100 }}>
                     <div style={{ padding: "10px 14px", fontSize: 12, color: "#86868b", borderBottom: "1px solid #f0f0f2" }}>
-                      {user.user_metadata?.name || user.email?.split("@")[0] || "회원"}
+                      {user.displayName || user.email?.split("@")[0] || "회원"}
                       <div style={{ fontSize: 11, color: "#aaa", marginTop: 2 }}>{user.email || "이메일 없음"}</div>
                     </div>
                     <button onClick={() => { setShowAuth(false); setShowMyPage("info"); }}
@@ -830,7 +873,7 @@ export default function Home() {
                       📦 배송지 관리
                     </button>
                     <div style={{ height: 1, background: "#f0f0f2", margin: "4px 0" }} />
-                    <button onClick={() => { supabase.auth.signOut(); setShowAuth(false); }}
+                    <button onClick={() => { signOut(); setShowAuth(false); }}
                       style={{ width: "100%", padding: "10px 14px", border: "none", background: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#e34040", textAlign: "left", borderRadius: 10, display: "flex", alignItems: "center", gap: 8 }}>
                       🚪 로그아웃
                     </button>
@@ -1004,26 +1047,14 @@ export default function Home() {
       {/* 행가도어 탭 */}
       {mainTab === "행가도어" && (
         <HangaDoorEstimator onAddCart={(item) => {
-          const itemWithCat = { ...item, category: "hanga" as const };
-          setCart(prev => {
-            const ex = prev.find(i => i.key === itemWithCat.key);
-            if (ex) return prev.map(i => i.key === itemWithCat.key ? { ...i, qty: i.qty + itemWithCat.qty } : i);
-            return [...prev, itemWithCat];
-          });
-          setCartAddedItem(item.productName);
+          addToCart({ ...item, category: "hanga" as const });
         }} />
       )}
 
       {/* 스윙도어 탭 */}
       {mainTab === "스윙도어" && (
         <SwingDoorEstimator onAddCart={(item) => {
-          const itemWithCat = { ...item, category: "swing" as const };
-          setCart(prev => {
-            const ex = prev.find(i => i.key === itemWithCat.key);
-            if (ex) return prev.map(i => i.key === itemWithCat.key ? { ...i, qty: i.qty + itemWithCat.qty } : i);
-            return [...prev, itemWithCat];
-          });
-          setCartAddedItem(item.productName);
+          addToCart({ ...item, category: "swing" as const });
         }} />
       )}
 
@@ -1340,9 +1371,9 @@ export default function Home() {
       )}
 
       {detail && <ProductDetail product={detail} onClose={() => setDetail(null)} onAddCart={addToCart} />}
-      {showCustom && <CustomFlashingModal onClose={() => setShowCustom(false)} onAddCart={(item) => { setCart(prev => [...prev, item]); setShowCustom(false); setCartAddedItem(item.productName); }} />}
+      {showCustom && <CustomFlashingModal onClose={() => setShowCustom(false)} onAddCart={(item) => { addToCart(item); setShowCustom(false); }} />}
       {showAuth && !user && <AuthModal onClose={() => setShowAuth(false)} onLogin={() => setShowAuth(false)} />}
-      {showMyPage && user && <MyPageModal user={user} initialTab={showMyPage} onClose={() => { setShowMyPage(false); loadAddresses(); }} />}
+      {showMyPage && user && <MyPageModal user={user} initialTab={showMyPage} onClose={() => setShowMyPage(false)} />}
 
       {/* 장바구니 추가 확인 모달 */}
       {cartAddedItem && (

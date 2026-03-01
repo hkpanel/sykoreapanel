@@ -1,18 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
-import type { User } from "@supabase/supabase-js";
-
-interface Address {
-  id: string;
-  label: string;
-  name: string;
-  phone: string;
-  zipcode: string;
-  address1: string;
-  address2: string;
-  isDefault: boolean;
-}
+import { updateUserProfile, getUserProfile } from "@/lib/auth";
+import {
+  subscribeAddresses, saveAddress, deleteAddress, setDefaultAddress,
+  type Address,
+} from "@/lib/db";
+import type { User } from "firebase/auth";
 
 interface MyPageModalProps {
   user: User;
@@ -22,8 +15,8 @@ interface MyPageModalProps {
 
 export default function MyPageModal({ user, initialTab = "info", onClose }: MyPageModalProps) {
   const [tab, setTab] = useState<"info" | "address">(initialTab);
-  const [name, setName] = useState(user.user_metadata?.name || user.user_metadata?.full_name || "");
-  const [phone, setPhone] = useState(user.user_metadata?.phone || "");
+  const [name, setName] = useState(user.displayName || "");
+  const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -32,48 +25,63 @@ export default function MyPageModal({ user, initialTab = "info", onClose }: MyPa
   const [editAddr, setEditAddr] = useState<Address | null>(null);
   const [showAddrForm, setShowAddrForm] = useState(false);
 
+  // Firestore에서 프로필 로드
   useEffect(() => {
-    loadAddresses();
-  }, []);
+    getUserProfile(user.uid).then(profile => {
+      if (profile) {
+        if (profile.name) setName(profile.name);
+        if (profile.phone) setPhone(profile.phone);
+      }
+    });
+  }, [user.uid]);
 
-  const loadAddresses = async () => {
-    const stored = localStorage.getItem(`addresses_${user.id}`);
-    if (stored) setAddresses(JSON.parse(stored));
-  };
-
-  const saveAddresses = (list: Address[]) => {
-    setAddresses(list);
-    localStorage.setItem(`addresses_${user.id}`, JSON.stringify(list));
-  };
+  // Firestore 배송지 실시간 구독 (PC↔모바일 동기화!)
+  useEffect(() => {
+    const unsub = subscribeAddresses(user.uid, (addrs) => {
+      setAddresses(addrs);
+    });
+    return () => unsub();
+  }, [user.uid]);
 
   const handleSaveInfo = async () => {
     setSaving(true);
     setMsg("");
-    const { error } = await supabase.auth.updateUser({
-      data: { name, phone },
-    });
-    if (error) setMsg("저장 실패: " + error.message);
-    else setMsg("저장했어요!");
+    try {
+      await updateUserProfile(user.uid, { name, phone });
+      setMsg("저장했어요!");
+    } catch {
+      setMsg("저장 실패. 다시 시도해주세요.");
+    }
     setSaving(false);
     setTimeout(() => setMsg(""), 2000);
   };
 
-  const handleSaveAddr = (addr: Address) => {
-    let list = [...addresses];
-    if (addr.isDefault) list = list.map(a => ({ ...a, isDefault: false }));
-    const idx = list.findIndex(a => a.id === addr.id);
-    if (idx >= 0) list[idx] = addr;
-    else list.push(addr);
-    if (list.length === 1) list[0].isDefault = true;
-    saveAddresses(list);
+  const handleSaveAddr = async (addr: Address) => {
+    // 기본 배송지로 설정한 경우
+    if (addr.isDefault) {
+      await setDefaultAddress(user.uid, addr.id);
+    }
+    await saveAddress(user.uid, addr);
+    // 첫 배송지면 자동으로 기본 배송지
+    if (addresses.length === 0) {
+      addr.isDefault = true;
+      await saveAddress(user.uid, addr);
+    }
     setShowAddrForm(false);
     setEditAddr(null);
   };
 
-  const deleteAddr = (id: string) => {
-    const list = addresses.filter(a => a.id !== id);
-    if (list.length > 0 && !list.some(a => a.isDefault)) list[0].isDefault = true;
-    saveAddresses(list);
+  const handleDeleteAddr = async (id: string) => {
+    await deleteAddress(user.uid, id);
+    // 기본 배송지가 삭제된 경우 첫 번째를 기본으로
+    const remaining = addresses.filter(a => a.id !== id);
+    if (remaining.length > 0 && !remaining.some(a => a.isDefault)) {
+      await setDefaultAddress(user.uid, remaining[0].id);
+    }
+  };
+
+  const handleSetDefault = async (id: string) => {
+    await setDefaultAddress(user.uid, id);
   };
 
   const inputStyle = {
@@ -87,6 +95,14 @@ export default function MyPageModal({ user, initialTab = "info", onClose }: MyPa
     background: "none", cursor: "pointer", fontSize: 14, fontWeight: active ? 800 : 600,
     color: active ? "#7b5ea7" : "#86868b", transition: "all 0.2s",
   });
+
+  // 로그인 방식 표시
+  const providerLabel = (() => {
+    const pid = user.providerData[0]?.providerId;
+    if (pid === "google.com") return "🔵 구글";
+    if (pid === "password") return "📧 이메일";
+    return "📧 이메일";
+  })();
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 3000, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", display: "flex", justifyContent: "center", alignItems: "center" }} onClick={onClose}>
@@ -112,8 +128,7 @@ export default function MyPageModal({ user, initialTab = "info", onClose }: MyPa
               <div>
                 <label style={{ fontSize: 12, fontWeight: 700, color: "#86868b", marginBottom: 4, display: "block" }}>로그인 방식</label>
                 <div style={{ padding: "11px 14px", borderRadius: 10, background: "#f5f5f7", fontSize: 14, color: "#1d1d1f", fontWeight: 600 }}>
-                  {user.app_metadata?.provider === "kakao" ? "🟡 카카오" :
-                   user.app_metadata?.provider === "google" ? "🔵 구글" : "📧 이메일"}
+                  {providerLabel}
                 </div>
               </div>
               <div>
@@ -160,12 +175,10 @@ export default function MyPageModal({ user, initialTab = "info", onClose }: MyPa
                       <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
                         <button onClick={() => { setEditAddr(a); setShowAddrForm(true); }}
                           style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #e8e8ed", background: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#1d1d1f" }}>수정</button>
-                        <button onClick={() => deleteAddr(a.id)}
+                        <button onClick={() => handleDeleteAddr(a.id)}
                           style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #fde8e8", background: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#e34040" }}>삭제</button>
-                        {!a.isDefault && <button onClick={() => {
-                          const list = addresses.map(x => ({ ...x, isDefault: x.id === a.id }));
-                          saveAddresses(list);
-                        }} style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #e8e8ed", background: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#7b5ea7" }}>기본 배송지로</button>}
+                        {!a.isDefault && <button onClick={() => handleSetDefault(a.id)}
+                          style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #e8e8ed", background: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#7b5ea7" }}>기본 배송지로</button>}
                       </div>
                     </div>
                   ))}
@@ -212,7 +225,6 @@ function AddressForm({ addr, onSave, onCancel }: { addr: Address | null; onSave:
         oncomplete: (data: any) => {
           setZipcode(data.zonecode);
           setAddress1(data.roadAddress || data.jibunAddress);
-          // 상세주소 입력란에 포커스
           setTimeout(() => {
             const el = document.getElementById("addr2-input");
             if (el) el.focus();

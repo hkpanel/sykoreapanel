@@ -1,7 +1,12 @@
 "use client";
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import Image from "next/image";
+import {
+  signInWithGoogle,
+  signInWithEmail,
+  signUpWithEmail,
+  getAuthErrorMessage,
+} from "@/lib/auth";
 
 interface AuthModalProps {
   onClose: () => void;
@@ -22,49 +27,42 @@ export default function AuthModal({ onClose, onLogin }: AuthModalProps) {
     setLoading(true);
     setError("");
     setSuccess("");
-
-    if (mode === "signup") {
-      if (!name.trim()) { setError("이름을 입력해주세요"); setLoading(false); return; }
-      const { error: err } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { name, phone },
-        },
-      });
-      if (err) {
-        setError(err.message === "User already registered" ? "이미 가입된 이메일이에요" : err.message);
+    try {
+      if (mode === "signup") {
+        if (!name.trim()) { setError("이름을 입력해주세요"); setLoading(false); return; }
+        await signUpWithEmail(email, password, name, phone);
       } else {
-        setSuccess("가입 완료! 이메일 인증 후 로그인해주세요 📧");
+        await signInWithEmail(email, password);
       }
-    } else {
-      const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-      if (err) {
-        setError(err.message === "Invalid login credentials" ? "이메일 또는 비밀번호가 맞지 않아요" : err.message);
-      } else {
-        onLogin();
-        onClose();
-      }
+      onLogin();
+      onClose();
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code || "";
+      setError(getAuthErrorMessage(code));
     }
     setLoading(false);
   };
 
-  const handleSocial = async (provider: "google" | "kakao") => {
+  const handleGoogle = async () => {
     setLoading(true);
     setError("");
-    const { error: err } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}`,
-        scopes: provider === "kakao" ? "account_email" : undefined,
-      },
-    });
-    if (err) setError(err.message);
+    try {
+      await signInWithGoogle();
+      onLogin();
+      onClose();
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code || "";
+      setError(getAuthErrorMessage(code));
+    }
     setLoading(false);
   };
 
+  const handleKakao = () => {
+    setError("카카오 로그인은 준비 중이에요! 구글 또는 이메일로 이용해주세요.");
+  };
+
   const handleNaver = () => {
-    setError("네이버 로그인은 준비 중이에요! 카카오 또는 구글로 이용해주세요.");
+    setError("네이버 로그인은 준비 중이에요! 구글 또는 이메일로 이용해주세요.");
   };
 
   const inputStyle = {
@@ -95,12 +93,12 @@ export default function AuthModal({ onClose, onLogin }: AuthModalProps) {
         <div style={{ padding: "20px 28px 28px" }}>
           {/* 소셜 로그인 */}
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
-            <button onClick={() => handleSocial("kakao")} disabled={loading}
+            <button onClick={handleKakao} disabled={loading}
               style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: "#FEE500", color: "#191919", transition: "opacity 0.2s" }}>
               <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 3C6.48 3 2 6.36 2 10.44c0 2.6 1.74 4.9 4.36 6.22-.14.52-.9 3.34-.93 3.55 0 0-.02.16.08.22.1.06.22.03.22.03.3-.04 3.44-2.26 3.98-2.64.74.1 1.5.16 2.29.16 5.52 0 10-3.36 10-7.54C22 6.36 17.52 3 12 3" fill="#191919"/></svg>
               카카오로 {mode === "login" ? "로그인" : "시작하기"}
             </button>
-            <button onClick={() => handleSocial("google")} disabled={loading}
+            <button onClick={handleGoogle} disabled={loading}
               style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "2px solid #e8e8ed", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: "#fff", color: "#1d1d1f", transition: "opacity 0.2s" }}>
               <svg width="20" height="20" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -110,7 +108,7 @@ export default function AuthModal({ onClose, onLogin }: AuthModalProps) {
               </svg>
               Google로 {mode === "login" ? "로그인" : "시작하기"}
             </button>
-            <button onClick={() => handleNaver()} disabled={loading}
+            <button onClick={handleNaver} disabled={loading}
               style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: "#03C75A", color: "#fff", transition: "opacity 0.2s" }}>
               <svg width="20" height="20" viewBox="0 0 24 24"><path d="M16.27 3H7.73L3 12l4.73 9h8.54L21 12l-4.73-9zM13.1 14.74L10.43 12v2.74H8.57V7.26h1.86V10l2.67-2.74h2.33L12.67 12l2.76 2.74h-2.33z" fill="#fff"/></svg>
               네이버로 {mode === "login" ? "로그인" : "시작하기"}
