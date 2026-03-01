@@ -209,12 +209,16 @@ function calcAluminum(
 // ─── 판넬 (U22) ───
 function calcPanel(
   w: number, h: number,
+  doorType: "편개" | "양개",
   material: string,
   color: string,
 ): { hwebe: number; cost: number } {
-  // 훼베 = CEIL(W/1000) * 높이계수
+  // 양개: 한 짝 기준으로 계산 후 ×2
+  const leafW = doorType === "양개" ? w / 2 : w;
+  const leafCount = doorType === "양개" ? 2 : 1;
   const heightFactor = h <= 2100 ? 2.1 : (h <= 2500 ? 2.5 : h / 1000);
-  const hwebe = Math.ceil(w / 1000) * heightFactor;
+  const hwebePerLeaf = Math.ceil(leafW / 1000) * heightFactor;
+  const hwebe = hwebePerLeaf * leafCount;
 
   // 기본 단가
   let unitPrice = material === "우레탄" ? UNIT_PRICES["40T_우레탄"] : UNIT_PRICES["40T_EPS"];
@@ -240,13 +244,16 @@ function calcLabor(
   doorType: "편개" | "양개",
   material: string,
 ): number {
-  const minArea = doorType === "양개" ? 4.2 : 2.1;
-  const effectiveW = doorType === "양개" ? Math.max(w, 2000) : w;
+  // 양개: 한 짝 기준으로 계산 후 ×2
+  const leafW = doorType === "양개" ? Math.max(w / 2, 1000) : w;
+  const leafCount = doorType === "양개" ? 2 : 1;
   const heightFactor = h <= 2100 ? 2.1 : h / 1000;
-  const calcArea = Math.ceil(effectiveW / 1000) * heightFactor;
-  const area = Math.max(minArea, calcArea);
+  const calcArea = Math.ceil(leafW / 1000) * heightFactor;
+  const minArea = 2.1; // 한 짝 최소 면적
+  const areaPerLeaf = Math.max(minArea, calcArea);
+  const totalArea = areaPerLeaf * leafCount;
   const rate = material === "우레탄" ? UNIT_PRICES["인건비_우레탄"] : UNIT_PRICES["인건비_EPS"];
-  return area * rate;
+  return totalArea * rate;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -288,7 +295,7 @@ export function calcSwingDoorEstimate(input: {
   );
 
   // 5. 판넬
-  const panel = calcPanel(w, h, input.material, input.color);
+  const panel = calcPanel(w, h, doorType, input.material, input.color);
 
   // 6. 인건비
   const labor = calcLabor(w, h, doorType, input.material);
