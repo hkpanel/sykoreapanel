@@ -56,8 +56,10 @@ export default function HangaDoorEstimator({ onAddCart }: {
 }) {
   // 입력 상태
   const [doorType, setDoorType] = useState<"편개" | "양개">("양개");
-  const [widthMm, setWidthMm] = useState(4100);
-  const [heightMm, setHeightMm] = useState(4100);
+  const [widthStr, setWidthStr] = useState("4100");
+  const [heightStr, setHeightStr] = useState("4100");
+  const widthMm = Number(widthStr) || 0;
+  const heightMm = Number(heightStr) || 0;
   const [doorThick, setDoorThick] = useState("50T");
   const [finishThick, setFinishThick] = useState("50T");
   const [trackType, setTrackType] = useState("C트랙");
@@ -164,14 +166,14 @@ export default function HangaDoorEstimator({ onAddCart }: {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 16 }}>
               <div>
                 <label style={LABEL_STYLE}>폭 (mm)</label>
-                <input type="number" value={widthMm} onChange={e => setWidthMm(Number(e.target.value))}
+                <input type="number" value={widthStr} onChange={e => setWidthStr(e.target.value)}
                   min={500} max={15000} step={10} style={INPUT_STYLE}
                   onFocus={e => e.target.style.borderColor = "#7b5ea7"}
                   onBlur={e => e.target.style.borderColor = "#e8e8ed"} />
               </div>
               <div>
                 <label style={LABEL_STYLE}>높이 (mm)</label>
-                <input type="number" value={heightMm} onChange={e => setHeightMm(Number(e.target.value))}
+                <input type="number" value={heightStr} onChange={e => setHeightStr(e.target.value)}
                   min={500} max={15000} step={10} style={INPUT_STYLE}
                   onFocus={e => e.target.style.borderColor = "#7b5ea7"}
                   onBlur={e => e.target.style.borderColor = "#e8e8ed"} />

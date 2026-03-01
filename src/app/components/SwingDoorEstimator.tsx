@@ -50,8 +50,10 @@ export default function SwingDoorEstimator({ onAddCart }: {
 }) {
   // 기본값: 양개 2000×2100
   const [doorType, setDoorType] = useState<"편개" | "양개">("편개");
-  const [widthMm, setWidthMm] = useState(900);
-  const [heightMm, setHeightMm] = useState(2100);
+  const [widthStr, setWidthStr] = useState("900");
+  const [heightStr, setHeightStr] = useState("2100");
+  const widthMm = Number(widthStr) || 0;
+  const heightMm = Number(heightStr) || 0;
   const [material, setMaterial] = useState("EPS");
   const [color, setColor] = useState("아이보리");
 
@@ -62,8 +64,10 @@ export default function SwingDoorEstimator({ onAddCart }: {
 
   // 픽스창
   const [hasFixWindow, setHasFixWindow] = useState(false);
-  const [fixW, setFixW] = useState(600);
-  const [fixH, setFixH] = useState(600);
+  const [fixWStr, setFixWStr] = useState("600");
+  const [fixHStr, setFixHStr] = useState("600");
+  const fixW = Number(fixWStr) || 0;
+  const fixH = Number(fixHStr) || 0;
   const [glassType, setGlassType] = useState("일반유리");
 
   // 도어락
@@ -116,14 +120,14 @@ export default function SwingDoorEstimator({ onAddCart }: {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <div>
                 <label style={LABEL_STYLE}>폭 (mm)</label>
-                <input type="number" value={widthMm} onChange={e => setWidthMm(Number(e.target.value))}
+                <input type="number" value={widthStr} onChange={e => setWidthStr(e.target.value)}
                   min={300} max={5000} step={10} style={INPUT_STYLE}
                   onFocus={e => e.target.style.borderColor = "#7b5ea7"}
                   onBlur={e => e.target.style.borderColor = "#e8e8ed"} />
               </div>
               <div>
                 <label style={LABEL_STYLE}>높이 (mm)</label>
-                <input type="number" value={heightMm} onChange={e => setHeightMm(Number(e.target.value))}
+                <input type="number" value={heightStr} onChange={e => setHeightStr(e.target.value)}
                   min={300} max={5000} step={10} style={INPUT_STYLE}
                   onFocus={e => e.target.style.borderColor = "#7b5ea7"}
                   onBlur={e => e.target.style.borderColor = "#e8e8ed"} />
@@ -189,12 +193,12 @@ export default function SwingDoorEstimator({ onAddCart }: {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 12 }}>
                   <div>
                     <label style={LABEL_STYLE}>픽스창 폭 (mm)</label>
-                    <input type="number" value={fixW} onChange={e => setFixW(Number(e.target.value))}
+                    <input type="number" value={fixWStr} onChange={e => setFixWStr(e.target.value)}
                       min={100} max={2000} step={10} style={INPUT_STYLE} />
                   </div>
                   <div>
                     <label style={LABEL_STYLE}>픽스창 높이 (mm)</label>
-                    <input type="number" value={fixH} onChange={e => setFixH(Number(e.target.value))}
+                    <input type="number" value={fixHStr} onChange={e => setFixHStr(e.target.value)}
                       min={100} max={2000} step={10} style={INPUT_STYLE} />
                   </div>
                   <div>
