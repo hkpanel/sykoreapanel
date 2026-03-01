@@ -593,6 +593,19 @@ export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [showMyPage, setShowMyPage] = useState<false | "info" | "address">(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // 드롭다운 바깥 클릭 시 닫기
+  useEffect(() => {
+    if (!showAuth || !user) return;
+    const handleClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowAuth(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showAuth, user]);
 
   useEffect(() => {
     setVis(true);
@@ -647,7 +660,7 @@ export default function Home() {
               <span style={{ fontSize: 13, fontWeight: 700, color: "#3ee6c4" }}>SYC 결제 가능</span>
             </div>
             {user ? (
-              <div style={{ position: "relative" }}>
+              <div style={{ position: "relative" }} ref={dropdownRef}>
                 <button onClick={() => setShowAuth(!showAuth)}
                   style={{ display: "flex", alignItems: "center", gap: 6, background: scrolled ? "#f5f5f7" : "rgba(255,255,255,0.1)", padding: "6px 10px", borderRadius: 20, border: "none", cursor: "pointer", transition: "all 0.3s" }}>
                   <div style={{ width: 24, height: 24, borderRadius: 12, background: "linear-gradient(135deg, #7b5ea7, #3ee6c4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: 800 }}>
@@ -658,8 +671,6 @@ export default function Home() {
                   </span>
                 </button>
                 {showAuth && (
-                  <>
-                  <div style={{ position: "fixed", inset: 0, zIndex: 99 }} onClick={() => setShowAuth(false)} />
                   <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "#fff", borderRadius: 16, boxShadow: "0 4px 24px rgba(0,0,0,0.12)", padding: 8, minWidth: 180, zIndex: 100 }}>
                     <div style={{ padding: "10px 14px", fontSize: 12, color: "#86868b", borderBottom: "1px solid #f0f0f2" }}>
                       {user.user_metadata?.name || user.email?.split("@")[0] || "회원"}
@@ -679,7 +690,6 @@ export default function Home() {
                       🚪 로그아웃
                     </button>
                   </div>
-                  </>
                 )}
               </div>
             ) : (
