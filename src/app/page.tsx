@@ -663,6 +663,40 @@ export default function Home() {
   const [savedAddresses, setSavedAddresses] = useState<{ id: string; label: string; address1: string; isDefault: boolean }[]>([]);
   const [selectedAddrId, setSelectedAddrId] = useState<string | null>(null);
 
+  // 주소 → 용차 지역 매칭 (축약 주소 대응)
+  const matchRegion = useCallback((address: string): string => {
+    // 1단계: 정확히 시/군 이름이 포함되어 있는지 (일반 시/군 먼저)
+    //   "경기도 평택시 ..." → "평택시" 매칭
+    //   "충남 천안시 ..." → "천안시" 매칭
+    const normalCities = TRUCK_FEES.filter(r =>
+      !["서울시","인천시","세종시","부산광역시","대구광역시","울산광역시","광주광역시"].includes(r.city)
+    );
+    for (const r of normalCities) {
+      const keyword = r.city.replace("(경기)", "");
+      if (address.includes(keyword)) return r.city;
+    }
+
+    // 2단계: 광역시/특별시 축약 패턴 매칭
+    const metroMap: [string[], string][] = [
+      [["서울특별시","서울시","서울 "], "서울시"],
+      [["인천광역시","인천시","인천 "], "인천시"],
+      [["부산광역시","부산시","부산 "], "부산광역시"],
+      [["대구광역시","대구시","대구 "], "대구광역시"],
+      [["울산광역시","울산시","울산 "], "울산광역시"],
+      [["세종특별자치시","세종시","세종 "], "세종시"],
+    ];
+    for (const [patterns, city] of metroMap) {
+      if (patterns.some(p => address.includes(p))) return city;
+    }
+    // 광주: 경기 광주 vs 광주광역시 구분
+    if (address.includes("광주광역시") || (address.includes("광주") && !address.includes("경기"))) {
+      // "경기" 없이 "광주"만 있으면 광주광역시
+      if (!address.includes("경기")) return "광주광역시";
+    }
+
+    return "";
+  }, []);
+
   // 배송지 불러오기
   const loadAddresses = useCallback(() => {
     if (!user) return;
@@ -675,11 +709,11 @@ export default function Home() {
       const def = addrs.find((a: { isDefault: boolean }) => a.isDefault) || addrs[0];
       if (def && !selectedAddrId) {
         setSelectedAddrId(def.id);
-        const matched = TRUCK_FEES.find(r => def.address1.includes(r.city.replace("(경기)", "")));
-        if (matched) setTruckRegion(matched.city);
+        const city = matchRegion(def.address1);
+        if (city) setTruckRegion(city);
       }
     } catch {}
-  }, [user, selectedAddrId]);
+  }, [user, selectedAddrId, matchRegion]);
 
   useEffect(() => { loadAddresses(); }, [loadAddresses]);
 
@@ -689,8 +723,8 @@ export default function Home() {
     setSelectedTruck(0);
     const addr = savedAddresses.find(a => a.id === addrId);
     if (addr) {
-      const matched = TRUCK_FEES.find(r => addr.address1.includes(r.city.replace("(경기)", "")));
-      setTruckRegion(matched ? matched.city : "");
+      const city = matchRegion(addr.address1);
+      setTruckRegion(city);
     }
   };
 
