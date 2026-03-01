@@ -48,9 +48,11 @@ export default function AuthModal({ onClose, onLogin }: AuthModalProps) {
     setLoading(true);
     setError("");
     try {
-      await signInWithGoogle();
-      onLogin();
-      onClose();
+      const user = await signInWithGoogle();
+      if (user) {
+        onLogin();
+        onClose();
+      }
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code || "";
       setError(getAuthErrorMessage(code));

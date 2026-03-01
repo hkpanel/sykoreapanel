@@ -1,11 +1,12 @@
 /**
  * Auth 서비스 — 인증 관련 모든 기능 한곳에서 관리
- * 나중에 카카오, 네이버, 애플 로그인 추가할 때도 여기만 수정하면 됨
  */
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   GoogleAuthProvider,
@@ -16,13 +17,38 @@ import {
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
-// ─── 구글 로그인 ───
+// ─── 모바일 감지 ───
+function isMobile(): boolean {
+  if (typeof window === "undefined") return false;
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+}
+
+// ─── 구글 로그인 (PC: 팝업 / 모바일: 리다이렉트) ───
 const googleProvider = new GoogleAuthProvider();
 
 export async function signInWithGoogle() {
-  const result = await signInWithPopup(auth, googleProvider);
-  await ensureUserProfile(result.user);
-  return result.user;
+  if (isMobile()) {
+    await signInWithRedirect(auth, googleProvider);
+    return null;
+  } else {
+    const result = await signInWithPopup(auth, googleProvider);
+    await ensureUserProfile(result.user);
+    return result.user;
+  }
+}
+
+// ─── 리다이렉트 결과 처리 (모바일 구글 로그인 복귀 시) ───
+export async function handleRedirectResult() {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result?.user) {
+      await ensureUserProfile(result.user);
+      return result.user;
+    }
+  } catch (err) {
+    console.error("리다이렉트 로그인 에러:", err);
+  }
+  return null;
 }
 
 // ─── 이메일/비밀번호 회원가입 ───
@@ -67,7 +93,7 @@ export function getCurrentUser(): User | null {
   return auth.currentUser;
 }
 
-// ─── 유저 프로필 보장 (소셜 로그인 시 Firestore에 프로필 없으면 생성) ───
+// ─── 유저 프로필 보장 ───
 async function ensureUserProfile(user: User) {
   const ref = doc(db, "users", user.uid);
   const snap = await getDoc(ref);
@@ -99,7 +125,7 @@ export async function getUserProfile(uid: string) {
   return snap.exists() ? snap.data() : null;
 }
 
-// ─── 카카오 로그인 (리다이렉트 방식) ───
+// ─── 카카오 로그인 ───
 export function signInWithKakao() {
   const kakaoClientId = process.env.NEXT_PUBLIC_KAKAO_REST_API_KEY;
   const redirectUri = `${window.location.origin}/auth/kakao`;
