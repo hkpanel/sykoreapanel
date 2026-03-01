@@ -182,7 +182,9 @@ function ProductDetail({ product, onClose, onAddCart }: {
             <div style={{ fontSize: 14, fontWeight: 700, color: "#1d1d1f", marginBottom: 10 }}>수량</div>
             <div style={{ display: "flex", alignItems: "center", gap: 4, background: "#f5f5f7", borderRadius: 12, width: "fit-content" }}>
               <button onClick={() => setQty(Math.max(1, qty - 1))} style={{ width: 40, height: 40, border: "none", background: "none", cursor: "pointer", fontSize: 18, fontWeight: 700 }}>−</button>
-              <span style={{ width: 40, textAlign: "center", fontSize: 16, fontWeight: 700 }}>{qty}</span>
+              <input type="number" value={qty} onChange={e => { const v = parseInt(e.target.value); if (!isNaN(v) && v >= 1) setQty(v); else if (e.target.value === "") setQty(1); }}
+                onBlur={() => { if (qty < 1) setQty(1); }}
+                style={{ width: 56, height: 36, textAlign: "center", fontSize: 16, fontWeight: 700, border: "2px solid #e8e8ed", borderRadius: 10, background: "#fff", outline: "none" }} min={1} />
               <button onClick={() => setQty(qty + 1)} style={{ width: 40, height: 40, border: "none", background: "none", cursor: "pointer", fontSize: 18, fontWeight: 700 }}>+</button>
             </div>
           </div>
@@ -558,7 +560,9 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
                   <span style={{ fontSize:13,fontWeight:600 }}>수량</span>
                   <div style={{ display:"flex",alignItems:"center",background:"#f5f5f7",borderRadius:8 }}>
                     <button onClick={()=>setQty(Math.max(1,qty-1))} style={{ width:34,height:34,border:"none",background:"none",cursor:"pointer",fontSize:18,fontWeight:700 }}>−</button>
-                    <span style={{ width:36,textAlign:"center",fontSize:16,fontWeight:700 }}>{qty}</span>
+                    <input type="number" value={qty} onChange={e => { const v = parseInt(e.target.value); if (!isNaN(v) && v >= 1) setQty(v); else if (e.target.value === "") setQty(1); }}
+                      onBlur={() => { if (qty < 1) setQty(1); }}
+                      style={{ width:50,height:30,textAlign:"center",fontSize:16,fontWeight:700,border:"2px solid #e8e8ed",borderRadius:8,background:"#fff",outline:"none" }} min={1} />
                     <button onClick={()=>setQty(qty+1)} style={{ width:34,height:34,border:"none",background:"none",cursor:"pointer",fontSize:18,fontWeight:700 }}>+</button>
                   </div>
                 </div>
@@ -654,6 +658,7 @@ export default function Home() {
   };
   const removeFromCart = (key: string) => setCart(prev => prev.filter(i => i.key !== key));
   const updateQty = (key: string, d: number) => setCart(prev => prev.map(i => i.key === key ? { ...i, qty: Math.max(1, i.qty + d) } : i));
+  const setItemQty = (key: string, q: number) => setCart(prev => prev.map(i => i.key === key ? { ...i, qty: Math.max(1, q) } : i));
   const cartTotal = cart.reduce((s, i) => s + i.retailPrice * i.qty, 0);
   const cartSyc = Math.round(cartTotal / 100);
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
@@ -1120,7 +1125,9 @@ export default function Home() {
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       <div style={{ display: "flex", alignItems: "center", background: "#f5f5f7", borderRadius: 10 }}>
                         <button onClick={() => updateQty(item.key, -1)} style={{ width: 32, height: 32, border: "none", background: "none", cursor: "pointer", fontSize: 16, fontWeight: 700 }}>−</button>
-                        <span style={{ width: 28, textAlign: "center", fontSize: 14, fontWeight: 700 }}>{item.qty}</span>
+                        <input type="number" value={item.qty} onChange={e => { const v = parseInt(e.target.value); if (!isNaN(v) && v >= 1) setItemQty(item.key, v); }}
+                          onBlur={() => { if (item.qty < 1) setItemQty(item.key, 1); }}
+                          style={{ width: 44, height: 28, textAlign: "center", fontSize: 14, fontWeight: 700, border: "2px solid #e8e8ed", borderRadius: 8, background: "#fff", outline: "none" }} min={1} />
                         <button onClick={() => updateQty(item.key, 1)} style={{ width: 32, height: 32, border: "none", background: "none", cursor: "pointer", fontSize: 16, fontWeight: 700 }}>+</button>
                       </div>
                       <button onClick={() => removeFromCart(item.key)} style={{ background: "none", border: "none", color: "#e34040", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>삭제</button>

@@ -269,7 +269,9 @@ export default function SwingDoorEstimator({ onAddCart }: {
                 {/* 수량 */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 16 }}>
                   <button onClick={() => setQty(Math.max(1, qty - 1))} style={{ width: 36, height: 36, borderRadius: 10, border: "2px solid #e8e8ed", background: "#fff", fontSize: 18, fontWeight: 700, cursor: "pointer" }}>−</button>
-                  <span style={{ fontSize: 20, fontWeight: 800, width: 40, textAlign: "center" }}>{qty}</span>
+                  <input type="number" value={qty} onChange={e => { const v = parseInt(e.target.value); if (!isNaN(v) && v >= 1) setQty(v); else if (e.target.value === "") setQty(1); }}
+                    onBlur={() => { if (qty < 1) setQty(1); }}
+                    style={{ width: 56, height: 36, textAlign: "center", fontSize: 20, fontWeight: 800, border: "2px solid #e8e8ed", borderRadius: 10, outline: "none", MozAppearance: "textfield", WebkitAppearance: "none" }} min={1} />
                   <button onClick={() => setQty(qty + 1)} style={{ width: 36, height: 36, borderRadius: 10, border: "2px solid #e8e8ed", background: "#fff", fontSize: 18, fontWeight: 700, cursor: "pointer" }}>+</button>
                 </div>
 
