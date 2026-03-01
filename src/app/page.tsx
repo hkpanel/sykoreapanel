@@ -969,9 +969,9 @@ export default function Home() {
         <div style={{ textAlign: "center", marginBottom: 48 }}>
           <h2 style={{ fontSize: 36, fontWeight: 800, color: "#1d1d1f", letterSpacing: -0.8, marginBottom: 12 }}>후레싱 제품</h2>
           <p style={{ fontSize: 15, color: "#86868b" }}>기성 {FLASHING_PRODUCTS.length}종 + 이형 맞춤 절곡 · 규격 · 색상 선택 후 주문</p>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 12, background: "#1a1a2e", padding: "12px 28px", borderRadius: 24 }}>
-            <span style={{ fontSize: 18, fontWeight: 800, color: "#f1c40f" }}>100% 국산 0.5T 코일만 사용</span>
-            <span style={{ fontSize: 16, color: "#86868b" }}>(0.35T 중국산 저가 코일 절대 사용하지 않습니다)</span>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 12, background: "#1a1a2e", padding: "8px 20px", borderRadius: 20 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#f1c40f" }}>100% 국산 0.5T 코일만 사용</span>
+            <span style={{ fontSize: 12, color: "#86868b" }}>(0.35T 중국산 저가 코일 절대 사용하지 않습니다)</span>
           </div>
           <div style={{ maxWidth: 400, margin: "20px auto 0" }}>
             <input
