@@ -634,24 +634,24 @@ export default function Home() {
         backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
         borderBottom: scrolled ? "1px solid rgba(0,0,0,0.06)" : "1px solid rgba(255,255,255,0.06)",
       }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 32px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-            <Image src="/syc-logo.png" alt="SY" width={32} height={32} style={{ borderRadius: "50%" }} />
-            <span style={{ fontSize: 17, fontWeight: 700, color: scrolled ? "#1d1d1f" : "#f5f5f7", transition: "color 0.4s" }}>SY Korea Panel</span>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 16px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", minWidth: 0 }} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+            <Image src="/syc-logo.png" alt="SY" width={32} height={32} style={{ borderRadius: "50%", flexShrink: 0 }} />
+            <span style={{ fontSize: 15, fontWeight: 700, color: scrolled ? "#1d1d1f" : "#f5f5f7", transition: "color 0.4s", whiteSpace: "nowrap" }}>SY Korea Panel</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(62,230,196,0.1)", padding: "6px 14px", borderRadius: 20, border: "1px solid rgba(62,230,196,0.2)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div className="hide-mobile" style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(62,230,196,0.1)", padding: "6px 14px", borderRadius: 20, border: "1px solid rgba(62,230,196,0.2)" }}>
               <Image src="/syc-logo.png" alt="SYC" width={18} height={18} style={{ borderRadius: "50%" }} />
               <span style={{ fontSize: 13, fontWeight: 700, color: "#3ee6c4" }}>SYC 결제 가능</span>
             </div>
             {user ? (
               <div style={{ position: "relative" }}>
                 <button onClick={() => setShowAuth(!showAuth)}
-                  style={{ display: "flex", alignItems: "center", gap: 6, background: scrolled ? "#f5f5f7" : "rgba(255,255,255,0.1)", padding: "6px 12px", borderRadius: 20, border: "none", cursor: "pointer", transition: "all 0.3s" }}>
+                  style={{ display: "flex", alignItems: "center", gap: 6, background: scrolled ? "#f5f5f7" : "rgba(255,255,255,0.1)", padding: "6px 10px", borderRadius: 20, border: "none", cursor: "pointer", transition: "all 0.3s" }}>
                   <div style={{ width: 24, height: 24, borderRadius: 12, background: "linear-gradient(135deg, #7b5ea7, #3ee6c4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: 800 }}>
                     {(user.user_metadata?.name || user.email || "U").charAt(0).toUpperCase()}
                   </div>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: scrolled ? "#1d1d1f" : "#f5f5f7", maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <span className="hide-mobile" style={{ fontSize: 12, fontWeight: 700, color: scrolled ? "#1d1d1f" : "#f5f5f7", maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {user.user_metadata?.name || user.email?.split("@")[0] || "회원"}
                   </span>
                 </button>
@@ -669,7 +669,7 @@ export default function Home() {
               </div>
             ) : (
               <button onClick={() => setShowAuth(true)}
-                style={{ padding: "6px 14px", borderRadius: 20, border: scrolled ? "2px solid #e8e8ed" : "2px solid rgba(255,255,255,0.15)", background: "none", cursor: "pointer", fontSize: 13, fontWeight: 700, color: scrolled ? "#1d1d1f" : "#f5f5f7", transition: "all 0.3s" }}>
+                style={{ padding: "6px 12px", borderRadius: 20, border: scrolled ? "2px solid #e8e8ed" : "2px solid rgba(255,255,255,0.15)", background: "none", cursor: "pointer", fontSize: 13, fontWeight: 700, color: scrolled ? "#1d1d1f" : "#f5f5f7", transition: "all 0.3s", whiteSpace: "nowrap" }}>
                 로그인
               </button>
             )}

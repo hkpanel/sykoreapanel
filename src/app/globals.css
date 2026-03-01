@@ -61,3 +61,4 @@ body {
   gap: 24px;
 }
 @media (max-width: 800px) { .feature-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .hide-mobile { display: none !important; } }
