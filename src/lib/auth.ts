@@ -5,8 +5,7 @@
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   GoogleAuthProvider,
@@ -17,25 +16,13 @@ import {
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
-// ─── 구글 로그인 (PC/모바일 모두 리다이렉트 방식으로 통일) ───
+// ─── 구글 로그인 ───
 const googleProvider = new GoogleAuthProvider();
 
 export async function signInWithGoogle() {
-  await signInWithRedirect(auth, googleProvider);
-}
-
-// ─── 리다이렉트 결과 처리 (구글 로그인 후 복귀 시) ───
-export async function handleRedirectResult() {
-  try {
-    const result = await getRedirectResult(auth);
-    if (result?.user) {
-      await ensureUserProfile(result.user);
-      return result.user;
-    }
-  } catch (err) {
-    console.error("리다이렉트 로그인 처리 에러:", err);
-  }
-  return null;
+  const result = await signInWithPopup(auth, googleProvider);
+  await ensureUserProfile(result.user);
+  return result.user;
 }
 
 // ─── 이메일/비밀번호 회원가입 ───
@@ -46,9 +33,7 @@ export async function signUpWithEmail(
   phone?: string
 ) {
   const result = await createUserWithEmailAndPassword(auth, email, password);
-  // Firebase Auth 프로필에 이름 저장
   await updateProfile(result.user, { displayName: name });
-  // Firestore에 유저 프로필 생성
   await setDoc(doc(db, "users", result.user.uid), {
     name,
     phone: phone || "",
@@ -102,7 +87,6 @@ async function ensureUserProfile(user: User) {
 export async function updateUserProfile(uid: string, data: { name?: string; phone?: string }) {
   const ref = doc(db, "users", uid);
   await setDoc(ref, { ...data, updatedAt: serverTimestamp() }, { merge: true });
-  // Firebase Auth displayName도 동기화
   if (data.name && auth.currentUser) {
     await updateProfile(auth.currentUser, { displayName: data.name });
   }

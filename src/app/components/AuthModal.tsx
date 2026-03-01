@@ -48,12 +48,14 @@ export default function AuthModal({ onClose, onLogin }: AuthModalProps) {
     setLoading(true);
     setError("");
     try {
-      await signInWithGoogle(); // 구글 페이지로 리다이렉트 (돌아오면 자동 로그인)
+      await signInWithGoogle();
+      onLogin();
+      onClose();
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code || "";
       setError(getAuthErrorMessage(code));
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   const handleKakao = () => {
