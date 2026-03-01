@@ -116,13 +116,15 @@ function hanga1tLimit(items: CartItemForTruck[]): { limit: number; ok: boolean; 
   const hangaItems = items.filter(i => i.category === "hanga");
   if (hangaItems.length === 0) return { limit: 0, ok: true };
 
-  // 제일 큰 사이즈 기준
+  // 제일 큰 사이즈 기준 (양개면 폭/2 = 한 짝 기준)
   let maxMinSide = 0;
   let maxMaxSide = 0;
   for (const item of hangaItems) {
     const { w, h } = parseHangaSize(item.size);
-    const minS = Math.min(w, h);
-    const maxS = Math.max(w, h);
+    const isDouble = item.productName.includes("양개");
+    const actualW = isDouble ? Math.ceil(w / 2) : w;
+    const minS = Math.min(actualW, h);
+    const maxS = Math.max(actualW, h);
     if (minS > maxMinSide) maxMinSide = minS;
     if (maxS > maxMaxSide) maxMaxSide = maxS;
   }
@@ -141,8 +143,10 @@ function hanga5tLimit(items: CartItemForTruck[]): { limit: number; ok: boolean; 
   let maxMaxSide = 0;
   for (const item of hangaItems) {
     const { w, h } = parseHangaSize(item.size);
-    const minS = Math.min(w, h);
-    const maxS = Math.max(w, h);
+    const isDouble = item.productName.includes("양개");
+    const actualW = isDouble ? Math.ceil(w / 2) : w;
+    const minS = Math.min(actualW, h);
+    const maxS = Math.max(actualW, h);
     if (minS > maxMinSide) maxMinSide = minS;
     if (maxS > maxMaxSide) maxMaxSide = maxS;
   }
