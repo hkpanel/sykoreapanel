@@ -5,7 +5,6 @@
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
   signOut as firebaseSignOut,
@@ -18,30 +17,14 @@ import {
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
-// ─── 모바일 감지 ───
-function isMobile(): boolean {
-  if (typeof window === "undefined") return false;
-  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-}
-
-// ─── 구글 로그인 (PC: 팝업 / 모바일: 리다이렉트) ───
+// ─── 구글 로그인 (PC/모바일 모두 리다이렉트 방식으로 통일) ───
 const googleProvider = new GoogleAuthProvider();
 
 export async function signInWithGoogle() {
-  if (isMobile()) {
-    // 모바일 → 리다이렉트 방식 (팝업이 안 먹힘)
-    await signInWithRedirect(auth, googleProvider);
-    // 리다이렉트 후 돌아오면 handleRedirectResult()에서 처리
-    return null;
-  } else {
-    // PC → 팝업 방식
-    const result = await signInWithPopup(auth, googleProvider);
-    await ensureUserProfile(result.user);
-    return result.user;
-  }
+  await signInWithRedirect(auth, googleProvider);
 }
 
-// ─── 리다이렉트 결과 처리 (모바일 구글 로그인 후 복귀 시) ───
+// ─── 리다이렉트 결과 처리 (구글 로그인 후 복귀 시) ───
 export async function handleRedirectResult() {
   try {
     const result = await getRedirectResult(auth);

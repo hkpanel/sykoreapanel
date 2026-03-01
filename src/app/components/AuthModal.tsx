@@ -5,6 +5,7 @@ import {
   signInWithGoogle,
   signInWithEmail,
   signUpWithEmail,
+  signInWithKakao,
   getAuthErrorMessage,
 } from "@/lib/auth";
 
@@ -47,18 +48,17 @@ export default function AuthModal({ onClose, onLogin }: AuthModalProps) {
     setLoading(true);
     setError("");
     try {
-      await signInWithGoogle();
-      onLogin();
-      onClose();
+      await signInWithGoogle(); // 구글 페이지로 리다이렉트 (돌아오면 자동 로그인)
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code || "";
       setError(getAuthErrorMessage(code));
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleKakao = () => {
-    setError("카카오 로그인은 준비 중이에요! 구글 또는 이메일로 이용해주세요.");
+    setLoading(true);
+    signInWithKakao(); // 카카오 페이지로 리다이렉트
   };
 
   const handleNaver = () => {
