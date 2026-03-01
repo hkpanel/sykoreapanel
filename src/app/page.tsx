@@ -658,25 +658,41 @@ export default function Home() {
 
   // 배송
   const [delivery, setDelivery] = useState<"self" | "parcel" | "truck">("parcel");
-  const [truckRegion, setTruckRegion] = useState("평택시");
+  const [truckRegion, setTruckRegion] = useState("");
   const [selectedTruck, setSelectedTruck] = useState(0);
-  const [savedAddr, setSavedAddr] = useState<{ label: string; address1: string } | null>(null);
+  const [savedAddresses, setSavedAddresses] = useState<{ id: string; label: string; address1: string; isDefault: boolean }[]>([]);
+  const [selectedAddrId, setSelectedAddrId] = useState<string | null>(null);
 
-  // 배송지에서 용차 지역 자동 매칭
-  useEffect(() => {
+  // 배송지 불러오기
+  const loadAddresses = useCallback(() => {
     if (!user) return;
     try {
       const stored = localStorage.getItem(`addresses_${user.id}`);
       if (!stored) return;
       const addrs = JSON.parse(stored);
+      setSavedAddresses(addrs);
+      // 기본 배송지 자동 선택
       const def = addrs.find((a: { isDefault: boolean }) => a.isDefault) || addrs[0];
-      if (!def) return;
-      setSavedAddr({ label: def.label, address1: def.address1 });
-      // 주소에서 시/군 매칭
-      const matched = TRUCK_FEES.find(r => def.address1.includes(r.city.replace("(경기)", "")));
-      if (matched) setTruckRegion(matched.city);
+      if (def && !selectedAddrId) {
+        setSelectedAddrId(def.id);
+        const matched = TRUCK_FEES.find(r => def.address1.includes(r.city.replace("(경기)", "")));
+        if (matched) setTruckRegion(matched.city);
+      }
     } catch {}
-  }, [user]);
+  }, [user, selectedAddrId]);
+
+  useEffect(() => { loadAddresses(); }, [loadAddresses]);
+
+  // 배송지 선택 시 지역 매칭
+  const selectAddr = (addrId: string) => {
+    setSelectedAddrId(addrId);
+    setSelectedTruck(0);
+    const addr = savedAddresses.find(a => a.id === addrId);
+    if (addr) {
+      const matched = TRUCK_FEES.find(r => addr.address1.includes(r.city.replace("(경기)", "")));
+      setTruckRegion(matched ? matched.city : "");
+    }
+  };
 
   // 택배비 계산
   const hasHanga = cart.some(i => i.category === "hanga");
@@ -695,7 +711,22 @@ export default function Home() {
   const parcelFee = calcParcelFee();
 
   // 용차 옵션 계산
-  const truckOptions = calcTruckOptions(cart, truckRegion);
+  const truckOptions = truckRegion ? calcTruckOptions(cart, truckRegion) : [];
+
+  // 배송 팁: 택배 vs 용차 비교
+  const cheapestTruck = truckOptions.find(o => o.type === "1t" || o.type === "5t");
+  const deliveryTip = (() => {
+    if (!parcelFee || !cheapestTruck) return null;
+    const diff = parcelFee - cheapestTruck.totalFee;
+    if (diff >= -30000 && parcelFee > 0) {
+      return "recommend_truck" as const; // 택배-용차 차이 3만원 이내 → 용차 추천
+    }
+    return null;
+  })();
+
+  // 조합 차량 시 소량 추가분 안내
+  const comboTruck = truckOptions.find(o => o.type === "combo");
+  const comboTip = comboTruck && comboTruck.trucks.length > 1;
 
   // 배송비 최종 계산
   const calcDeliveryFee = () => {
@@ -1065,6 +1096,49 @@ export default function Home() {
             </div>
             {cart.length > 0 && (
               <div style={{ padding: "20px 28px", borderTop: "1px solid #e8e8ed", background: "#fafafa" }}>
+
+                {/* 배송지 선택 */}
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#1d1d1f", marginBottom: 8 }}>배송지</div>
+                  {savedAddresses.length > 0 ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {savedAddresses.map(a => (
+                        <button key={a.id} onClick={() => selectAddr(a.id)}
+                          style={{
+                            padding: "10px 14px", borderRadius: 12, textAlign: "left",
+                            border: selectedAddrId === a.id ? "2px solid #7b5ea7" : "2px solid #e8e8ed",
+                            background: selectedAddrId === a.id ? "rgba(123,94,167,0.06)" : "#fff",
+                            cursor: "pointer",
+                          }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: selectedAddrId === a.id ? "#7b5ea7" : "#1d1d1f" }}>📍 {a.label}</span>
+                            {a.isDefault && <span style={{ fontSize: 9, fontWeight: 700, color: "#fff", background: "#7b5ea7", padding: "1px 6px", borderRadius: 6 }}>기본</span>}
+                          </div>
+                          <div style={{ fontSize: 11, color: "#86868b", marginTop: 2 }}>{a.address1}</div>
+                          {selectedAddrId === a.id && truckRegion && (
+                            <div style={{ fontSize: 11, color: "#7b5ea7", fontWeight: 600, marginTop: 3 }}>→ 용차 지역: {truckRegion}</div>
+                          )}
+                          {selectedAddrId === a.id && !truckRegion && (
+                            <div style={{ fontSize: 11, color: "#e34040", fontWeight: 600, marginTop: 3 }}>⚠️ 용차 배송지역 매칭 불가 — 문의 필요</div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: "center", padding: "16px 0" }}>
+                      <div style={{ fontSize: 13, color: "#86868b", marginBottom: 8 }}>등록된 배송지가 없어요</div>
+                    </div>
+                  )}
+                  <button onClick={() => { setShowMyPage("address"); setShowCart(false); }}
+                    style={{
+                      width: "100%", marginTop: 8, padding: "10px 0", borderRadius: 10,
+                      border: "2px dashed #d0d0d5", background: "none", cursor: "pointer",
+                      fontSize: 13, fontWeight: 600, color: "#7b5ea7",
+                    }}>
+                    {savedAddresses.length > 0 ? "＋ 배송지 추가/관리" : "＋ 배송지 등록하기"}
+                  </button>
+                </div>
+
                 {/* 배송방법 선택 */}
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: "#1d1d1f", marginBottom: 8 }}>배송방법</div>
@@ -1072,9 +1146,9 @@ export default function Home() {
                     {([
                       { key: "self" as const, label: "🚗 자차방문", desc: "무료" },
                       { key: "parcel" as const, label: "📦 택배", desc: parcelFee === null ? "불가" : parcelFee === 0 ? "무료" : `₩${parcelFee.toLocaleString()}` },
-                      { key: "truck" as const, label: "🚛 용차", desc: truckOptions.length > 0 && truckOptions[0].type !== "inquiry" ? `₩${truckOptions[selectedTruck]?.totalFee.toLocaleString() ?? "—"}` : "문의" },
+                      { key: "truck" as const, label: "🚛 용차", desc: truckOptions.length > 0 && truckOptions[0].type !== "inquiry" ? `₩${truckOptions[selectedTruck]?.totalFee.toLocaleString() ?? "—"}` : truckRegion ? "문의" : "배송지 선택" },
                     ]).map(m => {
-                      const disabled = (m.key === "parcel" && parcelFee === null);
+                      const disabled = (m.key === "parcel" && parcelFee === null) || (m.key === "truck" && !truckRegion);
                       const selected = delivery === m.key;
                       return (
                         <button key={m.key} onClick={() => !disabled && setDelivery(m.key)}
@@ -1104,43 +1178,44 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* 용차 선택 시: 배송지 + 지역 + 차량옵션 */}
-                  {delivery === "truck" && (
-                    <div style={{ marginTop: 10 }}>
-                      {savedAddr && (
-                        <div style={{ padding: "10px 12px", borderRadius: 10, background: "#f0edf5", marginBottom: 8, fontSize: 12 }}>
-                          <span style={{ fontWeight: 700, color: "#7b5ea7" }}>📍 {savedAddr.label}</span>
-                          <span style={{ color: "#86868b", marginLeft: 6 }}>{savedAddr.address1}</span>
-                        </div>
-                      )}
-                      <div style={{ fontSize: 12, fontWeight: 700, color: "#86868b", marginBottom: 4 }}>배송지역</div>
-                      <select value={truckRegion} onChange={e => { setTruckRegion(e.target.value); setSelectedTruck(0); }}
-                        style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "2px solid #e8e8ed", fontSize: 14, fontWeight: 600, background: "#fff", cursor: "pointer" }}>
-                        {TRUCK_FEES.map(r => (
-                          <option key={r.city} value={r.city}>{r.city}</option>
-                        ))}
-                      </select>
+                  {/* 💡 배송 추천 팁 */}
+                  {delivery === "parcel" && deliveryTip === "recommend_truck" && cheapestTruck && (
+                    <div style={{ marginTop: 8, padding: "10px 12px", borderRadius: 10, background: "#fff8e1", border: "1px solid #ffe082" }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "#e65100", marginBottom: 4 }}>💡 배송 추천</div>
+                      <div style={{ fontSize: 11, color: "#6d4c00", lineHeight: 1.6 }}>
+                        택배비 ₩{parcelFee!.toLocaleString()} / 용차({cheapestTruck.label.replace(/[^\d톤]/g, "")}) ₩{cheapestTruck.totalFee.toLocaleString()} — 차이 ₩{Math.abs(parcelFee! - cheapestTruck.totalFee).toLocaleString()}
+                        <br />택배는 포장을 신경써서 보내드리고 있으나 파손의 위험이 있기 때문에 <b>용차를 추천</b>드립니다.
+                      </div>
+                    </div>
+                  )}
 
-                      {/* 차량 옵션 */}
-                      {truckOptions.length > 0 && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>
-                          {truckOptions.map((opt, idx) => (
-                            <button key={idx} onClick={() => opt.type !== "inquiry" && setSelectedTruck(idx)}
-                              style={{
-                                padding: "12px 14px", borderRadius: 12, textAlign: "left",
-                                border: opt.type === "inquiry" ? "2px solid #fde8e8" : selectedTruck === idx ? "2px solid #7b5ea7" : "2px solid #e8e8ed",
-                                background: opt.type === "inquiry" ? "#fef2f2" : selectedTruck === idx ? "rgba(123,94,167,0.06)" : "#fff",
-                                cursor: opt.type === "inquiry" ? "default" : "pointer",
-                              }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <span style={{ fontSize: 13, fontWeight: 700, color: opt.type === "inquiry" ? "#e34040" : "#1d1d1f" }}>{opt.label}</span>
-                                <span style={{ fontSize: 14, fontWeight: 800, color: opt.type === "inquiry" ? "#e34040" : "#7b5ea7" }}>
-                                  {opt.type === "inquiry" ? "문의 필요" : `₩${opt.totalFee.toLocaleString()}`}
-                                </span>
-                              </div>
-                              <div style={{ fontSize: 11, color: "#86868b", marginTop: 2 }}>{opt.desc}</div>
-                            </button>
-                          ))}
+                  {/* 용차 차량 옵션 */}
+                  {delivery === "truck" && truckOptions.length > 0 && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>
+                      {truckOptions.map((opt, idx) => (
+                        <button key={idx} onClick={() => opt.type !== "inquiry" && setSelectedTruck(idx)}
+                          style={{
+                            padding: "12px 14px", borderRadius: 12, textAlign: "left",
+                            border: opt.type === "inquiry" ? "2px solid #fde8e8" : selectedTruck === idx ? "2px solid #7b5ea7" : "2px solid #e8e8ed",
+                            background: opt.type === "inquiry" ? "#fef2f2" : selectedTruck === idx ? "rgba(123,94,167,0.06)" : "#fff",
+                            cursor: opt.type === "inquiry" ? "default" : "pointer",
+                          }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: opt.type === "inquiry" ? "#e34040" : "#1d1d1f" }}>{opt.label}</span>
+                            <span style={{ fontSize: 14, fontWeight: 800, color: opt.type === "inquiry" ? "#e34040" : "#7b5ea7" }}>
+                              {opt.type === "inquiry" ? "문의 필요" : `₩${opt.totalFee.toLocaleString()}`}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: 11, color: "#86868b", marginTop: 2 }}>{opt.desc}</div>
+                        </button>
+                      ))}
+
+                      {/* 🚛 조합 차량 팁 */}
+                      {comboTip && (
+                        <div style={{ padding: "10px 12px", borderRadius: 10, background: "#e3f2fd", border: "1px solid #90caf9", marginTop: 2 }}>
+                          <div style={{ fontSize: 11, color: "#1565c0", lineHeight: 1.6 }}>
+                            💬 적재량 초과로 차량이 추가되었어요. 소량의 추가 물량은 인력으로 더 실을 수도 있으니, <b>문의하기</b>를 통해 사장님과 상의해보시는 건 어떨까요?
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1168,7 +1243,7 @@ export default function Home() {
                   <span>{pay === "syc" ? `${cartSyc.toLocaleString()} SYC` : `₩${cartTotal.toLocaleString()}`}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14, color: "#6e6e73" }}>
-                  <span>배송비{delivery === "truck" ? ` (${truckRegion})` : ""}</span>
+                  <span>배송비{delivery === "truck" && truckRegion ? ` (${truckRegion})` : ""}</span>
                   <span style={{ color: deliveryFee === 0 ? "#0f8a6c" : "#1d1d1f", fontWeight: 600 }}>
                     {deliveryFee === 0 ? "무료" : `₩${deliveryFee.toLocaleString()}`}
                   </span>
@@ -1212,7 +1287,7 @@ export default function Home() {
       {detail && <ProductDetail product={detail} onClose={() => setDetail(null)} onAddCart={addToCart} />}
       {showCustom && <CustomFlashingModal onClose={() => setShowCustom(false)} onAddCart={(item) => { setCart(prev => [...prev, item]); setShowCustom(false); }} />}
       {showAuth && !user && <AuthModal onClose={() => setShowAuth(false)} onLogin={() => setShowAuth(false)} />}
-      {showMyPage && user && <MyPageModal user={user} initialTab={showMyPage} onClose={() => setShowMyPage(false)} />}
+      {showMyPage && user && <MyPageModal user={user} initialTab={showMyPage} onClose={() => { setShowMyPage(false); loadAddresses(); }} />}
     </div>
   );
 }
