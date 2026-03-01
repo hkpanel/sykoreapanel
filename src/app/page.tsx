@@ -591,6 +591,7 @@ export default function Home() {
   const [mainTab, setMainTab] = useState<"후레싱" | "행가도어" | "스윙도어">("후레싱");
   const [user, setUser] = useState<User | null>(null);
   const [showAuth, setShowAuth] = useState(false);
+  const [showMyPage, setShowMyPage] = useState(false);
 
   useEffect(() => {
     setVis(true);
@@ -658,11 +659,21 @@ export default function Home() {
                 {showAuth && (
                   <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "#fff", borderRadius: 16, boxShadow: "0 4px 24px rgba(0,0,0,0.12)", padding: 8, minWidth: 180, zIndex: 100 }}>
                     <div style={{ padding: "10px 14px", fontSize: 12, color: "#86868b", borderBottom: "1px solid #f0f0f2" }}>
-                      {user.email}
+                      {user.user_metadata?.name || user.email?.split("@")[0] || "회원"}
+                      <div style={{ fontSize: 11, color: "#aaa", marginTop: 2 }}>{user.email || "이메일 없음"}</div>
                     </div>
+                    <button onClick={() => { setShowAuth(false); setShowMyPage(true); }}
+                      style={{ width: "100%", padding: "10px 14px", border: "none", background: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#1d1d1f", textAlign: "left", borderRadius: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                      👤 회원정보
+                    </button>
+                    <button onClick={() => { setShowAuth(false); setShowMyPage(true); }}
+                      style={{ width: "100%", padding: "10px 14px", border: "none", background: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#1d1d1f", textAlign: "left", borderRadius: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                      📦 배송지 관리
+                    </button>
+                    <div style={{ height: 1, background: "#f0f0f2", margin: "4px 0" }} />
                     <button onClick={() => { supabase.auth.signOut(); setShowAuth(false); }}
-                      style={{ width: "100%", padding: "10px 14px", border: "none", background: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#e34040", textAlign: "left", borderRadius: 10 }}>
-                      로그아웃
+                      style={{ width: "100%", padding: "10px 14px", border: "none", background: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#e34040", textAlign: "left", borderRadius: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                      🚪 로그아웃
                     </button>
                   </div>
                 )}
