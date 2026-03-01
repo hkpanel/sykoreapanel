@@ -78,7 +78,7 @@ export const TRUCK_FEES = [
   { city: "거제시", fee1t: 285000, fee5t: 420000 },
 ];
 
-// ===== 적재 알고리즘 =====
+// ===== 적재 알고리즘 (v2 — 실전 적재 규칙 기반) =====
 
 interface CartItemForTruck {
   category?: "flashing" | "swing" | "hanga";
@@ -111,49 +111,31 @@ export interface TruckResult {
   warning?: string;
 }
 
-// 1톤 행가 적재 한도 (편개 기준)
-function hanga1tLimit(items: CartItemForTruck[]): { limit: number; ok: boolean; reason?: string } {
-  const hangaItems = items.filter(i => i.category === "hanga");
-  if (hangaItems.length === 0) return { limit: 0, ok: true };
-
-  // 제일 큰 사이즈 기준 (양개면 폭/2 = 한 짝 기준)
+// 행가도어 최대 한짝폭/짧은변 계산
+function getHangaMaxDimensions(items: CartItemForTruck[]): { maxLeafW: number; maxMinSide: number } {
+  let maxLeafW = 0;
   let maxMinSide = 0;
-  let maxMaxSide = 0;
-  for (const item of hangaItems) {
+  for (const item of items.filter(i => i.category === "hanga")) {
     const { w, h } = parseHangaSize(item.size);
     const isDouble = item.productName.includes("양개");
-    const actualW = isDouble ? Math.ceil(w / 2) : w;
-    const minS = Math.min(actualW, h);
-    const maxS = Math.max(actualW, h);
-    if (minS > maxMinSide) maxMinSide = minS;
-    if (maxS > maxMaxSide) maxMaxSide = maxS;
+    const leafW = isDouble ? Math.ceil(w / 2) : w;
+    const minSide = Math.min(leafW, h);
+    if (leafW > maxLeafW) maxLeafW = leafW;
+    if (minSide > maxMinSide) maxMinSide = minSide;
   }
-
-  if (maxMinSide <= 1500 && maxMaxSide <= 3000) return { limit: 8, ok: true };
-  if (maxMinSide <= 2000 && maxMaxSide <= 3000) return { limit: 2, ok: true };
-  return { limit: 0, ok: false, reason: "행가도어 사이즈가 1톤에 적재 불가합니다" };
+  return { maxLeafW, maxMinSide };
 }
 
-// 5톤 행가 적재 한도 (편개 기준)
-function hanga5tLimit(items: CartItemForTruck[]): { limit: number; ok: boolean; inquiry?: boolean; reason?: string } {
-  const hangaItems = items.filter(i => i.category === "hanga");
-  if (hangaItems.length === 0) return { limit: 0, ok: true };
-
-  let maxMinSide = 0;
-  let maxMaxSide = 0;
-  for (const item of hangaItems) {
-    const { w, h } = parseHangaSize(item.size);
-    const isDouble = item.productName.includes("양개");
-    const actualW = isDouble ? Math.ceil(w / 2) : w;
-    const minS = Math.min(actualW, h);
-    const maxS = Math.max(actualW, h);
-    if (minS > maxMinSide) maxMinSide = minS;
-    if (maxS > maxMaxSide) maxMaxSide = maxS;
-  }
-
-  if (maxMinSide <= 2400 && maxMaxSide <= 6000) return { limit: 6, ok: true };
-  return { limit: 0, ok: false, inquiry: true, reason: "행가도어 2500×6000 이상 사이즈는 별도 문의가 필요합니다" };
+// ── 1톤 행가 적재 한도 (한짝폭 기준) ──
+function hanga1tLimit(maxLeafW: number): number {
+  if (maxLeafW <= 1500) return 4;
+  if (maxLeafW <= 2000) return 2;
+  if (maxLeafW <= 2500) return 1;
+  return 0; // 2500 초과 → 1톤 불가
 }
+
+// ── 5톤 행가 적재 한도 (2단×6 = 12짝) ──
+const HANGA_5T_LIMIT = 12;
 
 export function calcTruckOptions(items: CartItemForTruck[], regionCity: string): TruckResult[] {
   const region = TRUCK_FEES.find(r => r.city === regionCity);
@@ -167,94 +149,133 @@ export function calcTruckOptions(items: CartItemForTruck[], regionCity: string):
   const hasSwing = swingPanels > 0;
   const hasFlashing = flashingQty > 0;
 
+  const { maxLeafW, maxMinSide } = getHangaMaxDimensions(items);
+
   const results: TruckResult[] = [];
 
-  // ===== 1톤 체크 =====
-  const h1 = hanga1tLimit(items);
-
-  if (hasHanga) {
-    // 행가 있을 때: 행가 적재 가능 여부 + 짜투리(스윙2, 후레싱40)
-    if (h1.ok && hangaPanels <= h1.limit && swingPanels <= 2 && flashingQty <= 40) {
-      results.push({
-        type: "1t", label: "🚛 1톤 용차", desc: `행가${hangaPanels}짝${hasSwing ? `+스윙${swingPanels}조` : ""}${hasFlashing ? `+후레싱${flashingQty}개` : ""}`,
-        fee1t, fee5t, trucks: [{ size: "1t", count: 1 }], totalFee: fee1t,
-      });
-    }
-  } else if (hasSwing) {
-    // 스윙+후레싱: 스윙18 + 후레싱80
-    if (swingPanels <= 18 && flashingQty <= 80) {
-      results.push({
-        type: "1t", label: "🚛 1톤 용차", desc: `스윙${swingPanels}조${hasFlashing ? `+후레싱${flashingQty}개` : ""}`,
-        fee1t, fee5t, trucks: [{ size: "1t", count: 1 }], totalFee: fee1t,
-      });
-    }
-  } else if (hasFlashing) {
-    // 후레싱만: 200개
-    if (flashingQty <= 200) {
-      results.push({
-        type: "1t", label: "🚛 1톤 용차", desc: `후레싱 ${flashingQty}개`,
-        fee1t, fee5t, trucks: [{ size: "1t", count: 1 }], totalFee: fee1t,
-      });
-    }
-  }
-
-  // ===== 5톤 체크 =====
-  const h5 = hanga5tLimit(items);
-
-  if (h5.inquiry) {
-    // 2500×6000 이상 → 문의
+  // ━━━ 짧은변 > 3000mm → 용차 자체 불가 ━━━
+  if (hasHanga && maxMinSide > 3000) {
     results.push({
-      type: "inquiry", label: "📞 별도 문의", desc: h5.reason || "",
-      fee1t, fee5t, trucks: [], totalFee: 0, warning: h5.reason,
+      type: "inquiry", label: "⚠️ 가조립/현장제작",
+      desc: "짧은변이 3000mm를 초과하여 완조립 용차 배송이 불가합니다. 가조립 또는 현장제작으로 진행해 주세요.",
+      fee1t, fee5t, trucks: [], totalFee: 0,
+      warning: "짧은변 3000mm 초과 — 가조립/현장제작 필요",
     });
-    return results; // 문의 필요하면 다른 옵션 불필요
+    return results;
   }
 
+  // ━━━ 1톤 적재 판정 ━━━
+  const h1Limit = hasHanga ? hanga1tLimit(maxLeafW) : 0;
+  const desc1 = (parts: string[]) => parts.filter(Boolean).join(" + ");
+
   if (hasHanga) {
-    if (h5.ok && hangaPanels <= h5.limit && swingPanels <= 2 && flashingQty <= 40) {
-      results.push({
-        type: "5t", label: "🚛 5톤 용차", desc: `행가${hangaPanels}짝${hasSwing ? `+스윙${swingPanels}조` : ""}${hasFlashing ? `+후레싱${flashingQty}개` : ""}`,
-        fee1t, fee5t, trucks: [{ size: "5t", count: 1 }], totalFee: fee5t,
-      });
-    } else if (h5.ok) {
-      // 5톤 1대로 안 되면 조합
-      const need5t = Math.ceil(hangaPanels / h5.limit);
-      // 나머지(스윙/후레싱)는 1톤 추가
-      const needExtra1t = (swingPanels > 2 || flashingQty > 40) ? 1 : 0;
-      results.push({
-        type: "combo", label: `🚛 5톤×${need5t}${needExtra1t ? "+1톤×1" : ""}`, desc: "적재량 초과로 복수 차량 필요",
-        fee1t, fee5t, trucks: [{ size: "5t", count: need5t }, ...(needExtra1t ? [{ size: "1t" as const, count: 1 }] : [])],
-        totalFee: fee5t * need5t + fee1t * needExtra1t,
-      });
+    // 행가 + (스윙/후레싱)
+    if (h1Limit > 0 && hangaPanels <= h1Limit) {
+      // 행가가 절반 이하면 여유, 절반 초과면 빡빡
+      const halfFull = hangaPanels > h1Limit * 0.5;
+      const swingRemain = halfFull ? 3 : 4;
+      // 후레싱은 작아서 아래에 깔 수 있으므로 항상 100개까지
+      const flashRemain = 100;
+
+      if (swingPanels <= swingRemain && flashingQty <= flashRemain) {
+        results.push({
+          type: "1t", label: "🚛 1톤 용차",
+          desc: desc1([`행가 ${hangaPanels}짝`, hasSwing ? `스윙 ${swingPanels}조` : "", hasFlashing ? `후레싱 ${flashingQty}개` : ""]),
+          fee1t, fee5t, trucks: [{ size: "1t", count: 1 }], totalFee: fee1t,
+        });
+      }
     }
   } else if (hasSwing) {
-    if (swingPanels <= 72 && flashingQty <= 80) {
+    // 스윙 only (+ 후레싱: 스윙 여유분에 비례)
+    const swingUsage = swingPanels / 20; // 0~1
+    const flashRemain = swingUsage <= 0.5 ? 150 : 40;
+    if (swingPanels <= 20 && flashingQty <= flashRemain) {
       results.push({
-        type: "5t", label: "🚛 5톤 용차", desc: `스윙${swingPanels}조${hasFlashing ? `+후레싱${flashingQty}개` : ""}`,
-        fee1t, fee5t, trucks: [{ size: "5t", count: 1 }], totalFee: fee5t,
-      });
-    } else {
-      // 초과 → 5+1 또는 5+5
-      const need5tSwing = Math.ceil(swingPanels / 72);
-      const remainFlashing = flashingQty > 80 ? flashingQty - 80 : 0;
-      const need1tFlashing = remainFlashing > 0 ? Math.ceil(remainFlashing / 200) : 0;
-      results.push({
-        type: "combo", label: `🚛 5톤×${need5tSwing}${need1tFlashing ? `+1톤×${need1tFlashing}` : ""}`,
-        desc: "적재량 초과로 복수 차량 필요",
-        fee1t, fee5t, trucks: [{ size: "5t", count: need5tSwing }, ...(need1tFlashing ? [{ size: "1t" as const, count: need1tFlashing }] : [])],
-        totalFee: fee5t * need5tSwing + fee1t * need1tFlashing,
+        type: "1t", label: "🚛 1톤 용차",
+        desc: desc1([`스윙 ${swingPanels}조`, hasFlashing ? `후레싱 ${flashingQty}개` : ""]),
+        fee1t, fee5t, trucks: [{ size: "1t", count: 1 }], totalFee: fee1t,
       });
     }
   } else if (hasFlashing) {
-    if (flashingQty <= 800) {
+    // 후레싱 only
+    if (flashingQty <= 300) {
       results.push({
-        type: "5t", label: "🚛 5톤 용차", desc: `후레싱 ${flashingQty}개`,
+        type: "1t", label: "🚛 1톤 용차",
+        desc: `후레싱 ${flashingQty}개`,
+        fee1t, fee5t, trucks: [{ size: "1t", count: 1 }], totalFee: fee1t,
+      });
+    }
+  }
+
+  // ━━━ 5톤 적재 판정 ━━━
+  if (hasHanga) {
+    if (hangaPanels <= HANGA_5T_LIMIT) {
+      // 5톤 1대: 앞열 행가, 뒷열 스윙/후레싱
+      const frontUsed = hangaPanels > 6; // 앞열 넘어서 뒷열까지 행가
+      const swingRemain5 = frontUsed ? 0 : 32;
+      const flashRemain5 = frontUsed ? 0 : 300;
+
+      if (swingPanels <= swingRemain5 && flashingQty <= flashRemain5) {
+        results.push({
+          type: "5t", label: "🚛 5톤 용차",
+          desc: desc1([`행가 ${hangaPanels}짝`, hasSwing ? `스윙 ${swingPanels}조` : "", hasFlashing ? `후레싱 ${flashingQty}개` : ""]),
+          fee1t, fee5t, trucks: [{ size: "5t", count: 1 }], totalFee: fee5t,
+        });
+      } else {
+        // 5톤 1대로 부족 → 5톤 + 1톤 조합
+        const extra1t = 1;
+        results.push({
+          type: "combo", label: "🚛 5톤×1 + 1톤×1",
+          desc: "행가는 5톤, 나머지는 1톤 분리 배송",
+          fee1t, fee5t, trucks: [{ size: "5t", count: 1 }, { size: "1t", count: extra1t }],
+          totalFee: fee5t + fee1t * extra1t,
+        });
+      }
+    } else {
+      // 행가만으로 5톤 초과 → 복수 5톤
+      const need5t = Math.ceil(hangaPanels / HANGA_5T_LIMIT);
+      const needExtra = (swingPanels > 0 || flashingQty > 0) ? 1 : 0;
+      results.push({
+        type: "combo", label: `🚛 5톤×${need5t}${needExtra ? " + 1톤×1" : ""}`,
+        desc: "적재량 초과로 복수 차량 필요",
+        fee1t, fee5t, trucks: [{ size: "5t", count: need5t }, ...(needExtra ? [{ size: "1t" as const, count: 1 }] : [])],
+        totalFee: fee5t * need5t + fee1t * needExtra,
+      });
+    }
+  } else if (hasSwing) {
+    // 스윙 (+ 후레싱): 앞열 스윙, 뒷열 후레싱
+    const swingLimit5 = flashingQty > 0 ? 32 : 64;
+    const flashLimit5 = swingPanels > 32 ? 0 : 300;
+
+    if (swingPanels <= swingLimit5 && flashingQty <= flashLimit5) {
+      results.push({
+        type: "5t", label: "🚛 5톤 용차",
+        desc: desc1([`스윙 ${swingPanels}조`, hasFlashing ? `후레싱 ${flashingQty}개` : ""]),
         fee1t, fee5t, trucks: [{ size: "5t", count: 1 }], totalFee: fee5t,
       });
     } else {
-      const need5t = Math.ceil(flashingQty / 800);
+      const need5t = Math.ceil(swingPanels / 64);
+      const needFlash1t = flashingQty > flashLimit5 ? Math.ceil(flashingQty / 300) : 0;
       results.push({
-        type: "combo", label: `🚛 5톤×${need5t}`, desc: "적재량 초과로 복수 차량 필요",
+        type: "combo", label: `🚛 5톤×${need5t}${needFlash1t ? ` + 1톤×${needFlash1t}` : ""}`,
+        desc: "적재량 초과로 복수 차량 필요",
+        fee1t, fee5t, trucks: [{ size: "5t", count: need5t }, ...(needFlash1t ? [{ size: "1t" as const, count: needFlash1t }] : [])],
+        totalFee: fee5t * need5t + fee1t * needFlash1t,
+      });
+    }
+  } else if (hasFlashing) {
+    // 후레싱 only
+    if (flashingQty <= 1000) {
+      results.push({
+        type: "5t", label: "🚛 5톤 용차",
+        desc: `후레싱 ${flashingQty}개`,
+        fee1t, fee5t, trucks: [{ size: "5t", count: 1 }], totalFee: fee5t,
+      });
+    } else {
+      const need5t = Math.ceil(flashingQty / 1000);
+      results.push({
+        type: "combo", label: `🚛 5톤×${need5t}`,
+        desc: "적재량 초과로 복수 차량 필요",
         fee1t, fee5t, trucks: [{ size: "5t", count: need5t }],
         totalFee: fee5t * need5t,
       });
