@@ -143,6 +143,13 @@ export default function HangaDoorEstimator({ onAddCart }: {
           .estimator-sub { font-size: 13px !important; }
           .estimator-banner { padding: 8px 16px !important; }
           .estimator-banner span { font-size: 11px !important; }
+          .estimator-layout > div { padding: 16px !important; border-radius: 16px !important; }
+          .estimator-layout h3 { font-size: 14px !important; }
+          .estimator-layout label { font-size: 12px !important; }
+          .estimator-layout select { font-size: 12px !important; padding: 8px 10px !important; }
+          .estimator-layout input { font-size: 13px !important; padding: 8px 10px !important; }
+          .estimator-layout button { font-size: 11px !important; padding: 6px 12px !important; }
+          .est-grid-3 { grid-template-columns: 1fr 1fr 1fr !important; gap: 8px !important; }
         }
       `}</style>
       {/* 상단 설명 */}
@@ -193,7 +200,7 @@ export default function HangaDoorEstimator({ onAddCart }: {
           {/* 도어 사양 */}
           <div style={{ marginBottom: 28 }}>
             <h3 style={{ fontSize: 16, fontWeight: 800, color: "#1d1d1f", marginBottom: 16, paddingBottom: 8, borderBottom: "2px solid #f0f0f2" }}>⚙️ 도어 사양</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+            <div className="est-grid-3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
               <div>
                 <label style={LABEL_STYLE}>도어 두께</label>
                 <select value={doorThick} onChange={e => setDoorThick(e.target.value)} style={SELECT_STYLE}>

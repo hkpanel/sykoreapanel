@@ -105,6 +105,13 @@ export default function SwingDoorEstimator({ onAddCart }: {
           .estimator-layout { grid-template-columns: 1fr !important; }
           .estimator-title { font-size: 22px !important; }
           .estimator-sub { font-size: 13px !important; }
+          .estimator-layout > div { padding: 16px !important; border-radius: 16px !important; }
+          .estimator-layout h3 { font-size: 14px !important; }
+          .estimator-layout label { font-size: 12px !important; }
+          .estimator-layout select { font-size: 12px !important; padding: 8px 10px !important; }
+          .estimator-layout input { font-size: 13px !important; padding: 8px 10px !important; }
+          .estimator-layout button { font-size: 11px !important; padding: 6px 12px !important; }
+          .est-grid-3 { grid-template-columns: 1fr 1fr 1fr !important; gap: 8px !important; }
         }
       `}</style>
       {/* 상단 */}
@@ -202,7 +209,7 @@ export default function SwingDoorEstimator({ onAddCart }: {
             </div>
             {hasFixWindow && (
               <>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 12 }}>
+                <div className="est-grid-3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 12 }}>
                   <div>
                     <label style={LABEL_STYLE}>픽스창 폭 (mm)</label>
                     <input type="number" value={fixWStr} onChange={e => setFixWStr(e.target.value)}

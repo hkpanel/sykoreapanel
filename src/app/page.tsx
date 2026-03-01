@@ -602,6 +602,12 @@ export default function Home() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // ═══ Firestore 장바구니 실시간 동기화 ═══
+  // 장바구니/모달 열릴 때 body 스크롤 잠금
+  useEffect(() => {
+    document.body.style.overflow = showCart ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [showCart]);
+
   // 로그인 시: Firestore에서 실시간 구독 (PC↔모바일 동기화!)
   // 비로그인 시: localStorage 폴백 (게스트 사용자 지원)
   useEffect(() => {
@@ -844,8 +850,8 @@ export default function Home() {
           .hero-stats span { font-size: 11px !important; }
           .section-title { font-size: 22px !important; }
           .section-sub { font-size: 13px !important; }
-          .coil-banner { padding: 6px 14px !important; flex-wrap: nowrap !important; }
-          .coil-banner span { font-size: 11px !important; }
+          .coil-banner { padding: 6px 12px !important; white-space: nowrap !important; }
+          .coil-banner span { font-size: 10px !important; }
           .product-grid {
             grid-template-columns: repeat(2, 1fr) !important;
             gap: 10px !important;
