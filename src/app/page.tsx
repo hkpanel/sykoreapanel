@@ -599,6 +599,18 @@ export default function Home() {
   const [showMyPage, setShowMyPage] = useState<false | "info" | "address">(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // 장바구니 localStorage 복원
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("sy_cart");
+      if (saved) setCart(JSON.parse(saved));
+    } catch {}
+  }, []);
+  // 장바구니 변경 시 localStorage 저장
+  useEffect(() => {
+    try { localStorage.setItem("sy_cart", JSON.stringify(cart)); } catch {}
+  }, [cart]);
+
   // 드롭다운 바깥 클릭 시 닫기
   useEffect(() => {
     if (!showAuth || !user) return;
@@ -648,6 +660,23 @@ export default function Home() {
   const [delivery, setDelivery] = useState<"self" | "parcel" | "truck">("parcel");
   const [truckRegion, setTruckRegion] = useState("평택시");
   const [selectedTruck, setSelectedTruck] = useState(0);
+  const [savedAddr, setSavedAddr] = useState<{ label: string; address1: string } | null>(null);
+
+  // 배송지에서 용차 지역 자동 매칭
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const stored = localStorage.getItem(`addresses_${user.id}`);
+      if (!stored) return;
+      const addrs = JSON.parse(stored);
+      const def = addrs.find((a: { isDefault: boolean }) => a.isDefault) || addrs[0];
+      if (!def) return;
+      setSavedAddr({ label: def.label, address1: def.address1 });
+      // 주소에서 시/군 매칭
+      const matched = TRUCK_FEES.find(r => def.address1.includes(r.city.replace("(경기)", "")));
+      if (matched) setTruckRegion(matched.city);
+    } catch {}
+  }, [user]);
 
   // 택배비 계산
   const hasHanga = cart.some(i => i.category === "hanga");
@@ -1075,9 +1104,15 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* 용차 선택 시: 지역 + 차량옵션 */}
+                  {/* 용차 선택 시: 배송지 + 지역 + 차량옵션 */}
                   {delivery === "truck" && (
                     <div style={{ marginTop: 10 }}>
+                      {savedAddr && (
+                        <div style={{ padding: "10px 12px", borderRadius: 10, background: "#f0edf5", marginBottom: 8, fontSize: 12 }}>
+                          <span style={{ fontWeight: 700, color: "#7b5ea7" }}>📍 {savedAddr.label}</span>
+                          <span style={{ color: "#86868b", marginLeft: 6 }}>{savedAddr.address1}</span>
+                        </div>
+                      )}
                       <div style={{ fontSize: 12, fontWeight: 700, color: "#86868b", marginBottom: 4 }}>배송지역</div>
                       <select value={truckRegion} onChange={e => { setTruckRegion(e.target.value); setSelectedTruck(0); }}
                         style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "2px solid #e8e8ed", fontSize: 14, fontWeight: 600, background: "#fff", cursor: "pointer" }}>
