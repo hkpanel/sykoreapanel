@@ -56,6 +56,7 @@ export default function AuthModal({ onClose, onLogin }: AuthModalProps) {
       provider,
       options: {
         redirectTo: `${window.location.origin}`,
+        scopes: provider === "kakao" ? "profile_nickname profile_image account_email openid" : undefined,
       },
     });
     if (err) setError(err.message);
