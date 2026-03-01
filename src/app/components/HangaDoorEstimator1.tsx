@@ -136,26 +136,17 @@ export default function HangaDoorEstimator({ onAddCart }: {
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 32px 80px" }}>
-      <style>{`
-        @media (max-width: 767px) {
-          .estimator-layout { grid-template-columns: 1fr !important; }
-          .estimator-title { font-size: 22px !important; }
-          .estimator-sub { font-size: 13px !important; }
-          .estimator-banner { padding: 8px 16px !important; }
-          .estimator-banner span { font-size: 11px !important; }
-        }
-      `}</style>
       {/* 상단 설명 */}
       <div style={{ textAlign: "center", marginBottom: 40 }}>
-        <h2 className="estimator-title" style={{ fontSize: 32, fontWeight: 800, color: "#1d1d1f", marginBottom: 8 }}>행가도어 맞춤 견적</h2>
-        <p className="estimator-sub" style={{ fontSize: 15, color: "#86868b" }}>사이즈 · 옵션 선택하면 실시간 견적이 계산됩니다</p>
-        <div className="estimator-banner" style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 12, background: "#1a1a2e", padding: "10px 24px", borderRadius: 24 }}>
+        <h2 style={{ fontSize: 32, fontWeight: 800, color: "#1d1d1f", marginBottom: 8 }}>행가도어 맞춤 견적</h2>
+        <p style={{ fontSize: 15, color: "#86868b" }}>사이즈 · 옵션 선택하면 실시간 견적이 계산됩니다</p>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 12, background: "#1a1a2e", padding: "10px 24px", borderRadius: 24 }}>
           <span style={{ fontSize: 14, fontWeight: 800, color: "#f1c40f" }}>완조립 · 가조립 · 부속자재일체</span>
           <span style={{ fontSize: 13, color: "#86868b" }}>모든 방식 대응</span>
         </div>
       </div>
 
-      <div className="estimator-layout" style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 32, alignItems: "start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 32, alignItems: "start" }}>
         {/* 왼쪽: 옵션 선택 */}
         <div style={{ background: "#fff", borderRadius: 24, padding: 32, boxShadow: "0 2px 16px rgba(0,0,0,0.04)" }}>
 
