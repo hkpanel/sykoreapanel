@@ -56,10 +56,16 @@ export default function HangaDoorEstimator({ onAddCart }: {
 }) {
   // 입력 상태
   const [doorType, setDoorType] = useState<"편개" | "양개">("양개");
-  const [widthStr, setWidthStr] = useState("4100");
-  const [heightStr, setHeightStr] = useState("4100");
-  const widthMm = Number(widthStr) || 0;
-  const heightMm = Number(heightStr) || 0;
+  // 개구(타공) 사이즈 입력
+  const [openWidthStr, setOpenWidthStr] = useState("4000");
+  const [openHeightStr, setOpenHeightStr] = useState("4000");
+  const openW = Number(openWidthStr) || 0;
+  const openH = Number(openHeightStr) || 0;
+  // 도어(실) 사이즈 — 기본: 개구+100, 수동 오버라이드 가능
+  const [doorWidthOverride, setDoorWidthOverride] = useState("");
+  const [doorHeightOverride, setDoorHeightOverride] = useState("");
+  const widthMm = doorWidthOverride !== "" ? (Number(doorWidthOverride) || 0) : openW + 100;
+  const heightMm = doorHeightOverride !== "" ? (Number(doorHeightOverride) || 0) : openH + 100;
   const [doorThick, setDoorThick] = useState("50T");
   const [finishThick, setFinishThick] = useState("50T");
   const [trackType, setTrackType] = useState("C트랙");
@@ -124,7 +130,8 @@ export default function HangaDoorEstimator({ onAddCart }: {
   const handleAddCart = () => {
     if (!estimate) return;
     const sizeParts = [
-      `${widthMm}×${heightMm}`,
+      `개구${openW}×${openH}`,
+      `도어${widthMm}×${heightMm}`,
       doorThick,
       `마감${finishThick}`,
       assembly,
@@ -191,19 +198,44 @@ export default function HangaDoorEstimator({ onAddCart }: {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 16 }}>
               <div>
-                <label style={LABEL_STYLE}>폭 (mm)</label>
-                <input type="number" value={widthStr} onChange={e => setWidthStr(e.target.value)}
-                  min={500} max={15000} step={10} style={INPUT_STYLE}
+                <label style={LABEL_STYLE}>개구(타공) 폭 (mm)</label>
+                <input type="number" value={openWidthStr} onChange={e => { setOpenWidthStr(e.target.value); setDoorWidthOverride(""); }}
+                  min={400} max={15000} step={10} style={INPUT_STYLE}
                   onFocus={e => e.target.style.borderColor = "#7b5ea7"}
                   onBlur={e => e.target.style.borderColor = "#e8e8ed"} />
               </div>
               <div>
-                <label style={LABEL_STYLE}>높이 (mm)</label>
-                <input type="number" value={heightStr} onChange={e => setHeightStr(e.target.value)}
-                  min={500} max={15000} step={10} style={INPUT_STYLE}
+                <label style={LABEL_STYLE}>개구(타공) 높이 (mm)</label>
+                <input type="number" value={openHeightStr} onChange={e => { setOpenHeightStr(e.target.value); setDoorHeightOverride(""); }}
+                  min={400} max={15000} step={10} style={INPUT_STYLE}
                   onFocus={e => e.target.style.borderColor = "#7b5ea7"}
                   onBlur={e => e.target.style.borderColor = "#e8e8ed"} />
               </div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 10 }}>
+              <div>
+                <label style={{ ...LABEL_STYLE, color: "#7b5ea7" }}>도어(실) 폭 (mm)</label>
+                <input type="number" value={doorWidthOverride !== "" ? doorWidthOverride : String(widthMm)}
+                  onChange={e => setDoorWidthOverride(e.target.value)}
+                  min={500} max={15000} step={10}
+                  style={{ ...INPUT_STYLE, background: doorWidthOverride !== "" ? "#fef7ff" : "#f9f9fb", borderColor: doorWidthOverride !== "" ? "#7b5ea7" : "#e8e8ed" }}
+                  onFocus={e => e.target.style.borderColor = "#7b5ea7"}
+                  onBlur={e => e.target.style.borderColor = doorWidthOverride !== "" ? "#7b5ea7" : "#e8e8ed"} />
+              </div>
+              <div>
+                <label style={{ ...LABEL_STYLE, color: "#7b5ea7" }}>도어(실) 높이 (mm)</label>
+                <input type="number" value={doorHeightOverride !== "" ? doorHeightOverride : String(heightMm)}
+                  onChange={e => setDoorHeightOverride(e.target.value)}
+                  min={500} max={15000} step={10}
+                  style={{ ...INPUT_STYLE, background: doorHeightOverride !== "" ? "#fef7ff" : "#f9f9fb", borderColor: doorHeightOverride !== "" ? "#7b5ea7" : "#e8e8ed" }}
+                  onFocus={e => e.target.style.borderColor = "#7b5ea7"}
+                  onBlur={e => e.target.style.borderColor = doorHeightOverride !== "" ? "#7b5ea7" : "#e8e8ed"} />
+              </div>
+            </div>
+            <div style={{ fontSize: 11, color: doorWidthOverride !== "" || doorHeightOverride !== "" ? "#e34040" : "#86868b", marginTop: 6 }}>
+              {doorWidthOverride !== "" || doorHeightOverride !== "" 
+                ? "⚠️ 도어(실) 사이즈를 수동 입력했습니다"
+                : "💡 도어(실) 사이즈 = 개구(타공) + 100mm (자동계산, 직접 수정 가능)"}
             </div>
           </div>
 
@@ -305,8 +337,12 @@ export default function HangaDoorEstimator({ onAddCart }: {
                 {/* 요약 */}
                 <div style={{ background: "#f5f5f7", borderRadius: 14, padding: 16, marginBottom: 16 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                    <span style={{ fontSize: 13, color: "#6e6e73" }}>도어</span>
-                    <span style={{ fontSize: 13, fontWeight: 700 }}>{doorType} {widthMm}×{heightMm}mm</span>
+                    <span style={{ fontSize: 13, color: "#6e6e73" }}>개구(타공)</span>
+                    <span style={{ fontSize: 13, fontWeight: 700 }}>{openW}×{openH}mm</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                    <span style={{ fontSize: 13, color: "#6e6e73" }}>도어(실)</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: doorWidthOverride !== "" || doorHeightOverride !== "" ? "#7b5ea7" : "#1d1d1f" }}>{doorType} {widthMm}×{heightMm}mm</span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                     <span style={{ fontSize: 13, color: "#6e6e73" }}>면적</span>
