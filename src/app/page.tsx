@@ -1263,7 +1263,7 @@ export default function Home() {
               <span key={i} style={{ fontSize: 13, fontWeight: 800, color: "#f5f5f7" }}>{s.v}{s.l ? ` ${s.l}` : ""}</span>
             )).reduce<React.ReactNode[]>((a, c, i) => i === 0 ? [c] : [...a, <span key={`d${i}`} style={{ color: "rgba(255,255,255,0.15)" }}>·</span>, c], [])}
             <span style={{ color: "rgba(255,255,255,0.15)" }}>|</span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "#3ee6c4" }}>💰 SYC 토큰 구매</span>
+            <a href="/syc" style={{ fontSize: 12, fontWeight: 700, color: "#3ee6c4", textDecoration: "none" }}>💰 SYC 토큰 구매</a>
           </div>
         </div>
       </section>
@@ -1468,7 +1468,12 @@ export default function Home() {
               </div>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#f5f5f7", marginBottom: 12 }}>SYC 코인</div>
-                <div style={{ lineHeight: 2.2 }}>코인 소개<br />지갑 연결<br />할인 혜택<br />BSCscan</div>
+                <div style={{ lineHeight: 2.2 }}>
+                  <a href="/syc" style={{ color: "inherit", textDecoration: "none" }}>코인 소개</a><br />
+                  <a href="/syc#buy" style={{ color: "inherit", textDecoration: "none" }}>지갑 연결</a><br />
+                  <a href="/syc#benefits" style={{ color: "inherit", textDecoration: "none" }}>할인 혜택</a><br />
+                  <a href={`https://bscscan.com/token/0x6b2880CE191c790cA47329Dd761B07b71284785F`} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }}>BSCscan ↗</a>
+                </div>
               </div>
             </div>
           </div>
