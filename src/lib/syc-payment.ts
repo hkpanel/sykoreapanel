@@ -92,9 +92,10 @@ export async function connectWallet(): Promise<string> {
   }
 
   try {
-    const accounts = await window.ethereum!.request({
+    const result = await window.ethereum!.request({
       method: "eth_requestAccounts",
     });
+    const accounts = result as string[];
     if (!accounts || accounts.length === 0) {
       throw new Error("지갑 연결이 취소되었습니다.");
     }
