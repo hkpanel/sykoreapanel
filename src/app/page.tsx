@@ -18,6 +18,11 @@ import {
 import HangaDoorEstimator from "./components/HangaDoorEstimator";
 import SwingDoorEstimator from "./components/SwingDoorEstimator";
 import { TRUCK_FEES, calcTruckOptions } from "./data/truckFees";
+import {
+  isMetaMaskInstalled, connectWallet, switchToBSC, getWalletInfo,
+  getSycPrice, krwToSyc, sendSycPayment,
+  type WalletInfo, type SycPrice,
+} from "@/lib/syc-payment";
 
 // PortOne V2 SDK 글로벌 타입
 declare global {
@@ -621,6 +626,12 @@ export default function Home() {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // ═══ SYC 코인 결제 상태 ═══
+  const [wallet, setWallet] = useState<WalletInfo | null>(null);
+  const [sycPrice, setSycPrice] = useState<SycPrice | null>(null);
+  const [sycPriceLoading, setSycPriceLoading] = useState(false);
+  const [walletConnecting, setWalletConnecting] = useState(false);
+
   // ═══ Firestore 장바구니 실시간 동기화 ═══
   // 장바구니/모달 열릴 때 body 스크롤 잠금
   useEffect(() => {
@@ -734,6 +745,72 @@ export default function Home() {
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
 
   // ═══ 결제 처리 ═══
+
+  // SYC 시세 조회 (SYC 탭 선택 시 자동)
+  const fetchSycPrice = useCallback(async () => {
+    if (!isMetaMaskInstalled()) return;
+    setSycPriceLoading(true);
+    try {
+      const price = await getSycPrice();
+      setSycPrice(price);
+    } catch (err) {
+      console.error("SYC 시세 조회 실패:", err);
+    } finally {
+      setSycPriceLoading(false);
+    }
+  }, []);
+
+  // SYC 탭 선택 시 시세 조회
+  useEffect(() => {
+    if (pay === "syc") {
+      fetchSycPrice();
+    }
+  }, [pay, fetchSycPrice]);
+
+  // 메타마스크 지갑 연결
+  const handleConnectWallet = async () => {
+    setWalletConnecting(true);
+    try {
+      await switchToBSC();
+      const address = await connectWallet();
+      const info = await getWalletInfo(address);
+      setWallet(info);
+      // 시세도 같이 갱신
+      await fetchSycPrice();
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      alert(e.message || "지갑 연결에 실패했습니다.");
+    } finally {
+      setWalletConnecting(false);
+    }
+  };
+
+  // 메타마스크 계정 변경 감지
+  useEffect(() => {
+    if (!window.ethereum?.on) return;
+    const handleAccountsChanged = async (...args: unknown[]) => {
+      const accounts = args[0] as string[];
+      if (accounts.length === 0) {
+        setWallet(null);
+      } else {
+        try {
+          const info = await getWalletInfo(accounts[0]);
+          setWallet(info);
+        } catch { setWallet(null); }
+      }
+    };
+    window.ethereum.on("accountsChanged", handleAccountsChanged);
+    return () => { window.ethereum?.removeListener?.("accountsChanged", handleAccountsChanged); };
+  }, []);
+
+  // 원화→SYC 실시간 환산
+  const cartSycRealtime = sycPrice ? krwToSyc(cartTotal, sycPrice) : cartSyc;
+  const deliverySycRealtime = sycPrice && deliveryFee > 0 ? krwToSyc(deliveryFee, sycPrice) : Math.round(deliveryFee / 100);
+  const sycDiscount = Math.floor(cartSycRealtime * 0.1);
+  const sycSubtotalAfterDiscount = cartSycRealtime - sycDiscount + deliverySycRealtime;
+  const sycTax = Math.floor(sycSubtotalAfterDiscount * 0.1);
+  const sycFinalTotal = sycSubtotalAfterDiscount + sycTax;
+
   const handlePayment = async () => {
     // 1. 로그인 확인
     if (!user) {
@@ -753,7 +830,97 @@ export default function Home() {
       }
     }
 
-    // 4. 결제 금액 계산
+    // ──── SYC 코인 결제 ────
+    if (pay === "syc") {
+      // 메타마스크 확인
+      if (!isMetaMaskInstalled()) {
+        alert("메타마스크가 설치되어 있지 않습니다.\n\n📱 모바일: MetaMask 앱을 설치 후, 앱 내 브라우저에서 접속해주세요.\n💻 PC: Chrome 확장프로그램을 설치해주세요.");
+        return;
+      }
+
+      // 지갑 미연결 시 연결
+      if (!wallet) {
+        await handleConnectWallet();
+        return;
+      }
+
+      // 시세 미조회 시
+      if (!sycPrice) {
+        alert("SYC 시세를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+        return;
+      }
+
+      setPaymentLoading(true);
+      try {
+        // SYC 전송 실행
+        const result = await sendSycPayment(sycFinalTotal);
+
+        if (!result.success) {
+          alert(result.error || "SYC 결제에 실패했습니다.");
+          setPaymentLoading(false);
+          return;
+        }
+
+        // Firestore에 주문 저장
+        const subtotal = cartTotal;
+        const tax = Math.floor((subtotal + deliveryFee) * 0.1);
+        const totalAmount = subtotal + deliveryFee + tax;
+        const paymentId = `syc-${result.txHash?.slice(0, 10)}-${Date.now()}`;
+
+        const order: Order = {
+          id: paymentId,
+          paymentId: result.txHash || paymentId,
+          status: "paid",
+          items: cart.map(i => ({
+            productName: i.productName,
+            size: i.size,
+            color: i.color,
+            colorSub: i.colorSub,
+            retailPrice: i.retailPrice,
+            qty: i.qty,
+            category: i.category,
+          })),
+          subtotal,
+          deliveryFee,
+          tax,
+          totalAmount,
+          payMethod: "SYC",
+          deliveryType: delivery,
+          addressId: selectedAddrId || undefined,
+          receiptUrl: result.txHash ? `https://bscscan.com/tx/${result.txHash}` : undefined,
+          paidAt: new Date().toISOString(),
+        };
+        await saveOrder(user.uid, order);
+
+        // 장바구니 비우기
+        await clearCart(user.uid);
+        setCart([]);
+
+        // 결제 완료
+        setShowCart(false);
+        setOrderComplete({
+          paymentId,
+          totalAmount,
+          receiptUrl: result.txHash ? `https://bscscan.com/tx/${result.txHash}` : undefined,
+        });
+
+        // 지갑 잔액 갱신
+        if (wallet) {
+          try {
+            const info = await getWalletInfo(wallet.address);
+            setWallet(info);
+          } catch {}
+        }
+      } catch (err) {
+        console.error("SYC 결제 처리 오류:", err);
+        alert("SYC 결제 중 오류가 발생했습니다. 다시 시도해주세요.");
+      } finally {
+        setPaymentLoading(false);
+      }
+      return;
+    }
+
+    // ──── 원화 카드 결제 (기존 로직) ────
     const subtotal = cartTotal;
     const tax = Math.floor((subtotal + deliveryFee) * 0.1);
     const totalAmount = subtotal + deliveryFee + tax;
@@ -1513,17 +1680,17 @@ export default function Home() {
                 {/* 금액 상세 */}
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14, color: "#6e6e73" }}>
                   <span>상품 소계</span>
-                  <span>{pay === "syc" ? `${cartSyc.toLocaleString()} SYC` : `₩${cartTotal.toLocaleString()}`}</span>
+                  <span>{pay === "syc" ? `${cartSycRealtime.toLocaleString()} SYC` : `₩${cartTotal.toLocaleString()}`}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14, color: "#6e6e73" }}>
                   <span>배송비{delivery === "truck" && truckRegion ? ` (${truckRegion})` : ""}</span>
                   <span style={{ color: deliveryFee === 0 ? "#0f8a6c" : "#1d1d1f", fontWeight: 600 }}>
-                    {deliveryFee === 0 ? "무료" : `₩${deliveryFee.toLocaleString()}`}
+                    {deliveryFee === 0 ? "무료" : (pay === "syc" ? `${deliverySycRealtime.toLocaleString()} SYC` : `₩${deliveryFee.toLocaleString()}`)}
                   </span>
                 </div>
                 {pay === "syc" && (
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, color: "#3ee6c4", fontWeight: 600 }}>
-                    <span>SYC 할인 (10%)</span><span>-{Math.floor(cartSyc * 0.1).toLocaleString()} SYC</span>
+                    <span>SYC 할인 (10%)</span><span>-{sycDiscount.toLocaleString()} SYC</span>
                   </div>
                 )}
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, fontSize: 14, color: "#6e6e73", padding: "8px 0", borderTop: "1px solid #e8e8ed" }}>
@@ -1538,10 +1705,40 @@ export default function Home() {
                   <span>총 결제금액</span>
                   <span style={{ color: pay === "syc" ? "#7b5ea7" : "#1d1d1f" }}>
                     {pay === "syc"
-                      ? `${Math.floor((cartSyc * 0.9 + Math.round(deliveryFee / 100)) * 1.1).toLocaleString()} SYC`
+                      ? `${sycFinalTotal.toLocaleString()} SYC`
                       : `₩${Math.floor((cartTotal + deliveryFee) * 1.1).toLocaleString()}`}
                   </span>
                 </div>
+                {/* SYC 시세 정보 + 지갑 상태 */}
+                {pay === "syc" && (
+                  <div style={{ background: "linear-gradient(135deg, rgba(123,94,167,0.08), rgba(62,230,196,0.08))", borderRadius: 12, padding: 14, marginTop: 8, marginBottom: 4 }}>
+                    {sycPriceLoading ? (
+                      <div style={{ fontSize: 12, color: "#86868b", textAlign: "center" }}>⏳ SYC 시세 조회 중...</div>
+                    ) : sycPrice ? (
+                      <div style={{ fontSize: 12, color: "#6e6e73", lineHeight: 1.8 }}>
+                        <div>📊 <b style={{ color: "#7b5ea7" }}>1 SYC ≈ ₩{sycPrice.krwPerSyc < 1 ? sycPrice.krwPerSyc.toFixed(4) : sycPrice.krwPerSyc.toFixed(2)}</b> <span style={{ color: "#86868b" }}>(PancakeSwap 실시간)</span></div>
+                        <div>🔗 1 BNB = {sycPrice.sycPerBnb.toLocaleString(undefined, { maximumFractionDigits: 0 })} SYC</div>
+                        {wallet ? (
+                          <div style={{ marginTop: 6, padding: "8px 0", borderTop: "1px solid rgba(123,94,167,0.15)" }}>
+                            <div>👛 지갑: {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}</div>
+                            <div>💰 SYC 잔액: <b style={{ color: wallet.sycBalance >= sycFinalTotal ? "#3ee6c4" : "#ff6b6b" }}>{Math.floor(wallet.sycBalance).toLocaleString()} SYC</b>
+                              {wallet.sycBalance < sycFinalTotal && <span style={{ color: "#ff6b6b", fontSize: 11 }}> (잔액 부족)</span>}
+                            </div>
+                            <div>⛽ BNB (가스비): {wallet.bnbBalance.toFixed(4)} BNB</div>
+                          </div>
+                        ) : (
+                          <div style={{ marginTop: 6, fontSize: 11, color: "#86868b" }}>💡 아래 버튼을 눌러 메타마스크 지갑을 연결해주세요</div>
+                        )}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 12, color: "#86868b" }}>
+                        {isMetaMaskInstalled()
+                          ? "💡 지갑을 연결하면 실시간 SYC 시세를 확인할 수 있어요"
+                          : "⚠️ 메타마스크가 필요합니다. MetaMask 앱 내 브라우저에서 접속해주세요."}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <button onClick={handlePayment} disabled={paymentLoading} style={{
                   width: "100%", padding: "16px 0", border: "none", borderRadius: 14,
                   background: pay === "syc" ? "linear-gradient(135deg, #7b5ea7, #3ee6c4)" : "#1d1d1f",
@@ -1552,7 +1749,9 @@ export default function Home() {
                   {paymentLoading ? "⏳ 결제 처리 중..." : (
                     <>
                       {pay === "syc" && <Image src="/syc-logo.png" alt="" width={20} height={20} style={{ borderRadius: "50%" }} />}
-                      {pay === "syc" ? "지갑 연결 후 결제" : "💳 결제하기"}
+                      {pay === "syc"
+                        ? (wallet ? `${sycFinalTotal.toLocaleString()} SYC 결제하기` : (walletConnecting ? "⏳ 지갑 연결 중..." : "🦊 메타마스크 지갑 연결"))
+                        : "💳 결제하기"}
                     </>
                   )}
                 </button>
