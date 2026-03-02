@@ -947,7 +947,7 @@ export default function Home() {
       setShowCart(false);
 
       // requestPayment 호출 (await 안 함! 페이지가 이동하므로)
-      window.PortOne.requestPayment({
+      (window.PortOne.requestPayment as Function)({
         storeId: process.env.NEXT_PUBLIC_PORTONE_STORE_ID || "store-7d43cea3-aa09-4466-a1fb-4a2840baf3fd",
         channelKey: process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || "channel-key-f238aa16-fa21-42c6-8b96-3eb108805040",
         paymentId,
