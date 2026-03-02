@@ -126,6 +126,7 @@ export default function HangaDoorEstimator({ onAddCart }: {
     const sizeParts = [
       `${widthMm}×${heightMm}`,
       doorThick,
+      `마감${finishThick}`,
       assembly,
       trackType,
       mfgType,
