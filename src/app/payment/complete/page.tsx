@@ -56,8 +56,9 @@ function PaymentCompleteContent() {
 
         // Firestore에 주문 저장
         const { getAuth } = await import("firebase/auth");
-        const { getFirestore, collection, addDoc, serverTimestamp, deleteDoc, getDocs, query: firestoreQuery } = await import("firebase/firestore");
-        const { app } = await import("@/lib/firebase");
+        const { getFirestore, collection, addDoc, serverTimestamp, deleteDoc, getDocs } = await import("firebase/firestore");
+        const firebaseModule = await import("@/lib/firebase");
+        const app = firebaseModule.default;
         const auth = getAuth(app);
         const db = getFirestore(app);
         const user = auth.currentUser;
