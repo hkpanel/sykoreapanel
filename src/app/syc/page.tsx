@@ -174,8 +174,8 @@ export default function SycPage() {
 
       {/* ═══ HERO 섹션 ═══ */}
       <section className="hero-bg hero-section-syc" style={{
-        minHeight: "auto", display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "clamp(60px,10vw,120px) clamp(14px,3vw,24px) clamp(32px,6vw,80px)", position: "relative", overflow: "hidden",
+        minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "120px 24px 80px", position: "relative", overflow: "hidden",
       }}>
         {/* 배경 장식 */}
         <div style={{ position: "absolute", top: "10%", left: "5%", width: 300, height: 300, borderRadius: "50%", background: "rgba(123,94,167,0.05)", filter: "blur(80px)" }} />
@@ -187,26 +187,26 @@ export default function SycPage() {
           transition: "all 0.8s cubic-bezier(0.22,1,0.36,1)",
         }}>
           {/* 로고 */}
-          <div className="hero-logo-wrap" style={{ animation: "float 4s ease-in-out infinite", marginBottom: "clamp(14px,3vw,32px)" }}>
+          <div className="hero-logo-wrap" style={{ animation: "float 4s ease-in-out infinite", marginBottom: 32 }}>
             <Image src="/syc-logo.png" alt="SYC" width={100} height={100} style={{ borderRadius: "50%", boxShadow: "0 0 60px rgba(123,94,167,0.4)" }} />
           </div>
 
-          <div className="hero-bep" style={{ fontSize: "clamp(10px,1.5vw,13px)", fontWeight: 700, letterSpacing: "clamp(2px,0.4vw,4px)", color: "#7b5ea7", textTransform: "uppercase", marginBottom: "clamp(8px,1.5vw,16px)" }}>
+          <div className="hero-bep" style={{ fontSize: 13, fontWeight: 700, letterSpacing: 4, color: "#7b5ea7", textTransform: "uppercase", marginBottom: 16 }}>
             BNB Smart Chain (BEP-20)
           </div>
 
           <h1 className="hero-title" style={{
-            fontSize: "clamp(24px,6vw,52px)", fontWeight: 900, lineHeight: 1.15, marginBottom: "clamp(10px,2vw,20px)",
+            fontSize: 52, fontWeight: 900, lineHeight: 1.15, marginBottom: 20,
           }}>
             <span className="gradient-text">SY Coin</span>
             <br />
-            <span style={{ color: "#f5f5f7", fontSize: "clamp(13px,2.5vw,0.55em)", fontWeight: 600 }}>
+            <span style={{ color: "#f5f5f7", fontSize: "0.55em", fontWeight: 600 }}>
               건축자재 × AI × 블록체인
             </span>
           </h1>
 
           <p className="hero-sub" style={{
-            fontSize: "clamp(13px,2vw,17px)", color: "#86868b", lineHeight: 1.7, maxWidth: 600, margin: "0 auto clamp(20px,4vw,40px)",
+            fontSize: 17, color: "#86868b", lineHeight: 1.7, maxWidth: 600, margin: "0 auto 40px",
           }}>
             실물 제조업의 매출과 AI 서비스 수익이 뒷받침하는<br />
             <b style={{ color: "#f5f5f7" }}>실사용 가치 기반</b> 유틸리티 토큰
@@ -214,28 +214,28 @@ export default function SycPage() {
 
           {/* 실시간 시세 카드 */}
           <div className="hero-price-card" style={{
-            display: "inline-flex", alignItems: "center", gap: "clamp(10px,2vw,24px)",
+            display: "inline-flex", alignItems: "center", gap: 24,
             background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
-            borderRadius: "clamp(14px,2vw,20px)", padding: "clamp(10px,1.5vw,16px) clamp(14px,2.5vw,32px)", marginBottom: "clamp(16px,3vw,40px)",
+            borderRadius: 20, padding: "16px 32px", marginBottom: 40,
             flexWrap: "wrap", justifyContent: "center",
           }}>
             {loading ? (
-              <span style={{ fontSize: "clamp(11px,1.5vw,14px)", color: "#86868b" }}>⏳ 시세 조회 중...</span>
+              <span style={{ fontSize: 14, color: "#86868b" }}>⏳ 시세 조회 중...</span>
             ) : price ? (
               <>
                 <div>
-                  <div style={{ fontSize: "clamp(9px,1.2vw,11px)", color: "#86868b", marginBottom: 2 }}>현재 시세</div>
-                  <div style={{ fontSize: "clamp(16px,3vw,24px)", fontWeight: 800 }} className="gradient-text">₩{price.krw < 1 ? price.krw.toFixed(4) : price.krw.toFixed(2)}</div>
+                  <div style={{ fontSize: 11, color: "#86868b", marginBottom: 2 }}>현재 시세</div>
+                  <div style={{ fontSize: 24, fontWeight: 800 }} className="gradient-text">₩{price.krw < 1 ? price.krw.toFixed(4) : price.krw.toFixed(2)}</div>
                 </div>
-                <div style={{ width: 1, height: "clamp(24px,3vw,36px)", background: "rgba(255,255,255,0.1)" }} />
+                <div style={{ width: 1, height: 36, background: "rgba(255,255,255,0.1)" }} />
                 <div>
-                  <div style={{ fontSize: "clamp(9px,1.2vw,11px)", color: "#86868b", marginBottom: 2 }}>USD</div>
-                  <div style={{ fontSize: "clamp(13px,2vw,18px)", fontWeight: 700, color: "#f5f5f7" }}>${price.usd.toFixed(6)}</div>
+                  <div style={{ fontSize: 11, color: "#86868b", marginBottom: 2 }}>USD</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: "#f5f5f7" }}>${price.usd.toFixed(6)}</div>
                 </div>
-                <div style={{ width: 1, height: "clamp(24px,3vw,36px)", background: "rgba(255,255,255,0.1)" }} />
+                <div style={{ width: 1, height: 36, background: "rgba(255,255,255,0.1)" }} />
                 <div>
-                  <div style={{ fontSize: "clamp(9px,1.2vw,11px)", color: "#86868b", marginBottom: 2 }}>1 BNB</div>
-                  <div style={{ fontSize: "clamp(13px,2vw,18px)", fontWeight: 700, color: "#f5f5f7" }}>{price.sycPerBnb.toLocaleString()} SYC</div>
+                  <div style={{ fontSize: 11, color: "#86868b", marginBottom: 2 }}>1 BNB</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: "#f5f5f7" }}>{price.sycPerBnb.toLocaleString()} SYC</div>
                 </div>
               </>
             ) : null}
@@ -246,7 +246,7 @@ export default function SycPage() {
           {/* CTA 버튼 */}
           <div className="hero-cta-wrap" style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
             <a href="https://pancakeswap.finance/swap?outputCurrency=0x6b2880CE191c790cA47329Dd761B07b71284785F&chainId=56" target="_blank" rel="noopener noreferrer" style={{
-              padding: "clamp(10px,1.5vw,14px) clamp(18px,3vw,32px)", borderRadius: 14, fontSize: "clamp(13px,1.8vw,15px)", fontWeight: 800,
+              padding: "14px 32px", borderRadius: 14, fontSize: 15, fontWeight: 800,
               background: "linear-gradient(135deg, #7b5ea7, #3ee6c4)", color: "#fff",
               textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8,
               boxShadow: "0 8px 30px rgba(123,94,167,0.3)",
@@ -254,7 +254,7 @@ export default function SycPage() {
               🥞 PancakeSwap에서 구매
             </a>
             <a href={`https://bscscan.com/token/${CONTRACT}`} target="_blank" rel="noopener noreferrer" style={{
-              padding: "clamp(10px,1.5vw,14px) clamp(18px,3vw,32px)", borderRadius: 14, fontSize: "clamp(13px,1.8vw,15px)", fontWeight: 800,
+              padding: "14px 32px", borderRadius: 14, fontSize: 15, fontWeight: 800,
               background: "rgba(255,255,255,0.06)", color: "#f5f5f7",
               textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8,
               border: "1px solid rgba(255,255,255,0.1)",
