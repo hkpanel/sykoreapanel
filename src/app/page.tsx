@@ -930,8 +930,18 @@ export default function Home() {
     setPaymentLoading(true);
     // 모바일에서 결제창이 장바구니 패널에 가려지므로 패널을 먼저 닫음
     setShowCart(false);
-    // 패널 닫힌 후 결제창이 뜨도록 약간 딜레이
     await new Promise(r => setTimeout(r, 300));
+
+    // 모바일 여부 판별
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    // 리다이렉트 결제 시 주문정보를 sessionStorage에 저장 (결제 완료 후 복원용)
+    if (isMobile) {
+      sessionStorage.setItem("pendingOrder", JSON.stringify({
+        paymentId, orderName, totalAmount, cartSnapshot: cart,
+        delivery, deliveryFee, selectedAddrId, truckRegion,
+      }));
+    }
 
     try {
       // 6. 포트원 결제창 호출
@@ -947,6 +957,12 @@ export default function Home() {
           fullName: user.displayName || undefined,
           email: user.email || undefined,
         },
+        // 모바일: 리다이렉트 방식 (전체 화면 결제)
+        // PC: 기본 팝업 방식
+        ...(isMobile ? {
+          windowType: { mobile: "REDIRECT" },
+          redirectUrl: `${window.location.origin}/payment/complete`,
+        } : {}),
       });
 
       // 7. 사용자 취소 또는 에러
