@@ -4,27 +4,39 @@ import { useEffect, useState } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { FLASHING_PRODUCTS, RETAIL_MULTIPLIER, COLOR_DETAILS, type FlashingProduct } from "@/app/data/flashingProducts";
+import { DEFAULT_AL_KG_PRICE, saveAlKgPrice } from "@/lib/pricing";
 
 export default function AdminProducts() {
   const [multiplier, setMultiplier] = useState(RETAIL_MULTIPLIER);
   const [newMultiplier, setNewMultiplier] = useState(RETAIL_MULTIPLIER.toString());
   const [saving, setSaving] = useState(false);
+  const [alKgPrice, setAlKgPrice] = useState(DEFAULT_AL_KG_PRICE);
+  const [newAlKgPrice, setNewAlKgPrice] = useState(DEFAULT_AL_KG_PRICE.toString());
+  const [savingAl, setSavingAl] = useState(false);
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
   const [category, setCategory] = useState<string>("all");
 
-  // Firestore에서 커스텀 마진율 로드
+  // Firestore에서 커스텀 마진율 + 알루미늄 단가 로드
   useEffect(() => {
     (async () => {
       try {
         const ref = doc(db, "settings", "pricing");
         const snap = await getDoc(ref);
-        if (snap.exists() && snap.data().retailMultiplier) {
-          const m = snap.data().retailMultiplier;
-          setMultiplier(m);
-          setNewMultiplier(m.toString());
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.retailMultiplier) {
+            const m = data.retailMultiplier;
+            setMultiplier(m);
+            setNewMultiplier(m.toString());
+          }
+          if (data.alKgPrice) {
+            const p = data.alKgPrice;
+            setAlKgPrice(p);
+            setNewAlKgPrice(p.toString());
+          }
         }
       } catch (err) {
-        console.error("마진율 로드 실패:", err);
+        console.error("설정 로드 실패:", err);
       }
     })();
   }, []);
@@ -46,6 +58,25 @@ export default function AdminProducts() {
       alert("저장에 실패했습니다.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveAlKgPrice = async () => {
+    const val = parseInt(newAlKgPrice);
+    if (isNaN(val) || val < 1000 || val > 50000) {
+      alert("1,000 ~ 50,000 사이의 값을 입력하세요");
+      return;
+    }
+    setSavingAl(true);
+    try {
+      await saveAlKgPrice(val);
+      setAlKgPrice(val);
+      alert(`알루미늄 kg당 단가가 ₩${val.toLocaleString()}으로 변경되었습니다.\n※ 행가도어, 스윙도어, 크린룸AL, 도어AL 가격에 즉시 반영됩니다.`);
+    } catch (err) {
+      console.error("알루미늄 단가 저장 실패:", err);
+      alert("저장에 실패했습니다.");
+    } finally {
+      setSavingAl(false);
     }
   };
 
@@ -112,6 +143,59 @@ export default function AdminProducts() {
         </div>
         <div style={{ fontSize: 12, color: "#6e6e73", marginTop: 12 }}>
           예시: 도매가 2,000원 × {multiplier} = 소비자가 {(2000 * multiplier).toLocaleString()}원
+        </div>
+      </div>
+
+      {/* ═══ 알루미늄 kg당 단가 설정 ═══ */}
+      <div style={{
+        background: "rgba(255,255,255,0.03)", borderRadius: 16,
+        border: "1px solid rgba(255,255,255,0.06)", padding: 24, marginBottom: 28,
+      }}>
+        <h2 style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>⚙️ 알루미늄 kg당 단가</h2>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <div>
+            <div style={{ fontSize: 12, color: "#86868b", marginBottom: 6 }}>현재 단가</div>
+            <div style={{ fontSize: 28, fontWeight: 900, color: "#f59e0b" }}>
+              ₩{alKgPrice.toLocaleString()}
+              <span style={{ fontSize: 14, color: "#86868b", fontWeight: 600, marginLeft: 8 }}>
+                /kg
+              </span>
+            </div>
+          </div>
+          <div style={{ height: 40, width: 1, background: "rgba(255,255,255,0.1)" }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div>
+              <div style={{ fontSize: 12, color: "#86868b", marginBottom: 6 }}>새 단가 (원/kg)</div>
+              <input
+                type="number"
+                step="100"
+                min="1000"
+                max="50000"
+                value={newAlKgPrice}
+                onChange={(e) => setNewAlKgPrice(e.target.value)}
+                style={{
+                  width: 120, padding: "8px 12px", borderRadius: 10,
+                  border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.05)",
+                  color: "#f5f5f7", fontSize: 16, fontWeight: 700, outline: "none", textAlign: "center",
+                }}
+              />
+            </div>
+            <button
+              onClick={handleSaveAlKgPrice}
+              disabled={savingAl || newAlKgPrice === alKgPrice.toString()}
+              style={{
+                padding: "10px 20px", borderRadius: 10, fontSize: 13, fontWeight: 800,
+                background: savingAl ? "#555" : "#f59e0b", color: "#fff", border: "none",
+                cursor: savingAl ? "wait" : "pointer", marginTop: 20,
+                opacity: newAlKgPrice === alKgPrice.toString() ? 0.5 : 1,
+              }}
+            >
+              {savingAl ? "저장 중..." : "적용"}
+            </button>
+          </div>
+        </div>
+        <div style={{ fontSize: 12, color: "#6e6e73", marginTop: 12 }}>
+          ⚠️ 변경 시 행가도어, 스윙도어, 크린룸AL, 도어AL 가격이 전부 즉시 반영됩니다.
         </div>
       </div>
 

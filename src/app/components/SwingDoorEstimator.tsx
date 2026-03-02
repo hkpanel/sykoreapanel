@@ -45,8 +45,9 @@ function PillSelect({ options, value, onChange }: {
   );
 }
 
-export default function SwingDoorEstimator({ onAddCart }: {
+export default function SwingDoorEstimator({ onAddCart, alKgPrice }: {
   onAddCart: (item: { key: string; productId: string; productName: string; size: string; color: string; retailPrice: number; qty: number }) => void;
+  alKgPrice?: number;
 }) {
   // 기본값: 양개 2000×2100
   const [doorType, setDoorType] = useState<"편개" | "양개">("편개");
@@ -81,9 +82,9 @@ export default function SwingDoorEstimator({ onAddCart }: {
     return calcSwingDoorEstimate({
       widthMm, heightMm, doorType, material, color,
       frameThick, frameSides, hasFrame,
-      hasFixWindow, fixW, fixH, glassType, lockType,
+      hasFixWindow, fixW, fixH, glassType, lockType, alKgPrice,
     });
-  }, [widthMm, heightMm, doorType, material, color, frameThick, frameSides, hasFrame, hasFixWindow, fixW, fixH, glassType, lockType]);
+  }, [widthMm, heightMm, doorType, material, color, frameThick, frameSides, hasFrame, hasFixWindow, fixW, fixH, glassType, lockType, alKgPrice]);
 
   const handleAddCart = () => {
     if (!estimate) return;

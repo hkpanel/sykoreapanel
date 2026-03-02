@@ -3,9 +3,7 @@
 // ─────────────────────────────────────────
 
 import { calcSwingDoorEstimate } from "./swingDoorData";
-
-// AL kg단가
-export const AL_KG_PRICE = 7700;
+import { DEFAULT_AL_KG_PRICE } from "@/lib/pricing";
 
 // ─── 판넬 단가 (원/훼베) ─── 신호S&P 단가 +3,000원 ───
 // null = 해당 조합 없음 (선택 불가)
@@ -132,6 +130,7 @@ export function calcAlParts(
   panelType: string,       // "EPS" | "우레탄" | "그라스울" 등
   hasSideDoor: boolean,
   panelColor: string,
+  alKgPrice: number = DEFAULT_AL_KG_PRICE,
 ) {
   const B4 = doorType === "양개" ? widthMm / 2 : widthMm;
   const C4 = heightMm;
@@ -296,23 +295,23 @@ export function calcAlParts(
 
   // I22: 마감바 (없음이면 100T 기준으로 계산)
   const finishKg = finishThick === "없음" ? getKg("마감바", "100T") : getKg("마감바", finishThick);
-  const I22 = G22_finishBar * finishKg * AL_KG_PRICE * barLen;
+  const I22 = G22_finishBar * finishKg * alKgPrice * barLen;
 
   // I23: 양개바 행 (편개에서도 양개바 kg 사용!)
-  const I23 = G23 * getKg("양개바", doorThick) * AL_KG_PRICE * barLen;
+  const I23 = G23 * getKg("양개바", doorThick) * alKgPrice * barLen;
 
   // I24: 가이드바
-  const I24 = G24 * getKg("가이드바", "_") * AL_KG_PRICE * barLen;
+  const I24 = G24 * getKg("가이드바", "_") * alKgPrice * barLen;
 
   // I27: 편개바 행 (양개에서도 편개바 kg 사용!)
-  const I27 = G27 * getKg("편개바", doorThick) * AL_KG_PRICE * barLen;
+  const I27 = G27 * getKg("편개바", doorThick) * alKgPrice * barLen;
 
   // I31: 오핸들
-  const I31 = G31 * getKg("오핸들", "_") * AL_KG_PRICE * barLen;
+  const I31 = G31 * getKg("오핸들", "_") * alKgPrice * barLen;
 
   // I32: 트랙 (없음이면 C트랙 기준)
   const trackKg = trackType === "M트랙" ? getKg("M트랙", "_") : getKg("C트랙", "_");
-  const I32 = G32 * trackKg * AL_KG_PRICE * barLen;
+  const I32 = G32 * trackKg * alKgPrice * barLen;
 
   // I33: AL 합계
   const alTotal = I22 + I23 + I24 + I27 + I31 + I32;
@@ -323,7 +322,7 @@ export function calcAlParts(
 
   // === 쪽문 (I34) ===
   const sideDoorCost = hasSideDoor
-    ? calcSideDoorCost(doorThick, panelType, panelColor)
+    ? calcSideDoorCost(doorThick, panelType, panelColor, alKgPrice)
     : 0;
 
   // === 면적 (G36) ===
@@ -425,7 +424,8 @@ export function calcLabor(
 export function calcSideDoorCost(
   doorThickness: string,
   panelMaterial: string,
-  panelColor: string
+  panelColor: string,
+  alKgPrice: number = DEFAULT_AL_KG_PRICE,
 ): number {
   // 타공 인건비 (두께별)
   const tapGongFee: Record<string, number> = {
@@ -451,6 +451,7 @@ export function calcSideDoorCost(
     fixH: 0,
     glassType: "일반유리",
     lockType: "없음",
+    alKgPrice,
   });
 
   return swingEst.retailPrice + (tapGongFee[doorThickness] ?? 40000);
@@ -543,7 +544,10 @@ export function calcHangaDoorEstimate(input: {
   panelColor: string;      // "아이보리" | "일면은회색" | "양면백색"
   mfgType: "종제작" | "횡제작";
   hasSideDoor: boolean;
+  alKgPrice?: number;      // 알루미늄 kg당 단가 (Firestore에서 전달)
 }) {
+  const alKgPrice = input.alKgPrice ?? DEFAULT_AL_KG_PRICE;
+
   // 1. AL + 부자재 + 쪽문
   const al = calcAlParts(
     input.widthMm, input.heightMm, input.doorType,
@@ -551,6 +555,7 @@ export function calcHangaDoorEstimate(input: {
     input.panelMaterial === "우레탄" ? "우레탄" : "EPS",
     input.hasSideDoor,
     input.panelColor || "아이보리",
+    alKgPrice,
   );
 
   // 2. 판넬 (훼베 계산 → 단가) — 마진 미적용!

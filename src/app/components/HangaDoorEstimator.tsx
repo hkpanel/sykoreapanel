@@ -51,8 +51,9 @@ function PillSelect({ options, value, onChange, disabledSet }: {
   );
 }
 
-export default function HangaDoorEstimator({ onAddCart }: {
+export default function HangaDoorEstimator({ onAddCart, alKgPrice }: {
   onAddCart: (item: { key: string; productId: string; productName: string; size: string; color: string; retailPrice: number; qty: number }) => void;
+  alKgPrice?: number;
 }) {
   // 입력 상태
   const [doorType, setDoorType] = useState<"편개" | "양개">("양개");
@@ -123,9 +124,9 @@ export default function HangaDoorEstimator({ onAddCart }: {
     return calcHangaDoorEstimate({
       widthMm, heightMm, doorType, doorThick, finishThick,
       trackType, assembly, panelType, panelMaterial, panelThickness: doorThick,
-      panelColor, mfgType, hasSideDoor,
+      panelColor, mfgType, hasSideDoor, alKgPrice,
     });
-  }, [widthMm, heightMm, doorType, doorThick, finishThick, trackType, assembly, panelType, panelMaterial, panelColor, mfgType, hasSideDoor, junBulConflict]);
+  }, [widthMm, heightMm, doorType, doorThick, finishThick, trackType, assembly, panelType, panelMaterial, panelColor, mfgType, hasSideDoor, junBulConflict, alKgPrice]);
 
   const handleAddCart = () => {
     if (!estimate) return;

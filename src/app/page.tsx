@@ -17,6 +17,7 @@ import {
 } from "./data/flashingProducts";
 import HangaDoorEstimator from "./components/HangaDoorEstimator";
 import SwingDoorEstimator from "./components/SwingDoorEstimator";
+import { usePricingSettings } from "@/lib/pricing";
 import { TRUCK_FEES, calcTruckOptions } from "./data/truckFees";
 import {
   isMetaMaskInstalled, connectWallet, switchToBSC, getWalletInfo,
@@ -627,6 +628,10 @@ export default function Home() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // ═══ SYC 코인 결제 상태 ═══
+  // 알루미늄 kg당 단가 (Firestore 실시간 동기화)
+  const { alKgPrice } = usePricingSettings();
+
+  //
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [sycPrice, setSycPrice] = useState<SycPrice | null>(null);
   const [sycPriceLoading, setSycPriceLoading] = useState(false);
@@ -1460,14 +1465,14 @@ export default function Home() {
 
       {/* 행가도어 탭 */}
       {mainTab === "행가도어" && (
-        <HangaDoorEstimator onAddCart={(item) => {
+        <HangaDoorEstimator alKgPrice={alKgPrice} onAddCart={(item) => {
           addToCart({ ...item, category: "hanga" as const });
         }} />
       )}
 
       {/* 스윙도어 탭 */}
       {mainTab === "스윙도어" && (
-        <SwingDoorEstimator onAddCart={(item) => {
+        <SwingDoorEstimator alKgPrice={alKgPrice} onAddCart={(item) => {
           addToCart({ ...item, category: "swing" as const });
         }} />
       )}

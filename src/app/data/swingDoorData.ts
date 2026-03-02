@@ -2,7 +2,7 @@
 // SY한국판넬 스윙도어 견적 데이터 (엑셀 백데이터 1:1 변환)
 // ═══════════════════════════════════════════════════════
 
-const AL_PRICE = 7700; // 단가시트 C21
+import { DEFAULT_AL_KG_PRICE } from "@/lib/pricing";
 
 // ─── 단가 테이블 ───
 const UNIT_PRICES = {
@@ -138,6 +138,7 @@ function calcFixWindow(
   fixW: number, fixH: number,
   glassType: string,
   doorType: "편개" | "양개",
+  alKgPrice: number,
 ): { total: number; detail: Record<string, number> } {
   if (!hasFixWindow) return { total: 0, detail: {} };
 
@@ -145,7 +146,7 @@ function calcFixWindow(
 
   // U12 픽스바
   const pixBarQty = Math.ceil(((fixW + 40) + (fixH + 40)) * 4 * mul / 6300);
-  const pixBar = pixBarQty * AL_KG["픽스바"] * AL_PRICE * 6.3;
+  const pixBar = pixBarQty * AL_KG["픽스바"] * alKgPrice * 6.3;
 
   // U13 유리
   const glassArea = (fixW * fixH) / 100000;
@@ -174,6 +175,7 @@ function calcAluminum(
   frameThick: string,   // "50T" 등
   frameSides: string,    // "삼면" | "사면"
   hasFrame: boolean,
+  alKgPrice: number,
 ): { total: number; detail: Record<string, number> } {
   const mul = doorType === "양개" ? 2 : 1;
   const leafW = doorType === "양개" ? w / 2 : w;
@@ -181,7 +183,7 @@ function calcAluminum(
   // U18 훼샤바 (각 도어짝마다 → ×mul)
   const fascia = ((leafW + 35) * 2 + (h + 35) * 2) * mul;
   const fasciaQty = Math.ceil(fascia / 6300 * 2) / 2; // CEILING to 0.5
-  const fasciaAmt = fasciaQty * AL_KG["훼샤바"] * AL_PRICE * 6.3;
+  const fasciaAmt = fasciaQty * AL_KG["훼샤바"] * alKgPrice * 6.3;
 
   // U19 후레임 (개구부 1개 → 양개여도 ×1)
   let frameAmt = 0;
@@ -197,7 +199,7 @@ function calcAluminum(
     const kgKey = `후레임${frameThick}` as keyof typeof AL_KG;
     const kgPerM = AL_KG[kgKey] ?? 0;
     // T19 = 6.5 * kg * AL가
-    frameAmt = frameQty * kgPerM * AL_PRICE * 6.5;
+    frameAmt = frameQty * kgPerM * alKgPrice * 6.5;
   }
 
   const total = fasciaAmt + frameAmt;
@@ -233,7 +235,7 @@ function calcPanel(
 }
 
 // ─── 인건비 (U23) ───
-function calcLabor(
+function calcLaborSwing(
   w: number, h: number,
   doorType: "편개" | "양개",
   material: string,
@@ -264,8 +266,10 @@ export function calcSwingDoorEstimate(input: {
   fixH: number;
   glassType: string;       // "일반유리" | "강화유리" | "아크릴"
   lockType: string;        // "없음" | "원형락" | ...
+  alKgPrice?: number;      // 알루미늄 kg당 단가 (Firestore에서 전달)
 }) {
   const { widthMm: w, heightMm: h, doorType } = input;
+  const alKgPrice = input.alKgPrice ?? DEFAULT_AL_KG_PRICE;
 
   // 1. 부자재
   const hw = calcHardware(w, h, doorType, input.material);
@@ -276,20 +280,21 @@ export function calcSwingDoorEstimate(input: {
   // 3. 픽스창
   const fix = calcFixWindow(
     input.hasFixWindow, input.fixW, input.fixH,
-    input.glassType, doorType,
+    input.glassType, doorType, alKgPrice,
   );
 
   // 4. 알루미늄
   const al = calcAluminum(
     w, h, doorType,
     input.frameThick, input.frameSides, input.hasFrame,
+    alKgPrice,
   );
 
   // 5. 판넬
   const panel = calcPanel(w, h, input.material, input.color);
 
   // 6. 인건비
-  const labor = calcLabor(w, h, doorType, input.material);
+  const labor = calcLaborSwing(w, h, doorType, input.material);
 
   // 7. 도매가 (엑셀 U24)
   // CEILING(U8*1.3 + U11 + U17 + U21*1.3 + U22 + U23, 1000)
