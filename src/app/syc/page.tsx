@@ -174,8 +174,8 @@ export default function SycPage() {
 
       {/* ═══ HERO 섹션 ═══ */}
       <section className="hero-bg hero-section-syc" style={{
-        minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "120px 24px 80px", position: "relative", overflow: "hidden",
+        minHeight: "auto", display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "clamp(60px,10vw,120px) clamp(14px,3vw,24px) clamp(32px,6vw,80px)", position: "relative", overflow: "hidden",
       }}>
         {/* 배경 장식 */}
         <div style={{ position: "absolute", top: "10%", left: "5%", width: 300, height: 300, borderRadius: "50%", background: "rgba(123,94,167,0.05)", filter: "blur(80px)" }} />
@@ -187,26 +187,26 @@ export default function SycPage() {
           transition: "all 0.8s cubic-bezier(0.22,1,0.36,1)",
         }}>
           {/* 로고 */}
-          <div className="hero-logo-wrap" style={{ animation: "float 4s ease-in-out infinite", marginBottom: 32 }}>
+          <div className="hero-logo-wrap" style={{ animation: "float 4s ease-in-out infinite", marginBottom: "clamp(14px,3vw,32px)" }}>
             <Image src="/syc-logo.png" alt="SYC" width={100} height={100} style={{ borderRadius: "50%", boxShadow: "0 0 60px rgba(123,94,167,0.4)" }} />
           </div>
 
-          <div className="hero-bep" style={{ fontSize: 13, fontWeight: 700, letterSpacing: 4, color: "#7b5ea7", textTransform: "uppercase", marginBottom: 16 }}>
+          <div className="hero-bep" style={{ fontSize: "clamp(10px,1.5vw,13px)", fontWeight: 700, letterSpacing: "clamp(2px,0.4vw,4px)", color: "#7b5ea7", textTransform: "uppercase", marginBottom: "clamp(8px,1.5vw,16px)" }}>
             BNB Smart Chain (BEP-20)
           </div>
 
           <h1 className="hero-title" style={{
-            fontSize: 52, fontWeight: 900, lineHeight: 1.15, marginBottom: 20,
+            fontSize: "clamp(24px,6vw,52px)", fontWeight: 900, lineHeight: 1.15, marginBottom: "clamp(10px,2vw,20px)",
           }}>
             <span className="gradient-text">SY Coin</span>
             <br />
-            <span style={{ color: "#f5f5f7", fontSize: "0.55em", fontWeight: 600 }}>
+            <span style={{ color: "#f5f5f7", fontSize: "clamp(13px,2.5vw,0.55em)", fontWeight: 600 }}>
               건축자재 × AI × 블록체인
             </span>
           </h1>
 
           <p className="hero-sub" style={{
-            fontSize: 17, color: "#86868b", lineHeight: 1.8, maxWidth: 600, margin: "0 auto 40px",
+            fontSize: "clamp(13px,2vw,17px)", color: "#86868b", lineHeight: 1.7, maxWidth: 600, margin: "0 auto clamp(20px,4vw,40px)",
           }}>
             실물 제조업의 매출과 AI 서비스 수익이 뒷받침하는<br />
             <b style={{ color: "#f5f5f7" }}>실사용 가치 기반</b> 유틸리티 토큰
@@ -214,27 +214,28 @@ export default function SycPage() {
 
           {/* 실시간 시세 카드 */}
           <div className="hero-price-card" style={{
-            display: "inline-flex", alignItems: "center", gap: 24,
+            display: "inline-flex", alignItems: "center", gap: "clamp(10px,2vw,24px)",
             background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
-            borderRadius: 20, padding: "16px 32px", marginBottom: 40,
+            borderRadius: "clamp(14px,2vw,20px)", padding: "clamp(10px,1.5vw,16px) clamp(14px,2.5vw,32px)", marginBottom: "clamp(16px,3vw,40px)",
+            flexWrap: "wrap", justifyContent: "center",
           }}>
             {loading ? (
-              <span style={{ fontSize: 14, color: "#86868b" }}>⏳ 시세 조회 중...</span>
+              <span style={{ fontSize: "clamp(11px,1.5vw,14px)", color: "#86868b" }}>⏳ 시세 조회 중...</span>
             ) : price ? (
               <>
                 <div>
-                  <div style={{ fontSize: 11, color: "#86868b", marginBottom: 4 }}>현재 시세</div>
-                  <div style={{ fontSize: 24, fontWeight: 800 }} className="gradient-text">₩{price.krw < 1 ? price.krw.toFixed(4) : price.krw.toFixed(2)}</div>
+                  <div style={{ fontSize: "clamp(9px,1.2vw,11px)", color: "#86868b", marginBottom: 2 }}>현재 시세</div>
+                  <div style={{ fontSize: "clamp(16px,3vw,24px)", fontWeight: 800 }} className="gradient-text">₩{price.krw < 1 ? price.krw.toFixed(4) : price.krw.toFixed(2)}</div>
                 </div>
-                <div style={{ width: 1, height: 36, background: "rgba(255,255,255,0.1)" }} />
+                <div style={{ width: 1, height: "clamp(24px,3vw,36px)", background: "rgba(255,255,255,0.1)" }} />
                 <div>
-                  <div style={{ fontSize: 11, color: "#86868b", marginBottom: 4 }}>USD</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: "#f5f5f7" }}>${price.usd.toFixed(6)}</div>
+                  <div style={{ fontSize: "clamp(9px,1.2vw,11px)", color: "#86868b", marginBottom: 2 }}>USD</div>
+                  <div style={{ fontSize: "clamp(13px,2vw,18px)", fontWeight: 700, color: "#f5f5f7" }}>${price.usd.toFixed(6)}</div>
                 </div>
-                <div style={{ width: 1, height: 36, background: "rgba(255,255,255,0.1)" }} />
+                <div style={{ width: 1, height: "clamp(24px,3vw,36px)", background: "rgba(255,255,255,0.1)" }} />
                 <div>
-                  <div style={{ fontSize: 11, color: "#86868b", marginBottom: 4 }}>1 BNB</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: "#f5f5f7" }}>{price.sycPerBnb.toLocaleString()} SYC</div>
+                  <div style={{ fontSize: "clamp(9px,1.2vw,11px)", color: "#86868b", marginBottom: 2 }}>1 BNB</div>
+                  <div style={{ fontSize: "clamp(13px,2vw,18px)", fontWeight: 700, color: "#f5f5f7" }}>{price.sycPerBnb.toLocaleString()} SYC</div>
                 </div>
               </>
             ) : null}
@@ -245,7 +246,7 @@ export default function SycPage() {
           {/* CTA 버튼 */}
           <div className="hero-cta-wrap" style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
             <a href="https://pancakeswap.finance/swap?outputCurrency=0x6b2880CE191c790cA47329Dd761B07b71284785F&chainId=56" target="_blank" rel="noopener noreferrer" style={{
-              padding: "14px 32px", borderRadius: 14, fontSize: 15, fontWeight: 800,
+              padding: "clamp(10px,1.5vw,14px) clamp(18px,3vw,32px)", borderRadius: 14, fontSize: "clamp(13px,1.8vw,15px)", fontWeight: 800,
               background: "linear-gradient(135deg, #7b5ea7, #3ee6c4)", color: "#fff",
               textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8,
               boxShadow: "0 8px 30px rgba(123,94,167,0.3)",
@@ -253,7 +254,7 @@ export default function SycPage() {
               🥞 PancakeSwap에서 구매
             </a>
             <a href={`https://bscscan.com/token/${CONTRACT}`} target="_blank" rel="noopener noreferrer" style={{
-              padding: "14px 32px", borderRadius: 14, fontSize: 15, fontWeight: 800,
+              padding: "clamp(10px,1.5vw,14px) clamp(18px,3vw,32px)", borderRadius: 14, fontSize: "clamp(13px,1.8vw,15px)", fontWeight: 800,
               background: "rgba(255,255,255,0.06)", color: "#f5f5f7",
               textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8,
               border: "1px solid rgba(255,255,255,0.1)",
@@ -267,7 +268,7 @@ export default function SycPage() {
       {/* ═══ 통계 바 ═══ */}
       <section style={{ background: "rgba(255,255,255,0.02)", borderTop: "1px solid rgba(255,255,255,0.05)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
         <div className="section-container stat-grid" style={{
-          display: "flex", justifyContent: "center", gap: 48, padding: "36px 24px", flexWrap: "wrap",
+          display: "flex", justifyContent: "center", gap: "clamp(16px,3vw,48px)", padding: "clamp(14px,2.5vw,36px) clamp(12px,2vw,24px)", flexWrap: "wrap",
         }}>
           {[
             { label: "총 발행량", value: "1,000,000,000 SYC" },
@@ -277,26 +278,26 @@ export default function SycPage() {
           ].map((s, i) => (
             <div key={i} style={{ textAlign: "center" }}>
               <div style={{ fontSize: 11, color: "#86868b", letterSpacing: 1, marginBottom: 6, textTransform: "uppercase" }}>{s.label}</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: "#f5f5f7" }}>{s.value}</div>
+              <div style={{ fontSize: "clamp(14px,2vw,18px)", fontWeight: 800, color: "#f5f5f7" }}>{s.value}</div>
             </div>
           ))}
         </div>
       </section>
 
       {/* ═══ 1. SYC 코인이란? ═══ */}
-      <section className="syc-section" style={{ padding: "100px 24px" }}>
+      <section className="syc-section" style={{ padding: "clamp(36px,8vw,100px) clamp(14px,3vw,24px)" }}>
         <div className="section-container">
-          <div style={{ textAlign: "center", marginBottom: 60 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, color: "#7b5ea7", marginBottom: 12 }}>ABOUT SYC</div>
-            <h2 className="section-title" style={{ fontSize: 36, fontWeight: 900, marginBottom: 16 }}>
+          <div style={{ textAlign: "center", marginBottom: "clamp(24px,5vw,60px)" }}>
+            <div style={{ fontSize: "clamp(10px,1.3vw,12px)", fontWeight: 700, letterSpacing: "clamp(2px,0.3vw,3px)", color: "#7b5ea7", marginBottom: 12 }}>ABOUT SYC</div>
+            <h2 className="section-title" style={{ fontSize: "clamp(20px,4vw,36px)", fontWeight: 900, marginBottom: "clamp(8px,1.5vw,16px)" }}>
               SY Coin은 <span className="gradient-text">실사용 가치</span>로 작동합니다
             </h2>
-            <p style={{ fontSize: 15, color: "#86868b", maxWidth: 600, margin: "0 auto", lineHeight: 1.8 }}>
+            <p style={{ fontSize: "clamp(12px,1.8vw,15px)", color: "#86868b", maxWidth: 600, margin: "0 auto", lineHeight: 1.8 }}>
               투기가 아닌, 실제 제조업 매출과 AI 서비스 수익이 토큰 경제를 뒷받침합니다.
             </p>
           </div>
 
-          <div className="benefit-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20 }}>
+          <div className="benefit-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "clamp(8px,2vw,20px)" }}>
             {[
               {
                 icon: "🏭", title: "건축자재 쇼핑몰",
@@ -316,12 +317,12 @@ export default function SycPage() {
             ].map((item, i) => (
               <div key={i} className="card-hover" style={{
                 background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
-                borderRadius: 20, padding: "36px 28px",
+                borderRadius: "clamp(12px,2vw,20px)", padding: "clamp(16px,3vw,36px) clamp(14px,2.5vw,28px)",
                 animation: `fadeInUp 0.6s ease ${i * 0.15}s both`,
               }}>
-                <div style={{ fontSize: 40, marginBottom: 16 }}>{item.icon}</div>
-                <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 12, color: item.color }}>{item.title}</h3>
-                <p style={{ fontSize: 14, color: "#86868b", lineHeight: 1.7 }}>{item.desc}</p>
+                <div style={{ fontSize: "clamp(28px,4vw,40px)", marginBottom: "clamp(8px,1.5vw,16px)" }}>{item.icon}</div>
+                <h3 style={{ fontSize: "clamp(14px,2vw,18px)", fontWeight: 800, marginBottom: "clamp(6px,1vw,12px)", color: item.color }}>{item.title}</h3>
+                <p style={{ fontSize: "clamp(11px,1.6vw,14px)", color: "#86868b", lineHeight: 1.7 }}>{item.desc}</p>
               </div>
             ))}
           </div>
@@ -329,10 +330,10 @@ export default function SycPage() {
           {/* 토큰 수요 구조 */}
           <div style={{
             marginTop: 48, background: "rgba(123,94,167,0.06)", border: "1px solid rgba(123,94,167,0.15)",
-            borderRadius: 20, padding: "36px 32px",
+            borderRadius: "clamp(12px,2vw,20px)", padding: "clamp(16px,3vw,36px) clamp(14px,2.5vw,32px)",
           }}>
-            <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 20 }}>📊 토큰 수요 창출 구조</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="benefit-grid">
+            <h3 style={{ fontSize: "clamp(14px,2vw,18px)", fontWeight: 800, marginBottom: "clamp(10px,2vw,20px)" }}>📊 토큰 수요 창출 구조</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(8px,1.5vw,16px)" }} className="benefit-grid">
               {[
                 { emoji: "💳", title: "결제 수요", desc: "건축자재 구매 + AI 구독료를 SYC로 결제" },
                 { emoji: "💰", title: "할인 수요", desc: "SYC 결제 시 5~30% 할인 → 현금보다 이득" },
@@ -343,7 +344,7 @@ export default function SycPage() {
                   <span style={{ fontSize: 24 }}>{d.emoji}</span>
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: "#f5f5f7", marginBottom: 4 }}>{d.title}</div>
-                    <div style={{ fontSize: 13, color: "#86868b", lineHeight: 1.6 }}>{d.desc}</div>
+                    <div style={{ fontSize: "clamp(11px,1.5vw,13px)", color: "#86868b", lineHeight: 1.6 }}>{d.desc}</div>
                   </div>
                 </div>
               ))}
@@ -355,19 +356,19 @@ export default function SycPage() {
       <div className="glow-line" style={{ width: "60%" }} />
 
       {/* ═══ 2. SYC 구매 방법 (PancakeSwap 가이드) ═══ */}
-      <section className="syc-section" style={{ padding: "100px 24px" }}>
+      <section className="syc-section" style={{ padding: "clamp(36px,8vw,100px) clamp(14px,3vw,24px)" }}>
         <div className="section-container">
-          <div style={{ textAlign: "center", marginBottom: 60 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, color: "#3ee6c4", marginBottom: 12 }}>HOW TO BUY</div>
-            <h2 className="section-title" style={{ fontSize: 36, fontWeight: 900, marginBottom: 16 }}>
+          <div style={{ textAlign: "center", marginBottom: "clamp(24px,5vw,60px)" }}>
+            <div style={{ fontSize: "clamp(10px,1.3vw,12px)", fontWeight: 700, letterSpacing: "clamp(2px,0.3vw,3px)", color: "#3ee6c4", marginBottom: 12 }}>HOW TO BUY</div>
+            <h2 className="section-title" style={{ fontSize: "clamp(20px,4vw,36px)", fontWeight: 900, marginBottom: "clamp(8px,1.5vw,16px)" }}>
               SYC <span className="gradient-text">구매 방법</span>
             </h2>
-            <p style={{ fontSize: 15, color: "#86868b", maxWidth: 550, margin: "0 auto", lineHeight: 1.8 }}>
+            <p style={{ fontSize: "clamp(12px,1.8vw,15px)", color: "#86868b", maxWidth: 550, margin: "0 auto", lineHeight: 1.8 }}>
               PancakeSwap에서 BNB로 간편하게 SYC를 구매할 수 있어요
             </p>
           </div>
 
-          <div className="step-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+          <div className="step-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(8px,2vw,20px)" }}>
             {[
               {
                 step: 1, title: "메타마스크 설치",
@@ -392,7 +393,7 @@ export default function SycPage() {
             ].map((s, i) => (
               <div key={i} className={`step-card card-hover ${activeStep === i ? "step-active" : ""}`} style={{
                 background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 20, padding: "32px 28px", position: "relative", overflow: "hidden",
+                borderRadius: "clamp(12px,2vw,20px)", padding: "clamp(16px,3vw,32px) clamp(14px,2.5vw,28px)", position: "relative", overflow: "hidden",
               }}>
                 <div style={{
                   position: "absolute", top: -10, right: -10, fontSize: 80, opacity: 0.04, fontWeight: 900,
@@ -409,7 +410,7 @@ export default function SycPage() {
                     <div style={{ fontSize: 16, fontWeight: 800, color: "#f5f5f7" }}>{s.title}</div>
                   </div>
                 </div>
-                <p style={{ fontSize: 13, color: "#86868b", lineHeight: 1.7 }}>{s.desc}</p>
+                <p style={{ fontSize: "clamp(11px,1.5vw,13px)", color: "#86868b", lineHeight: 1.7 }}>{s.desc}</p>
               </div>
             ))}
           </div>
@@ -418,7 +419,7 @@ export default function SycPage() {
           <div style={{ textAlign: "center", marginTop: 40 }}>
             <a href="https://pancakeswap.finance/swap?outputCurrency=0x6b2880CE191c790cA47329Dd761B07b71284785F&chainId=56" target="_blank" rel="noopener noreferrer" style={{
               display: "inline-flex", alignItems: "center", gap: 10,
-              padding: "16px 36px", borderRadius: 14, fontSize: 16, fontWeight: 800,
+              padding: "clamp(12px,2vw,16px) clamp(20px,3vw,36px)", borderRadius: 14, fontSize: "clamp(13px,2vw,16px)", fontWeight: 800,
               background: "linear-gradient(135deg, #7b5ea7, #3ee6c4)", color: "#fff",
               textDecoration: "none", boxShadow: "0 8px 30px rgba(123,94,167,0.3)",
             }}>
@@ -434,19 +435,19 @@ export default function SycPage() {
       <div className="glow-line" style={{ width: "60%" }} />
 
       {/* ═══ 3. SYC 결제 할인 혜택 ═══ */}
-      <section className="syc-section" style={{ padding: "100px 24px" }}>
+      <section className="syc-section" style={{ padding: "clamp(36px,8vw,100px) clamp(14px,3vw,24px)" }}>
         <div className="section-container">
-          <div style={{ textAlign: "center", marginBottom: 60 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, color: "#e8b931", marginBottom: 12 }}>BENEFITS</div>
-            <h2 className="section-title" style={{ fontSize: 36, fontWeight: 900, marginBottom: 16 }}>
+          <div style={{ textAlign: "center", marginBottom: "clamp(24px,5vw,60px)" }}>
+            <div style={{ fontSize: "clamp(10px,1.3vw,12px)", fontWeight: 700, letterSpacing: "clamp(2px,0.3vw,3px)", color: "#e8b931", marginBottom: 12 }}>BENEFITS</div>
+            <h2 className="section-title" style={{ fontSize: "clamp(20px,4vw,36px)", fontWeight: 900, marginBottom: "clamp(8px,1.5vw,16px)" }}>
               SYC 결제 <span className="gradient-text">할인 혜택</span>
             </h2>
-            <p style={{ fontSize: 15, color: "#86868b", maxWidth: 550, margin: "0 auto", lineHeight: 1.8 }}>
+            <p style={{ fontSize: "clamp(12px,1.8vw,15px)", color: "#86868b", maxWidth: 550, margin: "0 auto", lineHeight: 1.8 }}>
               SYC로 결제하면 현금보다 무조건 이득!
             </p>
           </div>
 
-          <div className="benefit-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20 }}>
+          <div className="benefit-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "clamp(8px,2vw,20px)" }}>
             {[
               {
                 icon: "🏗️",
@@ -475,19 +476,19 @@ export default function SycPage() {
             ].map((b, i) => (
               <div key={i} className="card-hover" style={{
                 background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
-                borderRadius: 20, padding: "36px 28px", position: "relative", overflow: "hidden",
+                borderRadius: "clamp(12px,2vw,20px)", padding: "clamp(16px,3vw,36px) clamp(14px,2.5vw,28px)", position: "relative", overflow: "hidden",
               }}>
                 <div style={{
                   position: "absolute", top: 0, left: 0, right: 0, height: 4,
                   background: b.gradient, borderRadius: "20px 20px 0 0",
                 }} />
                 <div style={{ fontSize: 40, marginBottom: 12 }}>{b.icon}</div>
-                <h3 style={{ fontSize: 18, fontWeight: 800, color: "#f5f5f7", marginBottom: 8 }}>{b.title}</h3>
+                <h3 style={{ fontSize: "clamp(14px,2vw,18px)", fontWeight: 800, color: "#f5f5f7", marginBottom: "clamp(4px,0.8vw,8px)" }}>{b.title}</h3>
                 <div style={{
                   display: "inline-block", padding: "4px 14px", borderRadius: 20,
-                  background: b.gradient, color: "#fff", fontSize: 20, fontWeight: 900, marginBottom: 14,
+                  background: b.gradient, color: "#fff", fontSize: "clamp(15px,2.5vw,20px)", fontWeight: 900, marginBottom: 14,
                 }}>{b.discount} 할인</div>
-                <p style={{ fontSize: 13, color: "#86868b", lineHeight: 1.7, marginBottom: 16 }}>{b.desc}</p>
+                <p style={{ fontSize: "clamp(11px,1.5vw,13px)", color: "#86868b", lineHeight: 1.7, marginBottom: 16 }}>{b.desc}</p>
                 <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 14 }}>
                   {b.details.map((d, j) => (
                     <div key={j} style={{ fontSize: 12, color: "#6e6e73", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
@@ -508,7 +509,7 @@ export default function SycPage() {
             <span style={{ fontSize: 32 }}>🔄</span>
             <div>
               <div style={{ fontSize: 15, fontWeight: 800, color: "#f5f5f7", marginBottom: 4 }}>교차 보상 시스템</div>
-              <div style={{ fontSize: 13, color: "#86868b", lineHeight: 1.7 }}>
+              <div style={{ fontSize: "clamp(11px,1.5vw,13px)", color: "#86868b", lineHeight: 1.7 }}>
                 건축자재 구매 시 AI 서비스 할인쿠폰 지급 ↔ AI 구독 시 쇼핑몰 리워드 적립!
               </div>
             </div>
@@ -519,11 +520,11 @@ export default function SycPage() {
       <div className="glow-line" style={{ width: "60%" }} />
 
       {/* ═══ 4. 토큰 정보 (토큰노믹스 + BSCscan) ═══ */}
-      <section className="syc-section" style={{ padding: "100px 24px" }}>
+      <section className="syc-section" style={{ padding: "clamp(36px,8vw,100px) clamp(14px,3vw,24px)" }}>
         <div className="section-container">
-          <div style={{ textAlign: "center", marginBottom: 60 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, color: "#7b5ea7", marginBottom: 12 }}>TOKENOMICS</div>
-            <h2 className="section-title" style={{ fontSize: 36, fontWeight: 900, marginBottom: 16 }}>
+          <div style={{ textAlign: "center", marginBottom: "clamp(24px,5vw,60px)" }}>
+            <div style={{ fontSize: "clamp(10px,1.3vw,12px)", fontWeight: 700, letterSpacing: "clamp(2px,0.3vw,3px)", color: "#7b5ea7", marginBottom: 12 }}>TOKENOMICS</div>
+            <h2 className="section-title" style={{ fontSize: "clamp(20px,4vw,36px)", fontWeight: 900, marginBottom: "clamp(8px,1.5vw,16px)" }}>
               <span className="gradient-text">토큰 정보</span>
             </h2>
           </div>
@@ -540,10 +541,10 @@ export default function SycPage() {
             ].map((t, i) => (
               <div key={i} style={{
                 background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
-                borderRadius: 14, padding: "20px 22px",
+                borderRadius: "clamp(10px,1.5vw,14px)", padding: "clamp(12px,2vw,20px) clamp(12px,2vw,22px)",
               }}>
                 <div style={{ fontSize: 11, color: "#86868b", marginBottom: 6, letterSpacing: 1 }}>{t.label}</div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "#f5f5f7" }}>{t.value}</div>
+                <div style={{ fontSize: "clamp(12px,1.8vw,15px)", fontWeight: 700, color: "#f5f5f7" }}>{t.value}</div>
               </div>
             ))}
           </div>
@@ -551,9 +552,9 @@ export default function SycPage() {
           {/* 배분 구조 */}
           <div style={{
             background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
-            borderRadius: 20, padding: "36px 32px", marginBottom: 40,
+            borderRadius: "clamp(12px,2vw,20px)", padding: "clamp(16px,3vw,36px) clamp(14px,2.5vw,32px)", marginBottom: "clamp(20px,4vw,40px)",
           }}>
-            <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 24 }}>📊 토큰 배분 구조</h3>
+            <h3 style={{ fontSize: "clamp(14px,2vw,18px)", fontWeight: 800, marginBottom: "clamp(12px,2vw,24px)" }}>📊 토큰 배분 구조</h3>
             {[
               { label: "서비스 생태계", pct: 30, amount: "3억 SYC", color: "#7b5ea7", desc: "결제 보상, 할인 재원, 리워드 풀" },
               { label: "공개 판매", pct: 20, amount: "2억 SYC", color: "#3ee6c4", desc: "초기 자금 확보, DEX 유동성 공급" },
@@ -585,7 +586,7 @@ export default function SycPage() {
           {/* 컨트랙트 정보 */}
           <div style={{
             background: "linear-gradient(135deg, rgba(123,94,167,0.08), rgba(62,230,196,0.06))",
-            border: "1px solid rgba(123,94,167,0.15)", borderRadius: 20, padding: "32px",
+            border: "1px solid rgba(123,94,167,0.15)", borderRadius: "clamp(12px,2vw,20px)", padding: "clamp(16px,3vw,32px)",
           }}>
             <h3 style={{ fontSize: 16, fontWeight: 800, marginBottom: 20 }}>🔗 블록체인 정보</h3>
             <div style={{ display: "grid", gap: 14 }}>
@@ -615,16 +616,16 @@ export default function SycPage() {
       <div className="glow-line" style={{ width: "60%" }} />
 
       {/* ═══ 로드맵 ═══ */}
-      <section className="syc-section" style={{ padding: "100px 24px" }}>
+      <section className="syc-section" style={{ padding: "clamp(36px,8vw,100px) clamp(14px,3vw,24px)" }}>
         <div className="section-container">
-          <div style={{ textAlign: "center", marginBottom: 60 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, color: "#3ee6c4", marginBottom: 12 }}>ROADMAP</div>
-            <h2 className="section-title" style={{ fontSize: 36, fontWeight: 900 }}>
+          <div style={{ textAlign: "center", marginBottom: "clamp(24px,5vw,60px)" }}>
+            <div style={{ fontSize: "clamp(10px,1.3vw,12px)", fontWeight: 700, letterSpacing: "clamp(2px,0.3vw,3px)", color: "#3ee6c4", marginBottom: 12 }}>ROADMAP</div>
+            <h2 className="section-title" style={{ fontSize: "clamp(20px,4vw,36px)", fontWeight: 900 }}>
               <span className="gradient-text">로드맵</span>
             </h2>
           </div>
 
-          <div className="roadmap-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+          <div className="roadmap-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(8px,2vw,20px)" }}>
             {[
               {
                 phase: "Phase 1", title: "기반 구축", status: "✅ 진행 중",
@@ -649,18 +650,18 @@ export default function SycPage() {
             ].map((r, i) => (
               <div key={i} className="card-hover" style={{
                 background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
-                borderRadius: 20, padding: "32px 28px", position: "relative",
+                borderRadius: "clamp(12px,2vw,20px)", padding: "clamp(16px,3vw,32px) clamp(14px,2.5vw,28px)", position: "relative",
                 borderLeft: `3px solid ${r.color}`,
               }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
                   <div>
                     <div style={{ fontSize: 11, color: r.color, fontWeight: 700, letterSpacing: 1 }}>{r.phase}</div>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: "#f5f5f7" }}>{r.title}</div>
+                    <div style={{ fontSize: "clamp(14px,2vw,18px)", fontWeight: 800, color: "#f5f5f7" }}>{r.title}</div>
                   </div>
                   <div style={{ fontSize: 12, color: "#86868b" }}>{r.status}</div>
                 </div>
                 {r.items.map((item, j) => (
-                  <div key={j} style={{ fontSize: 13, color: "#86868b", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
+                  <div key={j} style={{ fontSize: "clamp(11px,1.5vw,13px)", color: "#86868b", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ color: r.color, fontSize: 10 }}>●</span> {item}
                   </div>
                 ))}
@@ -676,7 +677,7 @@ export default function SycPage() {
         background: "linear-gradient(180deg, transparent, rgba(123,94,167,0.08))",
       }}>
         <div className="section-container" style={{ textAlign: "center" }}>
-          <h2 style={{ fontSize: 32, fontWeight: 900, marginBottom: 16 }}>
+          <h2 style={{ fontSize: "clamp(22px,4vw,32px)", fontWeight: 900, marginBottom: 16 }}>
             지금 <span className="gradient-text">SYC</span>를 시작하세요
           </h2>
           <p style={{ fontSize: 15, color: "#86868b", marginBottom: 32, lineHeight: 1.8 }}>
@@ -684,14 +685,14 @@ export default function SycPage() {
           </p>
           <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
             <a href="https://pancakeswap.finance/swap?outputCurrency=0x6b2880CE191c790cA47329Dd761B07b71284785F&chainId=56" target="_blank" rel="noopener noreferrer" style={{
-              padding: "16px 36px", borderRadius: 14, fontSize: 16, fontWeight: 800,
+              padding: "clamp(12px,2vw,16px) clamp(20px,3vw,36px)", borderRadius: 14, fontSize: "clamp(13px,2vw,16px)", fontWeight: 800,
               background: "linear-gradient(135deg, #7b5ea7, #3ee6c4)", color: "#fff",
               textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8,
             }}>
               🥞 SYC 구매하기
             </a>
             <Link href="/" style={{
-              padding: "16px 36px", borderRadius: 14, fontSize: 16, fontWeight: 800,
+              padding: "clamp(12px,2vw,16px) clamp(20px,3vw,36px)", borderRadius: 14, fontSize: "clamp(13px,2vw,16px)", fontWeight: 800,
               background: "rgba(255,255,255,0.06)", color: "#f5f5f7",
               textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8,
               border: "1px solid rgba(255,255,255,0.1)",
