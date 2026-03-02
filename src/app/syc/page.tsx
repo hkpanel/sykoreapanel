@@ -426,7 +426,7 @@ export default function SycPage() {
               🥞 PancakeSwap에서 SYC 구매하기
             </a>
             <div style={{ fontSize: 12, color: "#86868b", marginTop: 12 }}>
-              컨트랙트 주소: <code style={{ color: "#3ee6c4", background: "rgba(62,230,196,0.1)", padding: "2px 8px", borderRadius: 6, fontSize: 11 }}>{CONTRACT}</code>
+              컨트랙트 주소: <code style={{ color: "#3ee6c4", background: "rgba(62,230,196,0.1)", padding: "2px 8px", borderRadius: 6, fontSize: 10, wordBreak: "break-all", display: "inline-block", maxWidth: "100%" }}>{CONTRACT}</code>
             </div>
           </div>
         </div>
@@ -593,7 +593,7 @@ export default function SycPage() {
               <div>
                 <div style={{ fontSize: 12, color: "#86868b", marginBottom: 4 }}>컨트랙트 주소</div>
                 <a href={`https://bscscan.com/token/${CONTRACT}`} target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: 14, color: "#3ee6c4", wordBreak: "break-all", textDecoration: "none" }}>
+                  style={{ fontSize: 12, color: "#3ee6c4", wordBreak: "break-all", textDecoration: "none" }}>
                   {CONTRACT} ↗
                 </a>
               </div>
