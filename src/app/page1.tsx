@@ -1265,32 +1265,6 @@ export default function Home() {
             <span style={{ color: "rgba(255,255,255,0.15)" }}>|</span>
             <a href="/syc" style={{ fontSize: 12, fontWeight: 700, color: "#3ee6c4", textDecoration: "none" }}>💰 SYC 토큰 구매</a>
           </div>
-
-          {/* SYC 소개 페이지 임팩트 배너 */}
-          <a href="/syc" style={{
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 14,
-            maxWidth: 520, margin: "0 auto 8px", padding: "14px 28px", borderRadius: 16,
-            background: "linear-gradient(135deg, rgba(123,94,167,0.25), rgba(62,230,196,0.18))",
-            border: "1px solid rgba(62,230,196,0.25)",
-            textDecoration: "none", cursor: "pointer",
-            transition: "all 0.3s ease",
-            position: "relative", overflow: "hidden",
-          }}>
-            <div style={{
-              position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-              background: "linear-gradient(90deg, transparent, rgba(62,230,196,0.08), transparent)",
-              animation: "bannerShimmer 3s ease-in-out infinite",
-            }} />
-            <Image src="/syc-logo.png" alt="SYC" width={28} height={28} style={{ borderRadius: "50%", flexShrink: 0 }} />
-            <div style={{ textAlign: "left" }}>
-              <div style={{ fontSize: 14, fontWeight: 800, color: "#f5f5f7" }}>
-                SY Coin — 건축자재 × AI × 블록체인
-              </div>
-              <div style={{ fontSize: 11, color: "#3ee6c4", fontWeight: 600 }}>
-                코인 소개 · 구매 방법 · 할인 혜택 보러가기 →
-              </div>
-            </div>
-          </a>
         </div>
       </section>
 
