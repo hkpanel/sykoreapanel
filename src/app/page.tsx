@@ -928,6 +928,10 @@ export default function Home() {
     }
 
     setPaymentLoading(true);
+    // 모바일에서 결제창이 장바구니 패널에 가려지므로 패널을 먼저 닫음
+    setShowCart(false);
+    // 패널 닫힌 후 결제창이 뜨도록 약간 딜레이
+    await new Promise(r => setTimeout(r, 300));
 
     try {
       // 6. 포트원 결제창 호출
@@ -951,6 +955,7 @@ export default function Home() {
           alert(`결제 실패: ${response.message || "알 수 없는 오류"}`);
         }
         setPaymentLoading(false);
+        setShowCart(true); // 결제 취소/실패 시 장바구니 다시 열기
         return;
       }
 
@@ -965,6 +970,7 @@ export default function Home() {
       if (!verifyResult.success) {
         alert(`결제 검증 실패: ${verifyResult.message}`);
         setPaymentLoading(false);
+        setShowCart(true);
         return;
       }
 
@@ -1008,6 +1014,7 @@ export default function Home() {
     } catch (err) {
       console.error("결제 처리 오류:", err);
       alert("결제 중 오류가 발생했습니다. 다시 시도해주세요.");
+      setShowCart(true); // 에러 시 장바구니 다시 열기
     } finally {
       setPaymentLoading(false);
     }
