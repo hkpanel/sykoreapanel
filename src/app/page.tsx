@@ -803,14 +803,6 @@ export default function Home() {
     return () => { window.ethereum?.removeListener?.("accountsChanged", handleAccountsChanged); };
   }, []);
 
-  // 원화→SYC 실시간 환산
-  const cartSycRealtime = sycPrice ? krwToSyc(cartTotal, sycPrice) : cartSyc;
-  const deliverySycRealtime = sycPrice && deliveryFee > 0 ? krwToSyc(deliveryFee, sycPrice) : Math.round(deliveryFee / 100);
-  const sycDiscount = Math.floor(cartSycRealtime * 0.1);
-  const sycSubtotalAfterDiscount = cartSycRealtime - sycDiscount + deliverySycRealtime;
-  const sycTax = Math.floor(sycSubtotalAfterDiscount * 0.1);
-  const sycFinalTotal = sycSubtotalAfterDiscount + sycTax;
-
   const handlePayment = async () => {
     // 1. 로그인 확인
     if (!user) {
@@ -1135,6 +1127,14 @@ export default function Home() {
     return 0;
   };
   const deliveryFee = calcDeliveryFee();
+
+  // 원화→SYC 실시간 환산
+  const cartSycRealtime = sycPrice ? krwToSyc(cartTotal, sycPrice) : cartSyc;
+  const deliverySycRealtime = sycPrice && deliveryFee > 0 ? krwToSyc(deliveryFee, sycPrice) : Math.round(deliveryFee / 100);
+  const sycDiscount = Math.floor(cartSycRealtime * 0.1);
+  const sycSubtotalAfterDiscount = cartSycRealtime - sycDiscount + deliverySycRealtime;
+  const sycTax = Math.floor(sycSubtotalAfterDiscount * 0.1);
+  const sycFinalTotal = sycSubtotalAfterDiscount + sycTax;
 
   // 행가도어 포함 시 택배 선택 불가 → 자동 전환
   useEffect(() => {

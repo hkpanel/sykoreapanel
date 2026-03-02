@@ -139,22 +139,32 @@ export async function getChainId(): Promise<string> {
 }
 
 // ═══════════════════════════════════════
-//  ethers.js 동적 로드 (CDN)
+//  ethers.js (CDN으로 로드 — npm 설치 불필요!)
 // ═══════════════════════════════════════
 
-let ethersModule: typeof import("ethers") | null = null;
+let ethersModule: any | null = null;
 
-async function getEthers() {
+async function getEthers(): Promise<any> {
   if (ethersModule) return ethersModule;
 
-  // Next.js에서는 ethers를 npm으로 설치해서 사용
-  // (layout.tsx에 CDN 스크립트 불필요)
-  try {
-    ethersModule = await import("ethers");
+  // window.ethers가 이미 있으면 (CDN 로드 완료)
+  if (typeof window !== "undefined" && (window as any).ethers) {
+    ethersModule = (window as any).ethers;
     return ethersModule;
-  } catch {
-    throw new Error("ethers 라이브러리를 불러올 수 없습니다.");
   }
+
+  // CDN에서 ethers.js 동적 로드
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js";
+    script.onload = () => {
+      ethersModule = (window as any).ethers;
+      if (ethersModule) resolve(ethersModule);
+      else reject(new Error("ethers 로드 실패"));
+    };
+    script.onerror = () => reject(new Error("ethers CDN 로드 실패"));
+    document.head.appendChild(script);
+  });
 }
 
 // ═══════════════════════════════════════
