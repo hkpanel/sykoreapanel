@@ -928,11 +928,49 @@ export default function Home() {
     }
 
     setPaymentLoading(true);
-    // 모바일에서 결제창이 장바구니 패널에 가려지므로 패널을 먼저 닫음
+
+    // 모바일 여부 판별
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    // ═══════════════════════════════════════════
+    // 모바일: 리다이렉트 방식 (await 사용 안 함!)
+    // ═══════════════════════════════════════════
+    if (isMobile) {
+      // 주문정보를 sessionStorage에 저장 (결제 완료 후 복원용)
+      sessionStorage.setItem("pendingOrder", JSON.stringify({
+        paymentId, orderName, totalAmount, cartSnapshot: cart,
+        delivery, deliveryFee, selectedAddrId, truckRegion,
+        subtotal, tax,
+      }));
+
+      // 장바구니 닫기
+      setShowCart(false);
+
+      // requestPayment 호출 (await 안 함! 페이지가 이동하므로)
+      window.PortOne.requestPayment({
+        storeId: process.env.NEXT_PUBLIC_PORTONE_STORE_ID || "store-7d43cea3-aa09-4466-a1fb-4a2840baf3fd",
+        channelKey: process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || "channel-key-f238aa16-fa21-42c6-8b96-3eb108805040",
+        paymentId,
+        orderName,
+        totalAmount,
+        currency: "CURRENCY_KRW",
+        payMethod: "CARD",
+        customer: {
+          fullName: user.displayName || undefined,
+          email: user.email || undefined,
+        },
+        redirectUrl: `${window.location.origin}/payment/complete`,
+      });
+      // 모바일은 여기서 페이지 자체가 이동함 → 아래 코드 실행 안 됨
+      return;
+    }
+
+    // ═══════════════════════════════════════════
+    // PC: 팝업(iframe) 방식 (기존 await 방식)
+    // ═══════════════════════════════════════════
     setShowCart(false);
 
     try {
-      // 6. 포트원 결제창 호출 (팝업 방식 - PC/모바일 동일)
       const response = await window.PortOne.requestPayment({
         storeId: process.env.NEXT_PUBLIC_PORTONE_STORE_ID || "store-7d43cea3-aa09-4466-a1fb-4a2840baf3fd",
         channelKey: process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || "channel-key-f238aa16-fa21-42c6-8b96-3eb108805040",

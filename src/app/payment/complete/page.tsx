@@ -1,26 +1,34 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 function PaymentCompleteContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const [status, setStatus] = useState<"loading" | "success" | "fail">("loading");
   const [message, setMessage] = useState("");
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const verify = async () => {
-      // 포트원 리다이렉트 후 쿼리 파라미터로 paymentId가 전달됨
-      const paymentId = searchParams.get("paymentId");
-      const code = searchParams.get("code"); // 에러 코드 (취소/실패 시)
+      // 포트원 V2 리다이렉트 후 쿼리 파라미터:
+      // 성공: ?payment_id=xxx&tx_id=xxx
+      // 실패: ?code=FAILURE_TYPE_PG&message=xxx&payment_id=xxx
+      const paymentId = searchParams.get("payment_id") || searchParams.get("paymentId");
+      const code = searchParams.get("code");
+      const txId = searchParams.get("tx_id"); // 포트원 트랜잭션 ID (로그용)
+      console.log("결제 리다이렉트:", { paymentId, code, txId });
 
-      // 사용자가 결제를 취소한 경우
-      if (code === "USER_CANCEL" || code) {
+      // 사용자가 결제를 취소하거나 실패한 경우
+      if (code) {
         setStatus("fail");
-        setMessage(code === "USER_CANCEL" ? "결제가 취소되었습니다." : `결제 실패: ${searchParams.get("message") || "알 수 없는 오류"}`);
+        setMessage(
+          code === "USER_CANCEL"
+            ? "결제가 취소되었습니다."
+            : `결제 실패: ${searchParams.get("message") || "알 수 없는 오류"}`
+        );
+        sessionStorage.removeItem("pendingOrder");
         return;
       }
 
@@ -55,13 +63,23 @@ function PaymentCompleteContent() {
         }
 
         // Firestore에 주문 저장
-        const { getAuth } = await import("firebase/auth");
+        const { getAuth, onAuthStateChanged } = await import("firebase/auth");
         const { getFirestore, collection, addDoc, serverTimestamp, deleteDoc, getDocs } = await import("firebase/firestore");
         const firebaseModule = await import("@/lib/firebase");
         const app = firebaseModule.default;
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const user = auth.currentUser;
+
+        // 리다이렉트 후 Auth 상태 복원 대기 (최대 5초)
+        const user = await new Promise<import("firebase/auth").User | null>((resolve) => {
+          if (auth.currentUser) { resolve(auth.currentUser); return; }
+          const timeout = setTimeout(() => resolve(null), 5000);
+          const unsub = onAuthStateChanged(auth, (u) => {
+            clearTimeout(timeout);
+            unsub();
+            resolve(u);
+          });
+        });
 
         if (user) {
           await addDoc(collection(db, "users", user.uid, "orders"), {
