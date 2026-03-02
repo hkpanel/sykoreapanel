@@ -1594,6 +1594,18 @@ export default function Home() {
             {cart.length > 0 && (
               <div style={{ padding: "clamp(14px,2vw,20px) clamp(16px,2.5vw,28px)", borderTop: "1px solid #e8e8ed", background: "#fafafa" }}>
 
+                {/* 상품 요약 (모바일에서 결제 영역 스크롤 시에도 상품 확인 가능) */}
+                <div style={{ marginBottom: 16, padding: "10px 14px", background: "#fff", borderRadius: 12, border: "1px solid #e8e8ed" }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#1d1d1f", marginBottom: 8 }}>📦 주문 상품 ({cartCount}개)</div>
+                  {cart.map(item => (
+                    <div key={item.key} style={{ fontSize: 11, color: "#6e6e73", marginBottom: 4, lineHeight: 1.5 }}>
+                      <span style={{ fontWeight: 700, color: "#1d1d1f" }}>{item.productName}</span>
+                      {" "}{item.size} / {item.color}{item.colorSub ? ` (${item.colorSub})` : ""} × {item.qty}개
+                      <span style={{ float: "right", fontWeight: 700, color: "#1d1d1f" }}>₩{(item.retailPrice * item.qty).toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+
                 {/* 배송지 선택 */}
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: "#1d1d1f", marginBottom: 8 }}>배송지</div>

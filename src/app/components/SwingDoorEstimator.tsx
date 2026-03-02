@@ -87,11 +87,18 @@ export default function SwingDoorEstimator({ onAddCart }: {
 
   const handleAddCart = () => {
     if (!estimate) return;
+    const sizeParts = [
+      `${widthMm}×${heightMm}`,
+      material,
+      hasFrame ? `${frameThick} ${frameSides}` : "후레임없음",
+      lockType,
+    ];
+    if (hasFixWindow) sizeParts.push(`FIX ${fixW}×${fixH} ${glassType}`);
     onAddCart({
       key: `swing-${Date.now()}`,
       productId: "swing-door",
       productName: `스윙도어 ${doorType}`,
-      size: `${widthMm}×${heightMm} / ${material} / ${hasFrame ? frameThick + frameSides : "후레임없음"}`,
+      size: sizeParts.join(" / "),
       color,
       retailPrice: estimate.retailPrice,
       qty,

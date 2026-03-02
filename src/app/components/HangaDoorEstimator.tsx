@@ -123,11 +123,20 @@ export default function HangaDoorEstimator({ onAddCart }: {
 
   const handleAddCart = () => {
     if (!estimate) return;
+    const sizeParts = [
+      `${widthMm}×${heightMm}`,
+      doorThick,
+      assembly,
+      trackType,
+      mfgType,
+      `${panelType}-${panelMaterial}${panelSubType ? `-${panelSubType}` : ""}`,
+    ];
+    if (hasSideDoor) sizeParts.push("쪽문포함");
     onAddCart({
       key: `hanga-${Date.now()}`,
       productId: "hanga-door",
       productName: `행가도어 ${doorType}`,
-      size: `${widthMm}×${heightMm} / ${doorThick} / ${panelType}-${panelMaterial}`,
+      size: sizeParts.join(" / "),
       color: panelColor,
       retailPrice: estimate.retailPrice,
       qty,
