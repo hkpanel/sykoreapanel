@@ -31,6 +31,11 @@ export const metadata: Metadata = {
     description: "스윙도어 · 행가도어 · 조립식판넬 · 후레싱 전문 제조",
     images: ["https://www.sykoreapanel.com/og-image.png"],
   },
+  verification: {
+    other: {
+      "naver-site-verification": "1a58741e284115bb5a9f89708ae41262f91d7446",
+    },
+  },
 };
 
 export default function RootLayout({
