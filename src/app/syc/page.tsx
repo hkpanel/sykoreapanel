@@ -167,7 +167,7 @@ export default function SycPage() {
         }}>
           {/* 로고 */}
           <div style={{ animation: "float 4s ease-in-out infinite", marginBottom: 32 }}>
-            <Image src="/syc-logo.png" alt="SYC" width={100} height={100} style={{ borderRadius: "50%", boxShadow: "0 0 60px rgba(123,94,167,0.4)", animation: "spin 6s linear infinite" }} />
+            <Image src="/syc-logo.png" alt="SYC" width={100} height={100} style={{ borderRadius: "50%", boxShadow: "0 0 60px rgba(123,94,167,0.4)" }} />
           </div>
 
           <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 4, color: "#7b5ea7", textTransform: "uppercase", marginBottom: 16 }}>

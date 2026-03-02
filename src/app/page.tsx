@@ -1272,7 +1272,7 @@ export default function Home() {
               background: "linear-gradient(90deg, transparent, rgba(62,230,196,0.08), transparent)",
               animation: "bannerShimmer 3s ease-in-out infinite",
             }} />
-            <Image src="/syc-logo.png" alt="SYC" width={32} height={32} style={{ borderRadius: "50%", flexShrink: 0, animation: "coinSpin 4s linear infinite" }} />
+            <Image src="/syc-logo.png" alt="SYC" width={32} height={32} style={{ borderRadius: "50%", flexShrink: 0, animation: "coinSpin 4s linear infinite", boxShadow: "0 0 20px rgba(123,94,167,0.5), 0 0 40px rgba(62,230,196,0.2)", border: "2px solid #1d1d1f" }} />
             <div style={{ textAlign: "left" }}>
               <div style={{ fontSize: 15, fontWeight: 800, color: "#f5f5f7" }}>
                 SY Coin — 건축자재 × AI × 블록체인
