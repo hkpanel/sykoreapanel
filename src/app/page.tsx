@@ -1028,9 +1028,14 @@ export default function Home() {
         receiptUrl: verifyResult.payment?.receiptUrl,
       });
     } catch (err) {
+      // 모바일 리다이렉트 방식에서는 페이지 이동 시 에러가 발생할 수 있음 (정상)
+      if (isMobile) {
+        console.log("모바일 리다이렉트 결제 진행 중...", err);
+        return; // 리다이렉트 중이므로 에러 무시
+      }
       console.error("결제 처리 오류:", err);
       alert("결제 중 오류가 발생했습니다. 다시 시도해주세요.");
-      setShowCart(true); // 에러 시 장바구니 다시 열기
+      setShowCart(true);
     } finally {
       setPaymentLoading(false);
     }
