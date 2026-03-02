@@ -99,25 +99,46 @@ export default function SycPage() {
         }
         .section-container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
         @media (max-width: 768px) {
-          .hero-title { font-size: 28px !important; }
-          .hero-sub { font-size: 14px !important; }
-          .stat-grid { flex-direction: column !important; gap: 16px !important; }
-          .benefit-grid { grid-template-columns: 1fr !important; }
-          .step-grid { grid-template-columns: 1fr !important; }
-          .token-grid { grid-template-columns: 1fr 1fr !important; }
-          .roadmap-grid { grid-template-columns: 1fr !important; }
-          .footer-grid { grid-template-columns: 1fr !important; text-align: center !important; }
-          .hero-price-card { flex-direction: column !important; gap: 12px !important; padding: 16px 20px !important; }
+          /* 히어로 컴팩트 */
+          .hero-section-syc { min-height: auto !important; padding: 80px 16px 32px !important; }
+          .hero-logo-wrap { margin-bottom: 16px !important; }
+          .hero-logo-wrap img { width: 56px !important; height: 56px !important; }
+          .hero-bep { font-size: 10px !important; letter-spacing: 2px !important; margin-bottom: 8px !important; }
+          .hero-title { font-size: 24px !important; margin-bottom: 10px !important; }
+          .hero-sub { font-size: 13px !important; margin: 0 auto 16px !important; line-height: 1.6 !important; }
+          .hero-price-card { padding: 10px 12px !important; margin-bottom: 16px !important; gap: 8px !important; }
           .hero-price-card > div:nth-child(2), .hero-price-card > div:nth-child(4) { display: none !important; }
-          .hero-cta-wrap { flex-direction: column !important; align-items: stretch !important; }
-          .hero-cta-wrap a { text-align: center; justify-content: center; }
-          .section-title { font-size: 26px !important; }
-          .cross-reward { flex-direction: column !important; text-align: center !important; }
+          .hero-cta-wrap { flex-direction: column !important; align-items: stretch !important; gap: 8px !important; }
+          .hero-cta-wrap a { justify-content: center !important; padding: 11px 16px !important; font-size: 13px !important; }
+          /* 섹션 패딩 대폭 축소 */
+          .syc-section { padding: 36px 14px !important; }
+          .section-container { padding: 0 10px !important; }
+          /* 섹션 타이틀 축소 */
+          .section-title { font-size: 20px !important; margin-bottom: 8px !important; }
+          /* 섹션 내 모든 텍스트 축소 */
+          .syc-section p, .syc-section span { font-size: 12px !important; }
+          .syc-section h3 { font-size: 14px !important; }
+          /* 섹션 헤더 영역 축소 */
+          .syc-section > div > div:first-child { margin-bottom: 28px !important; }
+          /* 그리드 1열 + 간격 축소 */
+          .benefit-grid, .step-grid, .roadmap-grid { grid-template-columns: 1fr !important; gap: 8px !important; }
+          .token-grid { grid-template-columns: 1fr 1fr !important; gap: 6px !important; }
+          /* 카드 패딩 축소 */
+          .benefit-grid > div, .step-grid > div, .roadmap-grid > div { padding: 16px 14px !important; border-radius: 12px !important; }
+          .token-grid > div { padding: 12px !important; border-radius: 10px !important; }
+          /* 통계바 */
+          .stat-grid { padding: 14px 10px !important; gap: 12px !important; }
+          /* 교차보상 */
+          .cross-reward { flex-direction: column !important; text-align: center !important; padding: 14px !important; gap: 6px !important; }
+          /* 글로우 라인 */
+          .glow-line { width: 80% !important; }
+          /* 푸터 */
+          .footer-grid { grid-template-columns: 1fr !important; text-align: center !important; gap: 20px !important; }
         }
         @media (max-width: 480px) {
-          .hero-title { font-size: 24px !important; }
+          .hero-title { font-size: 21px !important; }
+          .section-title { font-size: 18px !important; }
           .token-grid { grid-template-columns: 1fr !important; }
-          .section-container { padding: 0 16px; }
         }
       `}</style>
 
@@ -152,7 +173,7 @@ export default function SycPage() {
       </nav>
 
       {/* ═══ HERO 섹션 ═══ */}
-      <section className="hero-bg" style={{
+      <section className="hero-bg hero-section-syc" style={{
         minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
         padding: "120px 24px 80px", position: "relative", overflow: "hidden",
       }}>
@@ -166,11 +187,11 @@ export default function SycPage() {
           transition: "all 0.8s cubic-bezier(0.22,1,0.36,1)",
         }}>
           {/* 로고 */}
-          <div style={{ animation: "float 4s ease-in-out infinite", marginBottom: 32 }}>
+          <div className="hero-logo-wrap" style={{ animation: "float 4s ease-in-out infinite", marginBottom: 32 }}>
             <Image src="/syc-logo.png" alt="SYC" width={100} height={100} style={{ borderRadius: "50%", boxShadow: "0 0 60px rgba(123,94,167,0.4)" }} />
           </div>
 
-          <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 4, color: "#7b5ea7", textTransform: "uppercase", marginBottom: 16 }}>
+          <div className="hero-bep" style={{ fontSize: 13, fontWeight: 700, letterSpacing: 4, color: "#7b5ea7", textTransform: "uppercase", marginBottom: 16 }}>
             BNB Smart Chain (BEP-20)
           </div>
 
@@ -263,11 +284,11 @@ export default function SycPage() {
       </section>
 
       {/* ═══ 1. SYC 코인이란? ═══ */}
-      <section style={{ padding: "100px 24px" }}>
+      <section className="syc-section" style={{ padding: "100px 24px" }}>
         <div className="section-container">
           <div style={{ textAlign: "center", marginBottom: 60 }}>
             <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, color: "#7b5ea7", marginBottom: 12 }}>ABOUT SYC</div>
-            <h2 style={{ fontSize: 36, fontWeight: 900, marginBottom: 16 }}>
+            <h2 className="section-title" style={{ fontSize: 36, fontWeight: 900, marginBottom: 16 }}>
               SY Coin은 <span className="gradient-text">실사용 가치</span>로 작동합니다
             </h2>
             <p style={{ fontSize: 15, color: "#86868b", maxWidth: 600, margin: "0 auto", lineHeight: 1.8 }}>
@@ -334,11 +355,11 @@ export default function SycPage() {
       <div className="glow-line" style={{ width: "60%" }} />
 
       {/* ═══ 2. SYC 구매 방법 (PancakeSwap 가이드) ═══ */}
-      <section style={{ padding: "100px 24px" }}>
+      <section className="syc-section" style={{ padding: "100px 24px" }}>
         <div className="section-container">
           <div style={{ textAlign: "center", marginBottom: 60 }}>
             <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, color: "#3ee6c4", marginBottom: 12 }}>HOW TO BUY</div>
-            <h2 style={{ fontSize: 36, fontWeight: 900, marginBottom: 16 }}>
+            <h2 className="section-title" style={{ fontSize: 36, fontWeight: 900, marginBottom: 16 }}>
               SYC <span className="gradient-text">구매 방법</span>
             </h2>
             <p style={{ fontSize: 15, color: "#86868b", maxWidth: 550, margin: "0 auto", lineHeight: 1.8 }}>
@@ -413,11 +434,11 @@ export default function SycPage() {
       <div className="glow-line" style={{ width: "60%" }} />
 
       {/* ═══ 3. SYC 결제 할인 혜택 ═══ */}
-      <section style={{ padding: "100px 24px" }}>
+      <section className="syc-section" style={{ padding: "100px 24px" }}>
         <div className="section-container">
           <div style={{ textAlign: "center", marginBottom: 60 }}>
             <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, color: "#e8b931", marginBottom: 12 }}>BENEFITS</div>
-            <h2 style={{ fontSize: 36, fontWeight: 900, marginBottom: 16 }}>
+            <h2 className="section-title" style={{ fontSize: 36, fontWeight: 900, marginBottom: 16 }}>
               SYC 결제 <span className="gradient-text">할인 혜택</span>
             </h2>
             <p style={{ fontSize: 15, color: "#86868b", maxWidth: 550, margin: "0 auto", lineHeight: 1.8 }}>
@@ -498,11 +519,11 @@ export default function SycPage() {
       <div className="glow-line" style={{ width: "60%" }} />
 
       {/* ═══ 4. 토큰 정보 (토큰노믹스 + BSCscan) ═══ */}
-      <section style={{ padding: "100px 24px" }}>
+      <section className="syc-section" style={{ padding: "100px 24px" }}>
         <div className="section-container">
           <div style={{ textAlign: "center", marginBottom: 60 }}>
             <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, color: "#7b5ea7", marginBottom: 12 }}>TOKENOMICS</div>
-            <h2 style={{ fontSize: 36, fontWeight: 900, marginBottom: 16 }}>
+            <h2 className="section-title" style={{ fontSize: 36, fontWeight: 900, marginBottom: 16 }}>
               <span className="gradient-text">토큰 정보</span>
             </h2>
           </div>
@@ -594,11 +615,11 @@ export default function SycPage() {
       <div className="glow-line" style={{ width: "60%" }} />
 
       {/* ═══ 로드맵 ═══ */}
-      <section style={{ padding: "100px 24px" }}>
+      <section className="syc-section" style={{ padding: "100px 24px" }}>
         <div className="section-container">
           <div style={{ textAlign: "center", marginBottom: 60 }}>
             <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, color: "#3ee6c4", marginBottom: 12 }}>ROADMAP</div>
-            <h2 style={{ fontSize: 36, fontWeight: 900 }}>
+            <h2 className="section-title" style={{ fontSize: 36, fontWeight: 900 }}>
               <span className="gradient-text">로드맵</span>
             </h2>
           </div>

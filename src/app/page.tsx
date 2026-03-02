@@ -1258,7 +1258,7 @@ export default function Home() {
           </p>
 
           {/* SYC 소개 페이지 배너 (시안B) */}
-          <a href="/syc" className="anim-fadeUp-2" style={{
+          <a href="/syc" className="anim-fadeUp-2 syc-banner" style={{
             display: "flex", alignItems: "center", justifyContent: "center", gap: 16,
             maxWidth: 600, margin: "0 auto 8px", padding: "16px 32px", borderRadius: 16,
             background: "linear-gradient(135deg, rgba(123,94,167,0.25), rgba(62,230,196,0.18))",
