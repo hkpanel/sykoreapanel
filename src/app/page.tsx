@@ -1254,22 +1254,13 @@ export default function Home() {
             건축자재의 새로운 가치,<br /><span className="anim-shimmer">SY Korea Panel</span>
           </h1>
           <p className="anim-fadeUp-1 hero-sub" style={{ fontSize: 14, color: "#86868b", marginBottom: 20 }}>
-            후레싱 · 스윙도어 · 행가도어 — 제조부터 납품까지<br />
-            <span style={{ color: "#3ee6c4", fontWeight: 600 }}>SYC 토큰</span> 결제 시 5~10% 할인
+            후레싱 · 스윙도어 · 행가도어 — 제조부터 납품까지
           </p>
-          {/* 통계 + SYC 인라인 */}
-          <div className="anim-fadeUp-2 hero-stats" style={{ display: "inline-flex", alignItems: "center", gap: 24, padding: "12px 28px", borderRadius: 16, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 24, flexWrap: "wrap", justifyContent: "center" }}>
-            {[{ v: "15년+", l: "" }, { v: "2,400+", l: "현장" }, { v: "85종", l: "" }].map((s, i) => (
-              <span key={i} style={{ fontSize: 13, fontWeight: 800, color: "#f5f5f7" }}>{s.v}{s.l ? ` ${s.l}` : ""}</span>
-            )).reduce<React.ReactNode[]>((a, c, i) => i === 0 ? [c] : [...a, <span key={`d${i}`} style={{ color: "rgba(255,255,255,0.15)" }}>·</span>, c], [])}
-            <span style={{ color: "rgba(255,255,255,0.15)" }}>|</span>
-            <a href="/syc" style={{ fontSize: 12, fontWeight: 700, color: "#3ee6c4", textDecoration: "none" }}>💰 SYC 토큰 구매</a>
-          </div>
 
-          {/* SYC 소개 페이지 임팩트 배너 */}
-          <a href="/syc" style={{
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 14,
-            maxWidth: 520, margin: "0 auto 8px", padding: "14px 28px", borderRadius: 16,
+          {/* SYC 소개 페이지 배너 (시안B) */}
+          <a href="/syc" className="anim-fadeUp-2" style={{
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 16,
+            maxWidth: 600, margin: "0 auto 8px", padding: "16px 32px", borderRadius: 16,
             background: "linear-gradient(135deg, rgba(123,94,167,0.25), rgba(62,230,196,0.18))",
             border: "1px solid rgba(62,230,196,0.25)",
             textDecoration: "none", cursor: "pointer",
@@ -1281,13 +1272,13 @@ export default function Home() {
               background: "linear-gradient(90deg, transparent, rgba(62,230,196,0.08), transparent)",
               animation: "bannerShimmer 3s ease-in-out infinite",
             }} />
-            <Image src="/syc-logo.png" alt="SYC" width={28} height={28} style={{ borderRadius: "50%", flexShrink: 0 }} />
+            <Image src="/syc-logo.png" alt="SYC" width={32} height={32} style={{ borderRadius: "50%", flexShrink: 0, animation: "coinSpin 4s linear infinite" }} />
             <div style={{ textAlign: "left" }}>
-              <div style={{ fontSize: 14, fontWeight: 800, color: "#f5f5f7" }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: "#f5f5f7" }}>
                 SY Coin — 건축자재 × AI × 블록체인
               </div>
-              <div style={{ fontSize: 11, color: "#3ee6c4", fontWeight: 600 }}>
-                코인 소개 · 구매 방법 · 할인 혜택 보러가기 →
+              <div style={{ fontSize: 12, color: "#3ee6c4", fontWeight: 600 }}>
+                SYC 결제 시 5~10% 할인 · 코인 소개 보러가기 →
               </div>
             </div>
           </a>

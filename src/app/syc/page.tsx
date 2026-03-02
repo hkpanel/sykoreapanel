@@ -99,14 +99,25 @@ export default function SycPage() {
         }
         .section-container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
         @media (max-width: 768px) {
-          .hero-title { font-size: 32px !important; }
-          .hero-sub { font-size: 15px !important; }
-          .stat-grid { flex-direction: column !important; }
+          .hero-title { font-size: 28px !important; }
+          .hero-sub { font-size: 14px !important; }
+          .stat-grid { flex-direction: column !important; gap: 16px !important; }
           .benefit-grid { grid-template-columns: 1fr !important; }
           .step-grid { grid-template-columns: 1fr !important; }
-          .token-grid { grid-template-columns: 1fr !important; }
+          .token-grid { grid-template-columns: 1fr 1fr !important; }
           .roadmap-grid { grid-template-columns: 1fr !important; }
           .footer-grid { grid-template-columns: 1fr !important; text-align: center !important; }
+          .hero-price-card { flex-direction: column !important; gap: 12px !important; padding: 16px 20px !important; }
+          .hero-price-card > div:nth-child(2), .hero-price-card > div:nth-child(4) { display: none !important; }
+          .hero-cta-wrap { flex-direction: column !important; align-items: stretch !important; }
+          .hero-cta-wrap a { text-align: center; justify-content: center; }
+          .section-title { font-size: 26px !important; }
+          .cross-reward { flex-direction: column !important; text-align: center !important; }
+        }
+        @media (max-width: 480px) {
+          .hero-title { font-size: 24px !important; }
+          .token-grid { grid-template-columns: 1fr !important; }
+          .section-container { padding: 0 16px; }
         }
       `}</style>
 
@@ -156,7 +167,7 @@ export default function SycPage() {
         }}>
           {/* 로고 */}
           <div style={{ animation: "float 4s ease-in-out infinite", marginBottom: 32 }}>
-            <Image src="/syc-logo.png" alt="SYC" width={100} height={100} style={{ borderRadius: "50%", boxShadow: "0 0 60px rgba(123,94,167,0.4)" }} />
+            <Image src="/syc-logo.png" alt="SYC" width={100} height={100} style={{ borderRadius: "50%", boxShadow: "0 0 60px rgba(123,94,167,0.4)", animation: "spin 6s linear infinite" }} />
           </div>
 
           <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 4, color: "#7b5ea7", textTransform: "uppercase", marginBottom: 16 }}>
@@ -181,7 +192,7 @@ export default function SycPage() {
           </p>
 
           {/* 실시간 시세 카드 */}
-          <div style={{
+          <div className="hero-price-card" style={{
             display: "inline-flex", alignItems: "center", gap: 24,
             background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
             borderRadius: 20, padding: "16px 32px", marginBottom: 40,
@@ -211,7 +222,7 @@ export default function SycPage() {
           <br />
 
           {/* CTA 버튼 */}
-          <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
+          <div className="hero-cta-wrap" style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
             <a href="https://pancakeswap.finance/swap?outputCurrency=0x6b2880CE191c790cA47329Dd761B07b71284785F&chainId=56" target="_blank" rel="noopener noreferrer" style={{
               padding: "14px 32px", borderRadius: 14, fontSize: 15, fontWeight: 800,
               background: "linear-gradient(135deg, #7b5ea7, #3ee6c4)", color: "#fff",
@@ -468,7 +479,7 @@ export default function SycPage() {
           </div>
 
           {/* 교차 보상 안내 */}
-          <div style={{
+          <div className="cross-reward" style={{
             marginTop: 32, background: "linear-gradient(135deg, rgba(123,94,167,0.08), rgba(62,230,196,0.06))",
             border: "1px solid rgba(123,94,167,0.15)", borderRadius: 16, padding: "24px 28px",
             display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap",
