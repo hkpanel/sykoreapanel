@@ -4,9 +4,9 @@ import Image from "next/image";
 import type { User } from "firebase/auth";
 import { onAuthChange, signOut } from "@/lib/auth";
 import {
-  subscribeCart, setCartItem, removeCartItem,
-  subscribeAddresses, migrateLocalData,
-  type CartItem,
+  subscribeCart, setCartItem, removeCartItem, clearCart,
+  subscribeAddresses, migrateLocalData, saveOrder,
+  type CartItem, type Order,
 } from "@/lib/db";
 import AuthModal from "./components/AuthModal";
 import MyPageModal from "./components/MyPageModal";
@@ -18,6 +18,24 @@ import {
 import HangaDoorEstimator from "./components/HangaDoorEstimator";
 import SwingDoorEstimator from "./components/SwingDoorEstimator";
 import { TRUCK_FEES, calcTruckOptions } from "./data/truckFees";
+
+// PortOne V2 SDK 글로벌 타입
+declare global {
+  interface Window {
+    PortOne?: {
+      requestPayment: (params: {
+        storeId: string;
+        channelKey: string;
+        paymentId: string;
+        orderName: string;
+        totalAmount: number;
+        currency: string;
+        payMethod: string;
+        customer?: { fullName?: string; phoneNumber?: string; email?: string };
+      }) => Promise<{ code?: string; message?: string; txId?: string; paymentId?: string }>;
+    };
+  }
+}
 
 function AnimatedNumber({ value, suffix = "" }: { value: number; suffix?: string }) {
   const [d, setD] = useState(0);
@@ -599,6 +617,8 @@ export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [showMyPage, setShowMyPage] = useState<false | "info" | "address">(false);
+  const [orderComplete, setOrderComplete] = useState<{ paymentId: string; totalAmount: number; receiptUrl?: string } | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // ═══ Firestore 장바구니 실시간 동기화 ═══
@@ -712,6 +732,127 @@ export default function Home() {
   const cartTotal = cart.reduce((s, i) => s + i.retailPrice * i.qty, 0);
   const cartSyc = Math.round(cartTotal / 100);
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
+
+  // ═══ 결제 처리 ═══
+  const handlePayment = async () => {
+    // 1. 로그인 확인
+    if (!user) {
+      setShowCart(false);
+      setShowAuth(true);
+      return;
+    }
+    // 2. 장바구니 확인
+    if (cart.length === 0) return;
+
+    // 3. 배송지 확인 (직접수령 제외)
+    if (delivery !== "self") {
+      const selectedAddr = savedAddresses.find(a => a.id === selectedAddrId);
+      if (!selectedAddr) {
+        alert("배송지를 선택해주세요.\n마이페이지에서 배송지를 추가할 수 있어요.");
+        return;
+      }
+    }
+
+    // 4. 결제 금액 계산
+    const subtotal = cartTotal;
+    const tax = Math.floor((subtotal + deliveryFee) * 0.1);
+    const totalAmount = subtotal + deliveryFee + tax;
+    const orderName = cart.length === 1
+      ? cart[0].productName
+      : `${cart[0].productName} 외 ${cart.length - 1}건`;
+    const paymentId = `order-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    // 5. PortOne SDK 확인
+    if (!window.PortOne) {
+      alert("결제 모듈을 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+      return;
+    }
+
+    setPaymentLoading(true);
+
+    try {
+      // 6. 포트원 결제창 호출
+      const response = await window.PortOne.requestPayment({
+        storeId: process.env.NEXT_PUBLIC_PORTONE_STORE_ID || "store-7d43cea3-aa09-4466-a1fb-4a2840baf3fd",
+        channelKey: process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || "channel-key-f238aa16-fa21-42c6-8b96-3eb108805040",
+        paymentId,
+        orderName,
+        totalAmount,
+        currency: "CURRENCY_KRW",
+        payMethod: "CARD",
+        customer: {
+          fullName: user.displayName || undefined,
+          email: user.email || undefined,
+        },
+      });
+
+      // 7. 사용자 취소 또는 에러
+      if (response.code) {
+        if (response.code !== "USER_CANCEL") {
+          alert(`결제 실패: ${response.message || "알 수 없는 오류"}`);
+        }
+        setPaymentLoading(false);
+        return;
+      }
+
+      // 8. 서버에서 결제 검증
+      const verifyRes = await fetch("/api/payment/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentId, totalAmount }),
+      });
+      const verifyResult = await verifyRes.json();
+
+      if (!verifyResult.success) {
+        alert(`결제 검증 실패: ${verifyResult.message}`);
+        setPaymentLoading(false);
+        return;
+      }
+
+      // 9. Firestore에 주문 저장
+      const order: Order = {
+        id: paymentId,
+        paymentId,
+        status: "paid",
+        items: cart.map(i => ({
+          productName: i.productName,
+          size: i.size,
+          color: i.color,
+          colorSub: i.colorSub,
+          retailPrice: i.retailPrice,
+          qty: i.qty,
+          category: i.category,
+        })),
+        subtotal,
+        deliveryFee,
+        tax,
+        totalAmount,
+        payMethod: verifyResult.payment?.method || "CARD",
+        deliveryType: delivery,
+        addressId: selectedAddrId || undefined,
+        receiptUrl: verifyResult.payment?.receiptUrl,
+        paidAt: verifyResult.payment?.paidAt || new Date().toISOString(),
+      };
+      await saveOrder(user.uid, order);
+
+      // 10. 장바구니 비우기
+      await clearCart(user.uid);
+      setCart([]);
+
+      // 11. 결제 완료 표시
+      setShowCart(false);
+      setOrderComplete({
+        paymentId,
+        totalAmount,
+        receiptUrl: verifyResult.payment?.receiptUrl,
+      });
+    } catch (err) {
+      console.error("결제 처리 오류:", err);
+      alert("결제 중 오류가 발생했습니다. 다시 시도해주세요.");
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
 
   // 배송
   const [delivery, setDelivery] = useState<"self" | "parcel" | "truck">("parcel");
@@ -1401,14 +1542,19 @@ export default function Home() {
                       : `₩${Math.floor((cartTotal + deliveryFee) * 1.1).toLocaleString()}`}
                   </span>
                 </div>
-                <button style={{
+                <button onClick={handlePayment} disabled={paymentLoading} style={{
                   width: "100%", padding: "16px 0", border: "none", borderRadius: 14,
                   background: pay === "syc" ? "linear-gradient(135deg, #7b5ea7, #3ee6c4)" : "#1d1d1f",
-                  color: "#fff", fontSize: 16, fontWeight: 800, cursor: "pointer", marginTop: 12,
+                  color: "#fff", fontSize: 16, fontWeight: 800, cursor: paymentLoading ? "wait" : "pointer", marginTop: 12,
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  opacity: paymentLoading ? 0.6 : 1, transition: "opacity 0.2s",
                 }}>
-                  {pay === "syc" && <Image src="/syc-logo.png" alt="" width={20} height={20} style={{ borderRadius: "50%" }} />}
-                  {pay === "syc" ? "지갑 연결 후 결제" : "💳 결제하기"}
+                  {paymentLoading ? "⏳ 결제 처리 중..." : (
+                    <>
+                      {pay === "syc" && <Image src="/syc-logo.png" alt="" width={20} height={20} style={{ borderRadius: "50%" }} />}
+                      {pay === "syc" ? "지갑 연결 후 결제" : "💳 결제하기"}
+                    </>
+                  )}
                 </button>
                 <button onClick={async () => {
                   const items = cart.map(i => `• ${i.productName} (${i.size}/${i.color}) x${i.qty} = ₩${(i.retailPrice * i.qty).toLocaleString()}`).join("\n");
@@ -1471,6 +1617,45 @@ export default function Home() {
                 flex: 1, padding: "14px 0", borderRadius: 12, border: "none",
                 background: "linear-gradient(135deg, #7b5ea7, #9b59b6)", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer",
               }}>장바구니 보기</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 결제 완료 모달 */}
+      {orderComplete && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 400, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div className="anim-slideIn" style={{
+            background: "#fff", borderRadius: 24, padding: "40px 32px", width: "min(400px, 90vw)",
+            textAlign: "center", boxShadow: "0 24px 80px rgba(0,0,0,0.25)",
+          }}>
+            <div style={{ fontSize: 56, marginBottom: 16 }}>✅</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: "#1d1d1f", marginBottom: 8 }}>결제가 완료되었습니다!</div>
+            <div style={{ fontSize: 14, color: "#86868b", marginBottom: 8 }}>주문번호: {orderComplete.paymentId}</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: "#7b5ea7", marginBottom: 24 }}>
+              ₩{orderComplete.totalAmount.toLocaleString()}
+            </div>
+
+            <div style={{ background: "#f5f5f7", borderRadius: 14, padding: "16px 20px", marginBottom: 24, textAlign: "left" }}>
+              <div style={{ fontSize: 13, color: "#86868b", marginBottom: 8 }}>안내사항</div>
+              <div style={{ fontSize: 13, color: "#1d1d1f", lineHeight: 1.8 }}>
+                · 주문 확인 후 제작/배송이 시작됩니다.<br />
+                · 문의사항은 카톡 채널로 연락주세요.<br />
+                · 대표전화: 031-666-8404
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              {orderComplete.receiptUrl && (
+                <button onClick={() => window.open(orderComplete.receiptUrl, "_blank")} style={{
+                  flex: 1, padding: "14px 0", borderRadius: 12, border: "2px solid #e8e8ed",
+                  background: "#fff", fontSize: 14, fontWeight: 700, color: "#1d1d1f", cursor: "pointer",
+                }}>🧾 영수증</button>
+              )}
+              <button onClick={() => setOrderComplete(null)} style={{
+                flex: 1, padding: "14px 0", borderRadius: 12, border: "none",
+                background: "linear-gradient(135deg, #7b5ea7, #3ee6c4)", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer",
+              }}>확인</button>
             </div>
           </div>
         </div>

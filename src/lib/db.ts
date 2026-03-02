@@ -1,18 +1,19 @@
 /**
  * Firestore DB 서비스
  * ───────────────────
- * 장바구니, 배송지, 유저 프로필 — 모두 여기서 관리
+ * 장바구니, 배송지, 유저 프로필, 주문 — 모두 여기서 관리
  * onSnapshot 으로 PC↔모바일 실시간 동기화
  *
  * Firestore 구조:
  *   users/{uid}          ← 유저 프로필
  *   users/{uid}/cart/{key}      ← 장바구니 아이템
  *   users/{uid}/addresses/{id}  ← 배송지
- *   users/{uid}/orders/{id}     ← 주문내역 (나중에 확장)
+ *   users/{uid}/orders/{id}     ← 주문내역
  */
 import {
   collection, doc, setDoc, deleteDoc, getDocs,
   onSnapshot, writeBatch, serverTimestamp,
+  query, orderBy,
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "./firebase";
@@ -43,6 +44,33 @@ export interface Address {
   address1: string;
   address2: string;
   isDefault: boolean;
+}
+
+export interface OrderItem {
+  productName: string;
+  size: string;
+  color: string;
+  colorSub?: string;
+  retailPrice: number;
+  qty: number;
+  category?: string;
+}
+
+export interface Order {
+  id: string;
+  paymentId: string;
+  status: "paid" | "preparing" | "shipping" | "delivered" | "cancelled";
+  items: OrderItem[];
+  subtotal: number;         // 상품 소계 (부가세 전)
+  deliveryFee: number;      // 배송비
+  tax: number;              // 부가세
+  totalAmount: number;      // 총 결제금액 (부가세 포함)
+  payMethod: string;        // CARD, EASY_PAY 등
+  deliveryType: string;     // self, parcel, truck
+  addressId?: string;       // 배송지 ID
+  receiptUrl?: string;      // 영수증 URL
+  paidAt: string;           // 결제 시각
+  createdAt?: unknown;      // Firestore serverTimestamp
 }
 
 // ═══════════════════════════════════════
@@ -122,6 +150,30 @@ export async function setDefaultAddress(uid: string, addrId: string) {
     batch.update(d.ref, { isDefault: d.id === addrId });
   });
   await batch.commit();
+}
+
+// ═══════════════════════════════════════
+//  주문 (Orders)
+// ═══════════════════════════════════════
+
+/** 주문 저장 */
+export async function saveOrder(uid: string, order: Order) {
+  const ref = doc(db, "users", uid, "orders", order.id);
+  const clean = Object.fromEntries(
+    Object.entries({ ...order, createdAt: serverTimestamp() }).filter(([, v]) => v !== undefined)
+  );
+  await setDoc(ref, clean);
+}
+
+/** 주문 내역 실시간 구독 (최신순) */
+export function subscribeOrders(uid: string, callback: (orders: Order[]) => void): Unsubscribe {
+  const ref = collection(db, "users", uid, "orders");
+  const q = query(ref, orderBy("createdAt", "desc"));
+  return onSnapshot(q, (snap) => {
+    const orders: Order[] = [];
+    snap.forEach((doc) => orders.push({ id: doc.id, ...doc.data() } as Order));
+    callback(orders);
+  });
 }
 
 // ═══════════════════════════════════════

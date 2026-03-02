@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,7 +18,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* PortOne V2 결제 SDK */}
+        <Script src="https://cdn.portone.io/v2/browser-sdk.js" strategy="beforeInteractive" />
+      </body>
     </html>
   );
 }
