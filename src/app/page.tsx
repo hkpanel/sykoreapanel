@@ -930,21 +930,9 @@ export default function Home() {
     setPaymentLoading(true);
     // 모바일에서 결제창이 장바구니 패널에 가려지므로 패널을 먼저 닫음
     setShowCart(false);
-    await new Promise(r => setTimeout(r, 300));
-
-    // 모바일 여부 판별
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-    // 리다이렉트 결제 시 주문정보를 sessionStorage에 저장 (결제 완료 후 복원용)
-    if (isMobile) {
-      sessionStorage.setItem("pendingOrder", JSON.stringify({
-        paymentId, orderName, totalAmount, cartSnapshot: cart,
-        delivery, deliveryFee, selectedAddrId, truckRegion,
-      }));
-    }
 
     try {
-      // 6. 포트원 결제창 호출
+      // 6. 포트원 결제창 호출 (팝업 방식 - PC/모바일 동일)
       const response = await window.PortOne.requestPayment({
         storeId: process.env.NEXT_PUBLIC_PORTONE_STORE_ID || "store-7d43cea3-aa09-4466-a1fb-4a2840baf3fd",
         channelKey: process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || "channel-key-f238aa16-fa21-42c6-8b96-3eb108805040",
@@ -957,12 +945,6 @@ export default function Home() {
           fullName: user.displayName || undefined,
           email: user.email || undefined,
         },
-        // 모바일: 리다이렉트 방식 (전체 화면 결제)
-        // PC: 기본 팝업 방식
-        ...(isMobile ? {
-          windowType: { mobile: "REDIRECT" },
-          redirectUrl: `${window.location.origin}/payment/complete`,
-        } : {}),
       });
 
       // 7. 사용자 취소 또는 에러
@@ -1028,11 +1010,6 @@ export default function Home() {
         receiptUrl: verifyResult.payment?.receiptUrl,
       });
     } catch (err) {
-      // 모바일 리다이렉트 방식에서는 페이지 이동 시 에러가 발생할 수 있음 (정상)
-      if (isMobile) {
-        console.log("모바일 리다이렉트 결제 진행 중...", err);
-        return; // 리다이렉트 중이므로 에러 무시
-      }
       console.error("결제 처리 오류:", err);
       alert("결제 중 오류가 발생했습니다. 다시 시도해주세요.");
       setShowCart(true);
