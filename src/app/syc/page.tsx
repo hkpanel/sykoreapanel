@@ -147,25 +147,25 @@ export default function SycPage() {
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
         background: "rgba(10,10,15,0.85)", backdropFilter: "blur(20px)",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
-        padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "10px clamp(12px,2vw,24px)", display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-          <Image src="/syc-logo.png" alt="SYC" width={32} height={32} style={{ borderRadius: "50%" }} />
-          <span style={{ fontSize: 16, fontWeight: 800, color: "#f5f5f7" }}>SY Korea Panel</span>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", flexShrink: 0 }}>
+          <Image src="/syc-logo.png" alt="SYC" width={28} height={28} style={{ borderRadius: "50%" }} />
+          <span style={{ fontSize: "clamp(12px,1.8vw,16px)", fontWeight: 800, color: "#f5f5f7", whiteSpace: "nowrap" }}>SY Korea Panel</span>
         </Link>
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
           {!loading && price && (
             <div className="ticker" style={{
               background: "rgba(62,230,196,0.1)", border: "1px solid rgba(62,230,196,0.2)",
-              borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: 600, color: "#3ee6c4",
+              borderRadius: 16, padding: "4px 10px", fontSize: "clamp(10px,1.3vw,12px)", fontWeight: 600, color: "#3ee6c4", whiteSpace: "nowrap",
             }}>
               1 SYC ≈ ₩{price.krw < 1 ? price.krw.toFixed(4) : price.krw.toFixed(2)}
             </div>
           )}
           <Link href="/" style={{
-            padding: "8px 18px", borderRadius: 10, fontSize: 13, fontWeight: 700,
+            padding: "6px 12px", borderRadius: 8, fontSize: "clamp(11px,1.4vw,13px)", fontWeight: 700,
             background: "rgba(255,255,255,0.08)", color: "#f5f5f7", textDecoration: "none",
-            border: "1px solid rgba(255,255,255,0.1)",
+            border: "1px solid rgba(255,255,255,0.1)", whiteSpace: "nowrap",
           }}>
             🏠 홈으로
           </Link>

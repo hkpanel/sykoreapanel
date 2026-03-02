@@ -1248,12 +1248,12 @@ export default function Home() {
       </nav>
 
       {/* HERO + SYC + TAB 통합 (시안 C) */}
-      <section className="hero-section" style={{ background: "linear-gradient(180deg, #1a1a2e 0%, #12122a 100%)", padding: "36px 32px 28px", textAlign: "center", opacity: vis ? 1 : 0, transition: "opacity 0.8s" }}>
+      <section className="hero-section" style={{ background: "linear-gradient(180deg, #1a1a2e 0%, #12122a 100%)", padding: "clamp(36px,6vw,56px) clamp(20px,4vw,32px) clamp(28px,4vw,40px)", textAlign: "center", opacity: vis ? 1 : 0, transition: "opacity 0.8s" }}>
         <div style={{ maxWidth: 800, margin: "0 auto" }}>
-          <h1 className="anim-fadeUp hero-title" style={{ fontSize: "clamp(22px, 4vw, 42px)", fontWeight: 800, color: "#f5f5f7", lineHeight: 1.2, letterSpacing: -1, marginBottom: 10 }}>
+          <h1 className="anim-fadeUp hero-title" style={{ fontSize: "clamp(24px, 5vw, 42px)", fontWeight: 800, color: "#f5f5f7", lineHeight: 1.25, letterSpacing: -1, marginBottom: "clamp(12px,2vw,16px)" }}>
             건축자재의 새로운 가치,<br /><span className="anim-shimmer">SY Korea Panel</span>
           </h1>
-          <p className="anim-fadeUp-1 hero-sub" style={{ fontSize: 14, color: "#86868b", marginBottom: 20 }}>
+          <p className="anim-fadeUp-1 hero-sub" style={{ fontSize: "clamp(13px,1.8vw,15px)", color: "#86868b", marginBottom: "clamp(20px,3vw,28px)" }}>
             후레싱 · 스윙도어 · 행가도어 — 제조부터 납품까지
           </p>
 
@@ -1508,12 +1508,12 @@ export default function Home() {
       {/* CART */}
       {showCart && (
         <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }} onClick={() => setShowCart(false)}>
-          <div onClick={e => e.stopPropagation()} className="anim-slideIn" style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "min(440px, 92vw)", background: "#fff", overflowY: "auto", display: "flex", flexDirection: "column" }}>
-            <div style={{ padding: "24px 28px", borderBottom: "1px solid #e8e8ed", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ fontSize: 20, fontWeight: 800 }}>장바구니 ({cartCount})</h3>
-              <button onClick={() => setShowCart(false)} style={{ background: "#f5f5f7", border: "none", width: 36, height: 36, borderRadius: 18, fontSize: 18, cursor: "pointer" }}>✕</button>
+          <div onClick={e => e.stopPropagation()} className="anim-slideIn" style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "min(440px, 100vw)", background: "#fff", overflowY: "auto", display: "flex", flexDirection: "column" }}>
+            <div style={{ padding: "clamp(14px,2vw,24px) clamp(16px,2.5vw,28px)", borderBottom: "1px solid #e8e8ed", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ fontSize: "clamp(16px,2.5vw,20px)", fontWeight: 800 }}>장바구니 ({cartCount})</h3>
+              <button onClick={() => setShowCart(false)} style={{ background: "#f5f5f7", border: "none", width: 32, height: 32, borderRadius: 16, fontSize: 16, cursor: "pointer" }}>✕</button>
             </div>
-            <div style={{ flex: 1, padding: "16px 28px", overflowY: "auto" }}>
+            <div style={{ flex: 1, padding: "clamp(12px,1.5vw,16px) clamp(16px,2.5vw,28px)", overflowY: "auto" }}>
               {cart.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "60px 0", color: "#86868b" }}>
                   <div style={{ fontSize: 48, marginBottom: 16 }}>🛒</div><div>장바구니가 비어있어요</div>
@@ -1549,7 +1549,7 @@ export default function Home() {
               ))}
             </div>
             {cart.length > 0 && (
-              <div style={{ padding: "20px 28px", borderTop: "1px solid #e8e8ed", background: "#fafafa" }}>
+              <div style={{ padding: "clamp(14px,2vw,20px) clamp(16px,2.5vw,28px)", borderTop: "1px solid #e8e8ed", background: "#fafafa" }}>
 
                 {/* 배송지 선택 */}
                 <div style={{ marginBottom: 16 }}>
@@ -1723,7 +1723,7 @@ export default function Home() {
                   <span>부가세 (10%)</span>
                   <span>₩{Math.floor((cartTotal + deliveryFee) * 0.1).toLocaleString()}</span>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 20, fontWeight: 800, color: "#1d1d1f", padding: "12px 0", borderTop: "2px solid #1d1d1f", marginTop: 4 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "clamp(16px,2.5vw,20px)", fontWeight: 800, color: "#1d1d1f", padding: "10px 0", borderTop: "2px solid #1d1d1f", marginTop: 4 }}>
                   <span>총 결제금액</span>
                   <span style={{ color: pay === "syc" ? "#7b5ea7" : "#1d1d1f" }}>
                     {pay === "syc"
@@ -1762,9 +1762,9 @@ export default function Home() {
                   </div>
                 )}
                 <button onClick={handlePayment} disabled={paymentLoading} style={{
-                  width: "100%", padding: "16px 0", border: "none", borderRadius: 14,
+                  width: "100%", padding: "clamp(12px,2vw,16px) 0", border: "none", borderRadius: 14,
                   background: pay === "syc" ? "linear-gradient(135deg, #7b5ea7, #3ee6c4)" : "#1d1d1f",
-                  color: "#fff", fontSize: 16, fontWeight: 800, cursor: paymentLoading ? "wait" : "pointer", marginTop: 12,
+                  color: "#fff", fontSize: "clamp(13px,2vw,16px)", fontWeight: 800, cursor: paymentLoading ? "wait" : "pointer", marginTop: 10,
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                   opacity: paymentLoading ? 0.6 : 1, transition: "opacity 0.2s",
                 }}>
@@ -1784,8 +1784,8 @@ export default function Home() {
                   alert("장바구니 내용이 복사되었습니다!\n카톡 채팅창에 붙여넣기(Ctrl+V) 해주세요.");
                   window.open("http://pf.kakao.com/_vDxfmn/chat", "_blank");
                 }} style={{
-                  width: "100%", padding: "14px 0", border: "2px solid #FAE100", borderRadius: 14,
-                  background: "#FAE100", color: "#3C1E1E", fontSize: 15, fontWeight: 800, cursor: "pointer", marginTop: 8,
+                  width: "100%", padding: "clamp(10px,1.8vw,14px) 0", border: "2px solid #FAE100", borderRadius: 14,
+                  background: "#FAE100", color: "#3C1E1E", fontSize: "clamp(13px,1.8vw,15px)", fontWeight: 800, cursor: "pointer", marginTop: 8,
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                 }}>
                   💬 카톡으로 주문 문의

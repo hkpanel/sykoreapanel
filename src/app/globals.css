@@ -67,6 +67,10 @@ body {
   .syc-banner { padding: 12px 16px !important; gap: 10px !important; margin: 0 auto 4px !important; }
   .syc-banner div:last-child div:first-child { font-size: 13px !important; }
   .syc-banner div:last-child div:last-child { font-size: 11px !important; }
+  /* 장바구니 결제창 모바일 축소 */
+  .anim-slideIn { font-size: 13px; }
+  .anim-slideIn button { font-size: 12px !important; }
+  .anim-slideIn input { font-size: 12px !important; }
 }
 
 @keyframes bannerShimmer {
