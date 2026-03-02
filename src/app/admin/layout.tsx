@@ -10,6 +10,7 @@ import { usePathname } from "next/navigation";
 const NAV = [
   { href: "/admin", label: "대시보드", icon: "📊" },
   { href: "/admin/orders", label: "주문 관리", icon: "📦" },
+  { href: "/admin/carts", label: "장바구니", icon: "🛒" },
   { href: "/admin/products", label: "제품/가격", icon: "🏭" },
   { href: "/admin/members", label: "회원 관리", icon: "👥" },
   { href: "/admin/sales", label: "매출 통계", icon: "📈" },
