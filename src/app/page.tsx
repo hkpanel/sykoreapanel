@@ -1659,7 +1659,7 @@ export default function Home() {
                   <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: "#1d1d1f", marginBottom: 3 }}>{item.productName}</div>
-                    <div style={{ fontSize: 12, color: "#86868b", marginBottom: 6 }}>{item.size} / {item.color}{item.colorSub ? ` (${item.colorSub})` : ""}</div>
+                    <div style={{ fontSize: 12, color: "#86868b", marginBottom: 6 }}>{item.size}{item.color ? ` / ${item.color}` : ""}{item.colorSub ? ` (${item.colorSub})` : ""}</div>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       <div style={{ display: "flex", alignItems: "center", background: "#f5f5f7", borderRadius: 10 }}>
                         <button onClick={() => updateQty(item.key, -1)} style={{ width: 32, height: 32, border: "none", background: "none", cursor: "pointer", fontSize: 16, fontWeight: 700 }}>−</button>
