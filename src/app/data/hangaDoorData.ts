@@ -84,14 +84,21 @@ export function calcPanelCost(
   hwebe: number,
   panelType: string,
   material: string,
-  thickness: string
+  thickness: string,
+  subType?: string,
+  color?: string,
 ): number | null {
   const typePrice = PANEL_PRICES[panelType];
   if (!typePrice) return null;
   const matPrice = typePrice[material];
   if (!matPrice) return null;
-  const price = matPrice[thickness];
+  let price = matPrice[thickness];
   if (price === null || price === undefined) return null;
+
+  // EPS 소골 아이보리 → 매장판 단가 11,000원/훼베 적용
+  if (material === "EPS" && (subType || "소골") === "소골" && (color || "아이보리") === "아이보리") {
+    price = 11000;
+  }
 
   let cost = hwebe * price;
   // 징크 추가 공정비
@@ -534,14 +541,6 @@ export function getStockPanelLength(mm: number): number | null {
   return null; // > 6000 → 매장판 불가, 생산판
 }
 
-// ─── EPS 외 물류비 (생산판 가져오는 물류비) ───
-// 1~4조: 총 5만원 분담, 5조+: 총 10만원 분담
-export function calcLogisticsCost(qty: number): number {
-  if (qty <= 0) return 0;
-  if (qty <= 4) return Math.ceil(50000 / qty);
-  return Math.ceil(100000 / qty);
-}
-
 // ─── 전체 행가도어 견적 계산 ───
 // 엑셀 M6 공식:
 // ROUNDUP( ROUNDUP((자재원가+인건비)/(1-마진),-3) + 판넬비 - 마감차감 - 트랙차감, -3)
@@ -563,11 +562,9 @@ export function calcHangaDoorEstimate(input: {
   panelColor: string;      // "아이보리" | "은회색" 등
   mfgType: "종제작" | "횡제작";
   hasSideDoor: boolean;
-  qty?: number;            // 주문 수량 (물류비 분담 계산용)
   alKgPrice?: number;      // 알루미늄 kg당 단가 (Firestore에서 전달)
 }) {
   const alKgPrice = input.alKgPrice ?? DEFAULT_AL_KG_PRICE;
-  const qty = input.qty ?? 1;
 
   // 1. AL + 부자재 + 쪽문
   const al = calcAlParts(
@@ -599,7 +596,7 @@ export function calcHangaDoorEstimate(input: {
 
   const panelCost = input.assembly === "부속자재일체"
     ? 0  // 부속자재일체는 판넬 제외
-    : calcPanelCost(hwebe.hwebe, input.panelType, input.panelMaterial, input.panelThickness) ?? 0;
+    : calcPanelCost(hwebe.hwebe, input.panelType, input.panelMaterial, input.panelThickness, input.panelSubType, input.panelColor) ?? 0;
 
   // 3. 인건비 (천원 올림)
   const laborRaw = calcLabor(al.areaSqM, input.assembly);
@@ -622,15 +619,10 @@ export function calcHangaDoorEstimate(input: {
     skinCost = PRINT_COLORS.includes(input.panelColor) ? 50000 : 35000;
   }
 
-  // ── 5번: EPS 외 물류비 ── 마진 미적용 (실비)
-  const logisticsCost = (input.panelMaterial !== "EPS" && input.assembly !== "부속자재일체")
-    ? calcLogisticsCost(qty)
-    : 0;
-
   // 6. 최종 견적가
-  // 자재+인건비에 마진 적용 → 판넬비 + 쪽문 + 덧방 + 물류비(이미 소매가/실비) 별도 합산
+  // 자재+인건비에 마진 적용 → 판넬비 + 쪽문 + 덧방(이미 소매가) 별도 합산
   const marginApplied = Math.ceil((materialCost + labor) / (1 - RETAIL_MARGIN) / 1000) * 1000;
-  const retailPrice = Math.ceil((marginApplied + panelCost + al.sideDoorCost + skinCost + logisticsCost - finishDeduct - trackDeduct) / 1000) * 1000;
+  const retailPrice = Math.ceil((marginApplied + panelCost + al.sideDoorCost + skinCost - finishDeduct - trackDeduct) / 1000) * 1000;
 
   return {
     // 입력 요약
@@ -644,7 +636,6 @@ export function calcHangaDoorEstimate(input: {
     panelSheets: hwebe.sheets,
     sideDoorCost: al.sideDoorCost,
     skinCost,
-    logisticsCost,
     laborCost: labor,
     isStockPanel,
     // 마진 계산

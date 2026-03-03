@@ -58,8 +58,8 @@ export default function HangaDoorEstimator({ onAddCart, alKgPrice }: {
   // 입력 상태
   const [doorType, setDoorType] = useState<"편개" | "양개">("양개");
   // 개구(타공) 사이즈 입력
-  const [openWidthStr, setOpenWidthStr] = useState("4000");
-  const [openHeightStr, setOpenHeightStr] = useState("4000");
+  const [openWidthStr, setOpenWidthStr] = useState("3900");
+  const [openHeightStr, setOpenHeightStr] = useState("3900");
   const openW = Number(openWidthStr) || 0;
   const openH = Number(openHeightStr) || 0;
   // 도어(실) 사이즈 — 기본: 개구+100, 수동 오버라이드 가능
@@ -124,9 +124,9 @@ export default function HangaDoorEstimator({ onAddCart, alKgPrice }: {
     return calcHangaDoorEstimate({
       widthMm, heightMm, doorType, doorThick, finishThick,
       trackType, assembly, panelType, panelMaterial, panelThickness: doorThick,
-      panelSubType, panelColor, mfgType, hasSideDoor, qty, alKgPrice,
+      panelSubType, panelColor, mfgType, hasSideDoor, alKgPrice,
     });
-  }, [widthMm, heightMm, doorType, doorThick, finishThick, trackType, assembly, panelType, panelMaterial, panelSubType, panelColor, mfgType, hasSideDoor, qty, junBulConflict, alKgPrice]);
+  }, [widthMm, heightMm, doorType, doorThick, finishThick, trackType, assembly, panelType, panelMaterial, panelSubType, panelColor, mfgType, hasSideDoor, junBulConflict, alKgPrice]);
 
   const handleAddCart = () => {
     if (!estimate) return;
@@ -364,12 +364,6 @@ export default function HangaDoorEstimator({ onAddCart, alKgPrice }: {
                     <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
                       <span style={{ fontSize: 13, color: "#e67e22" }}>쪽문 덧방(스킨)</span>
                       <span style={{ fontSize: 13, fontWeight: 700, color: "#e67e22" }}>+₩{estimate.skinCost.toLocaleString()}</span>
-                    </div>
-                  )}
-                  {estimate.logisticsCost > 0 && (
-                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
-                      <span style={{ fontSize: 13, color: "#8b5cf6" }}>물류비 ({qty}조 분담)</span>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: "#8b5cf6" }}>+₩{estimate.logisticsCost.toLocaleString()}</span>
                     </div>
                   )}
                 </div>
