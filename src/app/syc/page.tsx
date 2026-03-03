@@ -628,12 +628,12 @@ export default function SycPage() {
           <div className="roadmap-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(8px,2vw,20px)" }}>
             {[
               {
-                phase: "Phase 1", title: "기반 구축", status: "✅ 진행 중",
+                phase: "Phase 1", title: "기반 구축", status: "✅ 완료",
                 color: "#3ee6c4",
-                items: ["BEP-20 토큰 발행 완료", "PancakeSwap 유동성 풀 구성", "SY한국판넬 홈페이지 + SYC 결제", "백서 공개"],
+                items: ["✅ BEP-20 토큰 발행 완료", "✅ PancakeSwap 유동성 풀 구성", "✅ SY한국판넬 홈페이지 + SYC 결제", "✅ 백서 공개"],
               },
               {
-                phase: "Phase 2", title: "서비스 연동", status: "🔜 예정",
+                phase: "Phase 2", title: "서비스 연동", status: "🔄 진행 중",
                 color: "#7b5ea7",
                 items: ["DeepSoccer AI 유료화 론칭", "SY.ai 통합 플랫폼 구축", "스테이킹 시스템 도입", "커뮤니티 구축"],
               },
