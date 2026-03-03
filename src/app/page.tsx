@@ -812,6 +812,15 @@ export default function Home() {
     return () => { window.ethereum?.removeListener?.("accountsChanged", handleAccountsChanged); };
   }, []);
 
+  // ═══ 텔레그램 알림 (fire-and-forget) ═══
+  const sendNotify = (type: string, data: Record<string, unknown>) => {
+    fetch("/api/notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, data }),
+    }).catch(() => {}); // 실패해도 무시
+  };
+
   // ═══ 주소 정보 빌드 헬퍼 ═══
   const buildAddrFields = () => {
     const addr = savedAddresses.find(a => a.id === selectedAddrId);
@@ -865,9 +874,15 @@ export default function Home() {
         deliveryNote: deliveryNote || undefined,
         preferredDate: deliveryNote === "희망일 지정" ? preferredDate || undefined : undefined,
         customerMemo: customerMemo || undefined,
+        estimatedDelivery: deliveryEstimate.needsInquiry ? "납기 확인 필요 (7일~)" : deliveryEstimate.maxDays > 0 ? `약 ${deliveryEstimate.maxDays}일` : undefined,
         statusHistory: [{ status: "pending_payment", at: new Date().toISOString() }],
       };
       await saveOrder(user.uid, order);
+      // 텔레그램 알림
+      sendNotify("new_order", {
+        ...order, userName: user.displayName || "", userEmail: user.email || "",
+        ...buildAddrFields(),
+      });
       await clearCart(user.uid);
       setCart([]);
       setShowCart(false);
@@ -962,9 +977,15 @@ export default function Home() {
           deliveryNote: deliveryNote || undefined,
           preferredDate: deliveryNote === "희망일 지정" ? preferredDate || undefined : undefined,
           customerMemo: customerMemo || undefined,
+          estimatedDelivery: deliveryEstimate.needsInquiry ? "납기 확인 필요 (7일~)" : deliveryEstimate.maxDays > 0 ? `약 ${deliveryEstimate.maxDays}일` : undefined,
           statusHistory: [{ status: "paid", at: new Date().toISOString() }],
         };
         await saveOrder(user.uid, order);
+        // 텔레그램 알림
+        sendNotify("new_order", {
+          ...order, userName: user.displayName || "", userEmail: user.email || "",
+          ...buildAddrFields(),
+        });
 
         // 장바구니 비우기
         await clearCart(user.uid);
@@ -1119,9 +1140,15 @@ export default function Home() {
         deliveryNote: deliveryNote || undefined,
         preferredDate: deliveryNote === "희망일 지정" ? preferredDate || undefined : undefined,
         customerMemo: customerMemo || undefined,
+        estimatedDelivery: deliveryEstimate.needsInquiry ? "납기 확인 필요 (7일~)" : deliveryEstimate.maxDays > 0 ? `약 ${deliveryEstimate.maxDays}일` : undefined,
         statusHistory: [{ status: "paid", at: new Date().toISOString() }],
       };
       await saveOrder(user.uid, order);
+      // 텔레그램 알림
+      sendNotify("new_order", {
+        ...order, userName: user.displayName || "", userEmail: user.email || "",
+        ...buildAddrFields(),
+      });
 
       // 10. 장바구니 비우기
       await clearCart(user.uid);
@@ -1313,6 +1340,98 @@ export default function Home() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasOversized, cart.length, parcelFee, truckOptions.length]);
+
+  // ═══ 예상 납기 자동계산 ═══
+  const calcDeliveryDays = () => {
+    if (cart.length === 0) return { lines: [], maxDays: 0, needsInquiry: false };
+    const lines: { label: string; days: number | null; note?: string }[] = [];
+    let maxDays = 0;
+    let needsInquiry = false;
+
+    // 후레싱 (기성+이형): 200개당 1일
+    const flashingQty = cart.filter(i => i.category === "flashing").reduce((s, i) => s + i.qty, 0);
+    if (flashingQty > 0) {
+      const d = Math.ceil(flashingQty / 200);
+      lines.push({ label: `후레싱 ${flashingQty}개`, days: d });
+      maxDays = Math.max(maxDays, d);
+    }
+
+    // 스윙도어
+    const swingItems = cart.filter(i => i.category === "swing");
+    if (swingItems.length > 0) {
+      const shortSwing = swingItems.filter(i => {
+        const m = i.size.match(/(\d+)×(\d+)/);
+        return m ? parseInt(m[2]) <= 2500 : true;
+      });
+      const longSwing = swingItems.filter(i => {
+        const m = i.size.match(/(\d+)×(\d+)/);
+        return m ? parseInt(m[2]) > 2500 : false;
+      });
+      if (shortSwing.length > 0) {
+        const qty = shortSwing.reduce((s, i) => s + i.qty, 0);
+        const d = Math.ceil(qty / 20);
+        lines.push({ label: `스윙도어 (≤2500) ${qty}조`, days: d });
+        maxDays = Math.max(maxDays, d);
+      }
+      if (longSwing.length > 0) {
+        const qty = longSwing.reduce((s, i) => s + i.qty, 0);
+        lines.push({ label: `스윙도어 (>2500) ${qty}조`, days: null, note: "판넬 생산 필요 · 7일~" });
+        needsInquiry = true;
+      }
+    }
+
+    // 행가도어
+    const hangaItems = cart.filter(i => i.category === "hanga");
+    if (hangaItems.length > 0) {
+      const stockHanga = hangaItems.filter(i => {
+        const m = i.size.match(/도어(\d+)×(\d+)/);
+        const h = m ? parseInt(m[2]) : 99999;
+        const is50T = i.size.includes("50T");
+        const isEpsSogol = i.size.includes("EPS") && i.size.includes("소골");
+        const isIvory = i.color === "아이보리";
+        return h <= 6000 && is50T && isEpsSogol && isIvory;
+      });
+      const prodHanga = hangaItems.filter(i => !stockHanga.includes(i));
+      if (stockHanga.length > 0) {
+        const qty = stockHanga.reduce((s, i) => s + i.qty, 0);
+        const d = Math.ceil(qty / 2);
+        lines.push({ label: `행가도어 (매장판) ${qty}조`, days: d });
+        maxDays = Math.max(maxDays, d);
+      }
+      if (prodHanga.length > 0) {
+        const qty = prodHanga.reduce((s, i) => s + i.qty, 0);
+        lines.push({ label: `행가도어 (판넬생산) ${qty}조`, days: null, note: "판넬 생산 필요 · 7일~" });
+        needsInquiry = true;
+      }
+    }
+
+    // 알루미늄: 50개당 1일
+    const alQty = cart.filter(i => i.category === "cleanroom-al" || i.category === "door-al").reduce((s, i) => s + i.qty, 0);
+    if (alQty > 0) {
+      const d = Math.ceil(alQty / 50);
+      lines.push({ label: `알루미늄 ${alQty}개`, days: d });
+      maxDays = Math.max(maxDays, d);
+    }
+
+    // 판넬: 100훼베당 1일
+    const panelQty = cart.filter(i => i.category === "panel").reduce((s, i) => s + i.qty, 0);
+    if (panelQty > 0) {
+      const d = Math.ceil(panelQty / 100);
+      lines.push({ label: `판넬 ${panelQty}훼베`, days: d });
+      maxDays = Math.max(maxDays, d);
+    }
+
+    // 부자재: 100개당 1일
+    const accQty = cart.filter(i => i.category === "accessory" || i.category === "hardware").reduce((s, i) => s + i.qty, 0);
+    if (accQty > 0) {
+      const d = Math.ceil(accQty / 100);
+      lines.push({ label: `부자재 ${accQty}개`, days: d });
+      maxDays = Math.max(maxDays, d);
+    }
+
+    return { lines, maxDays, needsInquiry };
+  };
+  const deliveryEstimate = calcDeliveryDays();
 
   return (
     <div style={{ minHeight: "100vh", background: "#f5f5f7" }}>
@@ -1985,6 +2104,37 @@ export default function Home() {
                     rows={2} style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid #d2d2d7",
                       fontSize: 13, resize: "none", boxSizing: "border-box", outline: "none" }} />
                 </div>
+
+                {/* ═══ 예상 납기 ═══ */}
+                {deliveryEstimate.lines.length > 0 && (
+                  <div style={{ marginBottom: 16, padding: "14px 16px", borderRadius: 12, background: deliveryEstimate.needsInquiry ? "#fff8f0" : "#f0fdf4", border: `1px solid ${deliveryEstimate.needsInquiry ? "#fed7aa" : "#bbf7d0"}` }}>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: deliveryEstimate.needsInquiry ? "#c2410c" : "#16a34a", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                      ⏱ 예상 소요기간: {deliveryEstimate.needsInquiry
+                        ? "납기 확인 필요"
+                        : `약 ${deliveryEstimate.maxDays}일`}
+                    </div>
+                    {deliveryEstimate.lines.map((line, i) => (
+                      <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: "#6e6e73", padding: "2px 0" }}>
+                        <span>· {line.label}</span>
+                        {line.days !== null
+                          ? <span style={{ fontWeight: 700, color: "#16a34a" }}>{line.days}일</span>
+                          : <span style={{ fontWeight: 700, color: "#ea580c" }}>⚠️ {line.note}</span>
+                        }
+                      </div>
+                    ))}
+                    {deliveryEstimate.needsInquiry && (
+                      <a href="http://pf.kakao.com/_vDxfmn/chat" target="_blank" rel="noopener noreferrer"
+                        style={{ display: "block", marginTop: 10, padding: "10px 0", borderRadius: 8, background: "#FAE100", color: "#3C1E1E", fontSize: 13, fontWeight: 800, textAlign: "center", textDecoration: "none" }}>
+                        💬 카카오톡으로 납기 문의하기
+                      </a>
+                    )}
+                    {!deliveryEstimate.needsInquiry && (
+                      <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 6, lineHeight: 1.4 }}>
+                        ※ 예상 소요기간은 입금 확인 후 기준이며, 주문 상황에 따라 변동될 수 있습니다.
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* 카드결제 준비중 안내 */}
                 <div style={{ marginBottom: 12, padding: "10px 14px", background: "#fff3cd", borderRadius: 10, border: "1px solid #ffc107", display: "flex", alignItems: "center", gap: 8 }}>
