@@ -23,8 +23,8 @@ export interface AccessoryItem {
 export const GUTTER_ITEMS: AccessoryItem[] = [
   { id: "gut-yudo", name: "유도모임통", category: "빗물받이", sellingPrice: 7000, unit: "EA", color: "징크블랙" },
   { id: "gut-sagak", name: "사각모임통", category: "빗물받이", sellingPrice: 8000, unit: "EA", color: "징크블랙" },
-  { id: "gut-maguri", name: "마구리 옆마개 (좌/우)", category: "빗물받이", sellingPrice: 1000, unit: "EA", color: "징크블랙", note: "좌/우 구분 주문 시 비고란 기재" },
-  { id: "gut-elbow", name: "엘보 (안/밖)", category: "빗물받이", sellingPrice: 3000, unit: "EA", color: "징크블랙", note: "안/밖 구분 주문 시 비고란 기재" },
+  { id: "gut-maguri", name: "마구리 옆마개 (좌/우)", category: "빗물받이", sellingPrice: 1000, unit: "EA", color: "징크블랙" },
+  { id: "gut-elbow", name: "엘보", category: "빗물받이", sellingPrice: 3000, unit: "EA", color: "징크블랙" },
   { id: "gut-bando", name: "반도 (스까미)", category: "빗물받이", sellingPrice: 700, unit: "EA", color: "징크블랙" },
   { id: "gut-hook", name: "물받이 걸이쇠", category: "빗물받이", sellingPrice: 900, unit: "EA", color: "징크블랙" },
   { id: "gut-homtong", name: "선홈통 (3M)", category: "빗물받이", sellingPrice: 12500, unit: "3M", color: "징크블랙", isLongItem: true },

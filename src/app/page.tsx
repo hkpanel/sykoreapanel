@@ -1619,12 +1619,12 @@ export default function Home() {
       {/* CART */}
       {showCart && (
         <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }} onClick={() => setShowCart(false)}>
-          <div onClick={e => e.stopPropagation()} className="anim-slideIn" style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "min(440px, 100vw)", background: "#fff", overflowY: "auto", display: "flex", flexDirection: "column" }}>
-            <div style={{ padding: "clamp(14px,2vw,24px) clamp(16px,2.5vw,28px)", borderBottom: "1px solid #e8e8ed", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div onClick={e => e.stopPropagation()} className="anim-slideIn" style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "min(440px, 100vw)", background: "#fff", overflowY: "auto" }}>
+            <div style={{ padding: "clamp(14px,2vw,24px) clamp(16px,2.5vw,28px)", borderBottom: "1px solid #e8e8ed", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, background: "#fff", zIndex: 10 }}>
               <h3 style={{ fontSize: "clamp(16px,2.5vw,20px)", fontWeight: 800 }}>장바구니 ({cartCount})</h3>
               <button onClick={() => setShowCart(false)} style={{ background: "#f5f5f7", border: "none", width: 32, height: 32, borderRadius: 16, fontSize: 16, cursor: "pointer" }}>✕</button>
             </div>
-            <div style={{ flex: 1, padding: "clamp(12px,1.5vw,16px) clamp(16px,2.5vw,28px)", overflowY: "auto" }}>
+            <div style={{ padding: "clamp(12px,1.5vw,16px) clamp(16px,2.5vw,28px)" }}>
               {cart.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "60px 0", color: "#86868b" }}>
                   <div style={{ fontSize: 48, marginBottom: 16 }}>🛒</div><div>장바구니가 비어있어요</div>
