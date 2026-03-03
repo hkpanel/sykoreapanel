@@ -261,6 +261,14 @@ export default function SycPage() {
             }}>
               🔍 BscScan 보기
             </a>
+            <a href="/SY_COIN_WHITEPAPER_v1.1.pdf" target="_blank" rel="noopener noreferrer" style={{
+              padding: "14px 32px", borderRadius: 14, fontSize: 15, fontWeight: 800,
+              background: "rgba(255,255,255,0.06)", color: "#f5f5f7",
+              textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8,
+              border: "1px solid rgba(255,255,255,0.1)",
+            }}>
+              📄 백서 다운로드
+            </a>
           </div>
         </div>
       </section>
@@ -726,6 +734,7 @@ export default function SycPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <a href={`https://bscscan.com/token/${CONTRACT}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: "#6e6e73", textDecoration: "none" }}>BscScan ↗</a>
               <a href="https://pancakeswap.finance/swap?outputCurrency=0x6b2880CE191c790cA47329Dd761B07b71284785F&chainId=56" target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: "#6e6e73", textDecoration: "none" }}>PancakeSwap ↗</a>
+              <a href="/SY_COIN_WHITEPAPER_v1.1.pdf" target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: "#6e6e73", textDecoration: "none" }}>📄 백서 (Whitepaper)</a>
               <Link href="/" style={{ fontSize: 13, color: "#6e6e73", textDecoration: "none" }}>SY한국판넬 쇼핑몰</Link>
             </div>
           </div>
