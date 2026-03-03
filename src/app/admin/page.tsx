@@ -6,9 +6,11 @@ import Link from "next/link";
 
 const STATUS_LABEL: Record<string, { label: string; color: string; bg: string }> = {
   paid: { label: "결제완료", color: "#60a5fa", bg: "rgba(59,130,246,0.12)" },
-  preparing: { label: "준비중", color: "#fbbf24", bg: "rgba(251,191,36,0.12)" },
-  shipping: { label: "배송중", color: "#a78bfa", bg: "rgba(167,139,250,0.12)" },
-  delivered: { label: "배송완료", color: "#34d399", bg: "rgba(52,211,153,0.12)" },
+  confirmed: { label: "주문확인", color: "#38bdf8", bg: "rgba(56,189,248,0.12)" },
+  producing: { label: "제작중", color: "#fbbf24", bg: "rgba(251,191,36,0.12)" },
+  shipped: { label: "발송완료", color: "#a78bfa", bg: "rgba(167,139,250,0.12)" },
+  delivered: { label: "배송중", color: "#818cf8", bg: "rgba(129,140,248,0.12)" },
+  completed: { label: "완료", color: "#34d399", bg: "rgba(52,211,153,0.12)" },
   cancelled: { label: "취소", color: "#f87171", bg: "rgba(248,113,113,0.12)" },
 };
 
@@ -47,7 +49,7 @@ export default function AdminDashboard() {
   const monthSales = monthOrders.reduce((s, o) => s + o.totalAmount, 0);
 
   const pendingCount = orders.filter((o) => o.status === "paid").length;
-  const shippingCount = orders.filter((o) => o.status === "shipping").length;
+  const processingCount = orders.filter((o) => o.status === "confirmed" || o.status === "producing" || o.status === "shipped" || o.status === "delivered").length;
 
   const formatKRW = (n: number) => n.toLocaleString("ko-KR") + "원";
   const formatDate = (o: AdminOrder) => {
@@ -82,8 +84,8 @@ export default function AdminDashboard() {
       }}>
         <StatCard icon="💰" label="오늘 매출" value={formatKRW(todaySales)} sub={`${todayOrders.length}건`} color="#60a5fa" />
         <StatCard icon="📅" label="이번 달 매출" value={formatKRW(monthSales)} sub={`${monthOrders.length}건`} color="#34d399" />
-        <StatCard icon="🔔" label="처리 대기" value={`${pendingCount}건`} sub="결제완료 → 준비 필요" color="#fbbf24" />
-        <StatCard icon="🚚" label="배송 중" value={`${shippingCount}건`} sub="현재 배송중인 주문" color="#a78bfa" />
+        <StatCard icon="🔔" label="처리 대기" value={`${pendingCount}건`} sub="결제완료 → 확인 필요" color="#fbbf24" />
+        <StatCard icon="🚚" label="진행 중" value={`${processingCount}건`} sub="확인~배송중 주문" color="#a78bfa" />
       </div>
 
       {/* ═══ 최근 주문 ═══ */}
