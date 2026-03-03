@@ -81,7 +81,7 @@ export const TRUCK_FEES = [
 // ===== 적재 알고리즘 (v2 — 실전 적재 규칙 기반) =====
 
 interface CartItemForTruck {
-  category?: "flashing" | "swing" | "hanga";
+  category?: "flashing" | "swing" | "hanga" | "cleanroom-al" | "door-al" | "panel" | "gutter" | "accessory" | "hardware";
   productName: string;
   size: string;
   qty: number;
