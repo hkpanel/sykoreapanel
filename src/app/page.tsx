@@ -1237,6 +1237,13 @@ export default function Home() {
           .filter-section button { padding: 8px 14px !important; font-size: 12px !important; }
           .product-section { padding: 32px 10px 48px !important; }
           .product-section .section-header { margin-bottom: 24px !important; }
+          /* 신규 탭 (AL/판넬/부자재) 모바일 축소 */
+          .newtab-wrap h2 { font-size: 20px !important; }
+          .newtab-wrap .newtab-name { font-size: 12px !important; }
+          .newtab-wrap .newtab-price { font-size: 13px !important; }
+          .newtab-wrap .newtab-sub { font-size: 10px !important; }
+          .newtab-wrap .newtab-search { font-size: 13px !important; }
+          .newtab-wrap .newtab-btn { font-size: 11px !important; padding: 6px 10px !important; }
           /* 행가도어/스윙도어 견적 카드 세로 배치 */
           .estimator-layout { flex-direction: column !important; }
           .estimator-card { width: 100% !important; min-width: 0 !important; max-width: 100% !important; }
@@ -1637,6 +1644,7 @@ export default function Home() {
                       <div style={{ display: "flex", alignItems: "center", background: "#f5f5f7", borderRadius: 10 }}>
                         <button onClick={() => updateQty(item.key, -1)} style={{ width: 32, height: 32, border: "none", background: "none", cursor: "pointer", fontSize: 16, fontWeight: 700 }}>−</button>
                         <input type="number" value={item.qty} onChange={e => { const v = parseInt(e.target.value); if (!isNaN(v) && v >= 1) setItemQty(item.key, v); }}
+                          onFocus={e => e.target.select()}
                           onBlur={() => { if (item.qty < 1) setItemQty(item.key, 1); }}
                           style={{ width: 44, height: 28, textAlign: "center", fontSize: 14, fontWeight: 700, border: "2px solid #e8e8ed", borderRadius: 8, background: "#fff", outline: "none" }} min={1} />
                         <button onClick={() => updateQty(item.key, 1)} style={{ width: 32, height: 32, border: "none", background: "none", cursor: "pointer", fontSize: 16, fontWeight: 700 }}>+</button>
@@ -1658,13 +1666,19 @@ export default function Home() {
                 {/* 상품 요약 (모바일에서 결제 영역 스크롤 시에도 상품 확인 가능) */}
                 <div style={{ marginBottom: 16, padding: "10px 14px", background: "#fff", borderRadius: 12, border: "1px solid #e8e8ed" }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: "#1d1d1f", marginBottom: 8 }}>📦 주문 상품 ({cartCount}개)</div>
-                  {cart.map(item => (
+                  {cart.map(item => {
+                    const unitLabel = item.category === "cleanroom-al" || item.category === "door-al" ? "본"
+                      : item.category === "panel" ? "장"
+                      : item.category === "flashing" ? "개"
+                      : "개";
+                    return (
                     <div key={item.key} style={{ fontSize: 11, color: "#6e6e73", marginBottom: 4, lineHeight: 1.5 }}>
                       <span style={{ fontWeight: 700, color: "#1d1d1f" }}>{item.productName}</span>
-                      {" "}{item.size} / {item.color}{item.colorSub ? ` (${item.colorSub})` : ""} × {item.qty}개
+                      {" "}{item.size}{item.color ? ` / ${item.color}` : ""}{item.colorSub ? ` (${item.colorSub})` : ""} × {item.qty}{unitLabel}
                       <span style={{ float: "right", fontWeight: 700, color: "#1d1d1f" }}>₩{(item.retailPrice * item.qty).toLocaleString()}</span>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* 배송지 선택 */}

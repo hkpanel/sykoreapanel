@@ -24,7 +24,7 @@ export default function PanelTab({ onAddCart }: {
       key: `panel-${id}-${Date.now()}`,
       productId: id,
       productName: `조립식판넬 ${product.thickness}`,
-      size: `${product.lengthMm}mm × 1000mm · ${product.profile}`,
+      size: `${product.widthMm}mm × ${product.lengthMm}mm · ${product.profile}`,
       color: product.color,
       retailPrice: product.sellingPrice,
       qty: getQtyNum(qty[id]),
@@ -41,15 +41,11 @@ export default function PanelTab({ onAddCart }: {
     width: 48, padding: "6px 4px", borderRadius: 8, border: "1px solid #d2d2d7",
     textAlign: "center", fontSize: 14, fontWeight: 700,
   };
-  const BTN: React.CSSProperties = {
-    padding: "10px 20px", borderRadius: 10, border: "none", cursor: "pointer",
-    fontSize: 14, fontWeight: 700, background: "#7b5ea7", color: "#fff",
-  };
 
   return (
-    <div style={{ padding: "20px 16px 40px", maxWidth: 640, margin: "0 auto" }}>
-      <h2 style={{ fontSize: 22, fontWeight: 800, color: "#1d1d1f", marginBottom: 4 }}>조립식판넬</h2>
-      <p style={{ fontSize: 12, color: "#86868b", marginBottom: 16 }}>
+    <div className="newtab-wrap" style={{ padding: "20px 16px 40px", maxWidth: 640, margin: "0 auto" }}>
+      <h2 style={{ fontSize: 28, fontWeight: 800, color: "#1d1d1f", marginBottom: 4 }}>조립식판넬</h2>
+      <p className="newtab-sub" style={{ fontSize: 14, color: "#86868b", marginBottom: 20 }}>
         매장 항시 구비 · EPS 소골 아이보리 · 장당 판매
       </p>
 
@@ -58,17 +54,17 @@ export default function PanelTab({ onAddCart }: {
           <div key={product.id} style={CARD}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: "#1d1d1f" }}>
-                  {product.lengthMm}mm
+                <div className="newtab-name" style={{ fontSize: 18, fontWeight: 800, color: "#1d1d1f" }}>
+                  {product.widthMm} × {product.lengthMm}mm
                 </div>
-                <div style={{ fontSize: 11, color: "#86868b", marginTop: 3 }}>
+                <div className="newtab-sub" style={{ fontSize: 13, color: "#86868b", marginTop: 4 }}>
                   {product.thickness} · {product.material} · {product.profile} · {product.color}
                 </div>
-                <div style={{ fontSize: 10, color: "#aeaeb2", marginTop: 2 }}>
+                <div style={{ fontSize: 11, color: "#aeaeb2", marginTop: 2 }}>
                   {product.hwebePerSheet}훼베 × ₩{product.pricePerHwebe.toLocaleString()}
                 </div>
               </div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: "#7b5ea7" }}>
+              <div className="newtab-price" style={{ fontSize: 20, fontWeight: 800, color: "#7b5ea7" }}>
                 ₩{product.sellingPrice.toLocaleString()}
                 <span style={{ fontSize: 12, color: "#86868b", fontWeight: 600 }}>/장</span>
               </div>
@@ -79,7 +75,9 @@ export default function PanelTab({ onAddCart }: {
                 onChange={e => setQty(prev => ({ ...prev, [product.id]: e.target.value }))}
                 style={QTY} />
               <span style={{ fontSize: 12, color: "#86868b" }}>장</span>
-              <button onClick={() => handleAdd(product.id)} style={BTN}>담기</button>
+              <button className="newtab-btn" onClick={() => handleAdd(product.id)}
+                style={{ padding: "10px 20px", borderRadius: 10, border: "none", cursor: "pointer",
+                  fontSize: 14, fontWeight: 700, background: "#7b5ea7", color: "#fff" }}>담기</button>
             </div>
           </div>
         ))}

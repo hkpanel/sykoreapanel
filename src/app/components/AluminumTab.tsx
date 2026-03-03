@@ -81,20 +81,16 @@ export default function AluminumTab({ alKgPrice, onAddCart }: {
     width: 48, padding: "6px 4px", borderRadius: 8, border: "1px solid #d2d2d7",
     textAlign: "center", fontSize: 14, fontWeight: 700,
   };
-  const BTN: React.CSSProperties = {
-    padding: "8px 14px", borderRadius: 10, border: "none", cursor: "pointer",
-    fontSize: 12, fontWeight: 700, background: "#7b5ea7", color: "#fff", whiteSpace: "nowrap",
-  };
 
   return (
-    <div style={{ padding: "20px 16px 40px", maxWidth: 640, margin: "0 auto" }}>
-      <h2 style={{ fontSize: 22, fontWeight: 800, color: "#1d1d1f", marginBottom: 14 }}>알루미늄</h2>
+    <div className="newtab-wrap" style={{ padding: "20px 16px 40px", maxWidth: 640, margin: "0 auto" }}>
+      <h2 style={{ fontSize: 28, fontWeight: 800, color: "#1d1d1f", marginBottom: 14 }}>알루미늄</h2>
 
       {/* 검색 */}
-      <input type="text" placeholder="🔍 제품명 검색 (유바, 앵글, 후레임...)"
+      <input className="newtab-search" type="text" placeholder="🔍 제품명 검색 (유바, 앵글, 후레임...)"
         value={search} onChange={e => setSearch(e.target.value)}
         style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #d2d2d7",
-          fontSize: 13, marginBottom: 12, boxSizing: "border-box", outline: "none" }}
+          fontSize: 14, marginBottom: 14, boxSizing: "border-box", outline: "none" }}
       />
 
       {/* 서브탭 */}
@@ -102,7 +98,7 @@ export default function AluminumTab({ alKgPrice, onAddCart }: {
         {(["크린룸", "도어"] as SubTab[]).map(t => (
           <button key={t} onClick={() => setSub(t)} style={{
             flex: 1, padding: "9px 0", borderRadius: 10, border: "1px solid #e8e8ed",
-            fontSize: 13, fontWeight: 700, cursor: "pointer",
+            fontSize: 14, fontWeight: 700, cursor: "pointer",
             background: sub === t ? "#7b5ea7" : "#fff",
             color: sub === t ? "#fff" : "#6e6e73",
           }}>{t} AL</button>
@@ -116,36 +112,40 @@ export default function AluminumTab({ alKgPrice, onAddCart }: {
             return (
               <div key={item.id} style={CARD}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#1d1d1f" }}>{item.name}</div>
-                  <div style={{ fontSize: 10, color: "#86868b", marginTop: 2 }}>
+                  <div className="newtab-name" style={{ fontSize: 15, fontWeight: 700, color: "#1d1d1f" }}>{item.name}</div>
+                  <div className="newtab-sub" style={{ fontSize: 12, color: "#86868b", marginTop: 2 }}>
                     {item.unitWeight}kg/m · {item.lengthM}m · {p.weightPerBar}kg/본
                   </div>
                 </div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: "#7b5ea7", whiteSpace: "nowrap" }}>
+                <div className="newtab-price" style={{ fontSize: 16, fontWeight: 800, color: "#7b5ea7", whiteSpace: "nowrap" }}>
                   ₩{p.sellingPrice.toLocaleString()}
                 </div>
                 <input type="number" min={1} value={crQty[item.id] ?? "1"}
                   onFocus={e => e.target.select()}
                   onChange={e => setCrQty(prev => ({ ...prev, [item.id]: e.target.value }))}
                   style={QTY} />
-                <button onClick={() => handleAddCr(item.id)} style={BTN}>담기</button>
+                <button className="newtab-btn" onClick={() => handleAddCr(item.id)}
+                  style={{ padding: "8px 14px", borderRadius: 10, border: "none", cursor: "pointer",
+                    fontSize: 13, fontWeight: 700, background: "#7b5ea7", color: "#fff", whiteSpace: "nowrap" }}>담기</button>
               </div>
             );
           })}
           {filteredAcc.length > 0 && (
             <>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#86868b", marginTop: 10, marginBottom: 2 }}>부자재</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#86868b", marginTop: 10, marginBottom: 2 }}>부자재</div>
               {filteredAcc.map(acc => (
                 <div key={acc.id} style={CARD}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#1d1d1f" }}>{acc.name}</div>
+                    <div className="newtab-name" style={{ fontSize: 15, fontWeight: 700, color: "#1d1d1f" }}>{acc.name}</div>
                   </div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: "#7b5ea7" }}>₩{acc.price.toLocaleString()}</div>
+                  <div className="newtab-price" style={{ fontSize: 16, fontWeight: 800, color: "#7b5ea7" }}>₩{acc.price.toLocaleString()}</div>
                   <input type="number" min={1} value={accQty[acc.id] ?? "1"}
                     onFocus={e => e.target.select()}
                     onChange={e => setAccQty(prev => ({ ...prev, [acc.id]: e.target.value }))}
                     style={QTY} />
-                  <button onClick={() => handleAddAcc(acc.id)} style={BTN}>담기</button>
+                  <button className="newtab-btn" onClick={() => handleAddAcc(acc.id)}
+                    style={{ padding: "8px 14px", borderRadius: 10, border: "none", cursor: "pointer",
+                      fontSize: 13, fontWeight: 700, background: "#7b5ea7", color: "#fff", whiteSpace: "nowrap" }}>담기</button>
                 </div>
               ))}
             </>
@@ -163,7 +163,7 @@ export default function AluminumTab({ alKgPrice, onAddCart }: {
             if (items.length === 0) return null;
             return (
               <div key={cat}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#86868b", marginBottom: 6, marginTop: cat === "후레임" ? 0 : 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#86868b", marginBottom: 6, marginTop: cat === "후레임" ? 0 : 12 }}>
                   {cat}
                 </div>
                 {items.map(item => {
@@ -171,19 +171,21 @@ export default function AluminumTab({ alKgPrice, onAddCart }: {
                   return (
                     <div key={item.id} style={{ ...CARD, marginBottom: 6 }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: "#1d1d1f" }}>{item.name}</div>
-                        <div style={{ fontSize: 10, color: "#86868b", marginTop: 2 }}>
+                        <div className="newtab-name" style={{ fontSize: 15, fontWeight: 700, color: "#1d1d1f" }}>{item.name}</div>
+                        <div className="newtab-sub" style={{ fontSize: 12, color: "#86868b", marginTop: 2 }}>
                           {item.unitWeight}kg/m · {item.lengthM}m · {p.weightPerBar}kg/본
                         </div>
                       </div>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: "#7b5ea7", whiteSpace: "nowrap" }}>
+                      <div className="newtab-price" style={{ fontSize: 16, fontWeight: 800, color: "#7b5ea7", whiteSpace: "nowrap" }}>
                         ₩{p.retailPrice.toLocaleString()}
                       </div>
                       <input type="number" min={1} value={daQty[item.id] ?? "1"}
                         onFocus={e => e.target.select()}
                         onChange={e => setDaQty(prev => ({ ...prev, [item.id]: e.target.value }))}
                         style={QTY} />
-                      <button onClick={() => handleAddDa(item.id)} style={BTN}>담기</button>
+                      <button className="newtab-btn" onClick={() => handleAddDa(item.id)}
+                        style={{ padding: "8px 14px", borderRadius: 10, border: "none", cursor: "pointer",
+                          fontSize: 13, fontWeight: 700, background: "#7b5ea7", color: "#fff", whiteSpace: "nowrap" }}>담기</button>
                     </div>
                   );
                 })}
