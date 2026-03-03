@@ -10,12 +10,16 @@ interface CartItemInput {
 export default function PanelTab({ onAddCart }: {
   onAddCart: (item: CartItemInput & { category: string }) => void;
 }) {
-  const [qty, setQty] = useState<Record<string, number>>({});
+  const [qty, setQty] = useState<Record<string, string>>({});
+
+  const getQtyNum = (val: string | undefined) => {
+    const n = parseInt(val || "1", 10);
+    return isNaN(n) || n < 1 ? 1 : n;
+  };
 
   const handleAdd = (id: string) => {
     const product = PANEL_PRODUCTS.find(p => p.id === id);
     if (!product) return;
-    const q = qty[id] || 1;
     onAddCart({
       key: `panel-${id}-${Date.now()}`,
       productId: id,
@@ -23,18 +27,18 @@ export default function PanelTab({ onAddCart }: {
       size: `${product.lengthMm}mm × 1000mm · ${product.profile}`,
       color: product.color,
       retailPrice: product.sellingPrice,
-      qty: q,
+      qty: getQtyNum(qty[id]),
       category: "panel",
     });
-    setQty(prev => ({ ...prev, [id]: 1 }));
+    setQty(prev => ({ ...prev, [id]: "1" }));
   };
 
   const CARD: React.CSSProperties = {
     background: "#fff", borderRadius: 16, border: "1px solid #e8e8ed",
     padding: 20, display: "flex", flexDirection: "column", gap: 12,
   };
-  const QTY_INPUT: React.CSSProperties = {
-    width: 56, padding: "6px 4px", borderRadius: 8, border: "1px solid #d2d2d7",
+  const QTY: React.CSSProperties = {
+    width: 48, padding: "6px 4px", borderRadius: 8, border: "1px solid #d2d2d7",
     textAlign: "center", fontSize: 14, fontWeight: 700,
   };
   const BTN: React.CSSProperties = {
@@ -70,9 +74,10 @@ export default function PanelTab({ onAddCart }: {
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
-              <input type="number" min={1} value={qty[product.id] || 1}
-                onChange={e => setQty(prev => ({ ...prev, [product.id]: Math.max(1, +e.target.value || 1) }))}
-                style={QTY_INPUT} />
+              <input type="number" min={1} value={qty[product.id] ?? "1"}
+                onFocus={e => e.target.select()}
+                onChange={e => setQty(prev => ({ ...prev, [product.id]: e.target.value }))}
+                style={QTY} />
               <span style={{ fontSize: 12, color: "#86868b" }}>장</span>
               <button onClick={() => handleAdd(product.id)} style={BTN}>담기</button>
             </div>

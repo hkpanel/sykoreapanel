@@ -1345,19 +1345,19 @@ export default function Home() {
       </section>
 
       {/* 카테고리 탭 (세그먼트 컨트롤) */}
-      <div id="products" style={{ background: "#fff", padding: "16px 20px 8px", borderBottom: "1px solid #e8e8ed" }}>
-        <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", gap: 3, background: "#f0f0f2", borderRadius: 14, padding: 4, overflowX: "auto" }}>
+      <div id="products" style={{ background: "#fff", padding: "12px 12px 6px", borderBottom: "1px solid #e8e8ed" }}>
+        <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", gap: 2, background: "#f0f0f2", borderRadius: 12, padding: 3, flexWrap: "nowrap" }}>
           {([
             { id: "후레싱" as const, label: "후레싱",
               icon: (active: boolean) => (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
                   <path d="M4 5 L4 17 C4 18.1 4.9 19 6 19 L18 19 C19.1 19 20 18.1 20 17 L20 5" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               )
             },
             { id: "행가도어" as const, label: "행가",
               icon: (active: boolean) => (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
                   <line x1="3" y1="4" x2="21" y2="4" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="2.5" strokeLinecap="round"/>
                   <rect x="3" y="6" width="8" height="14" rx="1" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.8" fill="none"/>
                   <rect x="13" y="6" width="8" height="14" rx="1" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.8" fill="none"/>
@@ -1366,7 +1366,7 @@ export default function Home() {
             },
             { id: "스윙도어" as const, label: "스윙",
               icon: (active: boolean) => (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
                   <rect x="4" y="3" width="12" height="18" rx="1" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.8" fill="none"/>
                   <circle cx="14" cy="12" r="1.5" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.3" fill="none"/>
                 </svg>
@@ -1374,15 +1374,15 @@ export default function Home() {
             },
             { id: "알루미늄" as const, label: "AL",
               icon: (active: boolean) => (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <rect x="3" y="8" width="18" height="3" rx="1" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.8" fill="none"/>
-                  <rect x="3" y="13" width="18" height="3" rx="1" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.8" fill="none"/>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                  <rect x="8" y="3" width="3" height="18" rx="1" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.8" fill="none"/>
+                  <rect x="13" y="3" width="3" height="18" rx="1" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.8" fill="none"/>
                 </svg>
               )
             },
             { id: "판넬" as const, label: "판넬",
               icon: (active: boolean) => (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
                   <rect x="3" y="3" width="18" height="18" rx="2" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.8" fill="none"/>
                   <line x1="3" y1="9" x2="21" y2="9" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.2"/>
                   <line x1="3" y1="15" x2="21" y2="15" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.2"/>
@@ -1391,7 +1391,7 @@ export default function Home() {
             },
             { id: "부자재" as const, label: "부자재",
               icon: (active: boolean) => (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
                   <circle cx="12" cy="12" r="3" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.8" fill="none"/>
                   <path d="M12 2v4M12 18v4M2 12h4M18 12h4" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.8" strokeLinecap="round"/>
                 </svg>
@@ -1400,16 +1400,16 @@ export default function Home() {
           ]).map(tab => (
             <button key={tab.id} onClick={() => setMainTab(tab.id)}
               style={{
-                flex: 1, padding: "10px 4px", border: "none", cursor: "pointer",
-                borderRadius: 11, minWidth: 0,
+                flex: 1, padding: "8px 2px", border: "none", cursor: "pointer",
+                borderRadius: 9, minWidth: 0,
                 background: mainTab === tab.id ? "#fff" : "transparent",
-                boxShadow: mainTab === tab.id ? "0 1px 8px rgba(0,0,0,0.1)" : "none",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
+                boxShadow: mainTab === tab.id ? "0 1px 6px rgba(0,0,0,0.1)" : "none",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 3,
                 transition: "all 0.25s",
               }}>
               {tab.icon(mainTab === tab.id)}
               <span style={{
-                fontSize: 12, fontWeight: 700,
+                fontSize: 11, fontWeight: 700,
                 color: mainTab === tab.id ? "#7b5ea7" : "#9a9a9f",
               }}>{tab.label}</span>
             </button>

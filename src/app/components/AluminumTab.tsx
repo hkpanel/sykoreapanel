@@ -15,10 +15,10 @@ export default function AluminumTab({ alKgPrice, onAddCart }: {
   onAddCart: (item: CartItemInput & { category: string }) => void;
 }) {
   const [sub, setSub] = useState<SubTab>("크린룸");
-  // 수량 상태
-  const [crQty, setCrQty] = useState<Record<string, number>>({});
-  const [daQty, setDaQty] = useState<Record<string, number>>({});
-  const [accQty, setAccQty] = useState<Record<string, number>>({});
+  const [search, setSearch] = useState("");
+  const [crQty, setCrQty] = useState<Record<string, string>>({});
+  const [daQty, setDaQty] = useState<Record<string, string>>({});
+  const [accQty, setAccQty] = useState<Record<string, string>>({});
 
   const crPrices = useMemo(() =>
     Object.fromEntries(CLEANROOM_AL_ITEMS.map(item => [item.id, calcCleanroomAlPrice(item, alKgPrice)])),
@@ -29,84 +29,80 @@ export default function AluminumTab({ alKgPrice, onAddCart }: {
     [alKgPrice]
   );
 
+  const filteredCr = CLEANROOM_AL_ITEMS.filter(i => !search || i.name.includes(search));
+  const filteredAcc = CLEANROOM_ACCESSORIES.filter(i => !search || i.name.includes(search));
+  const filteredDa = DOOR_AL_ITEMS.filter(i => !search || i.name.includes(search) || i.category.includes(search));
+
+  const getQtyNum = (val: string | undefined) => {
+    const n = parseInt(val || "1", 10);
+    return isNaN(n) || n < 1 ? 1 : n;
+  };
+
   const handleAddCr = (id: string) => {
     const item = CLEANROOM_AL_ITEMS.find(i => i.id === id);
     const price = crPrices[id];
-    const qty = crQty[id] || 1;
     if (!item || !price) return;
     onAddCart({
-      key: `cr-al-${id}-${Date.now()}`,
-      productId: id,
-      productName: item.name,
-      size: `${item.lengthM}m / ${price.weightPerBar}kg`,
-      color: "",
-      retailPrice: price.sellingPrice,
-      qty,
-      category: "cleanroom-al",
+      key: `cr-al-${id}-${Date.now()}`, productId: id, productName: item.name,
+      size: `${item.lengthM}m / ${price.weightPerBar}kg`, color: "",
+      retailPrice: price.sellingPrice, qty: getQtyNum(crQty[id]), category: "cleanroom-al",
     });
-    setCrQty(prev => ({ ...prev, [id]: 1 }));
+    setCrQty(prev => ({ ...prev, [id]: "1" }));
   };
 
   const handleAddAcc = (id: string) => {
     const acc = CLEANROOM_ACCESSORIES.find(i => i.id === id);
-    const qty = accQty[id] || 1;
     if (!acc) return;
     onAddCart({
-      key: `cr-acc-${id}-${Date.now()}`,
-      productId: id,
-      productName: acc.name,
-      size: "",
-      color: "",
-      retailPrice: acc.price,
-      qty,
-      category: "cleanroom-al",
+      key: `cr-acc-${id}-${Date.now()}`, productId: id, productName: acc.name,
+      size: "", color: "", retailPrice: acc.price, qty: getQtyNum(accQty[id]), category: "cleanroom-al",
     });
-    setAccQty(prev => ({ ...prev, [id]: 1 }));
+    setAccQty(prev => ({ ...prev, [id]: "1" }));
   };
 
   const handleAddDa = (id: string) => {
     const item = DOOR_AL_ITEMS.find(i => i.id === id);
     const price = daPrices[id];
-    const qty = daQty[id] || 1;
     if (!item || !price) return;
     onAddCart({
-      key: `da-al-${id}-${Date.now()}`,
-      productId: id,
-      productName: item.name,
-      size: `${item.lengthM}m / ${price.weightPerBar}kg`,
-      color: "",
-      retailPrice: price.retailPrice,
-      qty,
-      category: "door-al",
+      key: `da-al-${id}-${Date.now()}`, productId: id, productName: item.name,
+      size: `${item.lengthM}m / ${price.weightPerBar}kg`, color: "",
+      retailPrice: price.retailPrice, qty: getQtyNum(daQty[id]), category: "door-al",
     });
-    setDaQty(prev => ({ ...prev, [id]: 1 }));
+    setDaQty(prev => ({ ...prev, [id]: "1" }));
   };
 
   const CARD: React.CSSProperties = {
-    background: "#fff", borderRadius: 16, border: "1px solid #e8e8ed",
-    padding: "16px 18px", display: "flex", justifyContent: "space-between",
-    alignItems: "center", gap: 12,
+    background: "#fff", borderRadius: 14, border: "1px solid #e8e8ed",
+    padding: "14px 16px", display: "flex", justifyContent: "space-between",
+    alignItems: "center", gap: 10,
   };
-  const QTY_INPUT: React.CSSProperties = {
-    width: 56, padding: "6px 4px", borderRadius: 8, border: "1px solid #d2d2d7",
+  const QTY: React.CSSProperties = {
+    width: 48, padding: "6px 4px", borderRadius: 8, border: "1px solid #d2d2d7",
     textAlign: "center", fontSize: 14, fontWeight: 700,
   };
   const BTN: React.CSSProperties = {
-    padding: "8px 16px", borderRadius: 10, border: "none", cursor: "pointer",
-    fontSize: 13, fontWeight: 700, background: "#7b5ea7", color: "#fff",
-    whiteSpace: "nowrap",
+    padding: "8px 14px", borderRadius: 10, border: "none", cursor: "pointer",
+    fontSize: 13, fontWeight: 700, background: "#7b5ea7", color: "#fff", whiteSpace: "nowrap",
   };
 
   return (
     <div style={{ padding: "20px 16px 40px", maxWidth: 640, margin: "0 auto" }}>
       <h2 style={{ fontSize: 28, fontWeight: 800, color: "#1d1d1f", marginBottom: 4 }}>알루미늄</h2>
-      <p style={{ fontSize: 14, color: "#86868b", marginBottom: 16 }}>본 단위 판매 · AL kg단가 ₩{alKgPrice.toLocaleString()} 기준</p>
+      <p style={{ fontSize: 14, color: "#86868b", marginBottom: 14 }}>본 단위 판매 · AL kg단가 ₩{alKgPrice.toLocaleString()} 기준</p>
+
+      {/* 검색 */}
+      <input type="text" placeholder="🔍 제품명 검색 (유바, 앵글, 후레임...)"
+        value={search} onChange={e => setSearch(e.target.value)}
+        style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #d2d2d7",
+          fontSize: 14, marginBottom: 14, boxSizing: "border-box", outline: "none" }}
+      />
 
       {/* 서브탭 */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
         {(["크린룸", "도어"] as SubTab[]).map(t => (
           <button key={t} onClick={() => setSub(t)} style={{
-            flex: 1, padding: "10px 0", borderRadius: 10, border: "1px solid #e8e8ed",
+            flex: 1, padding: "9px 0", borderRadius: 10, border: "1px solid #e8e8ed",
             fontSize: 14, fontWeight: 700, cursor: "pointer",
             background: sub === t ? "#7b5ea7" : "#fff",
             color: sub === t ? "#fff" : "#6e6e73",
@@ -115,73 +111,89 @@ export default function AluminumTab({ alKgPrice, onAddCart }: {
       </div>
 
       {sub === "크린룸" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {CLEANROOM_AL_ITEMS.map(item => {
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {filteredCr.map(item => {
             const p = crPrices[item.id];
             return (
               <div key={item.id} style={CARD}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: "#1d1d1f" }}>{item.name}</div>
-                  <div style={{ fontSize: 12, color: "#86868b", marginTop: 2 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "#1d1d1f" }}>{item.name}</div>
+                  <div style={{ fontSize: 11, color: "#86868b", marginTop: 2 }}>
                     {item.unitWeight}kg/m · {item.lengthM}m · {p.weightPerBar}kg/본
                   </div>
                 </div>
-                <div style={{ fontSize: 17, fontWeight: 800, color: "#7b5ea7", whiteSpace: "nowrap" }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: "#7b5ea7", whiteSpace: "nowrap" }}>
                   ₩{p.sellingPrice.toLocaleString()}
                 </div>
-                <input type="number" min={1} value={crQty[item.id] || 1}
-                  onChange={e => setCrQty(prev => ({ ...prev, [item.id]: Math.max(1, +e.target.value || 1) }))}
-                  style={QTY_INPUT} />
+                <input type="number" min={1} value={crQty[item.id] ?? "1"}
+                  onFocus={e => e.target.select()}
+                  onChange={e => setCrQty(prev => ({ ...prev, [item.id]: e.target.value }))}
+                  style={QTY} />
                 <button onClick={() => handleAddCr(item.id)} style={BTN}>담기</button>
               </div>
             );
           })}
-          {/* 코너포인트 */}
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#86868b", marginTop: 12, marginBottom: 4 }}>부자재</div>
-          {CLEANROOM_ACCESSORIES.map(acc => (
-            <div key={acc.id} style={CARD}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "#1d1d1f" }}>{acc.name}</div>
-              </div>
-              <div style={{ fontSize: 17, fontWeight: 800, color: "#7b5ea7" }}>₩{acc.price.toLocaleString()}</div>
-              <input type="number" min={1} value={accQty[acc.id] || 1}
-                onChange={e => setAccQty(prev => ({ ...prev, [acc.id]: Math.max(1, +e.target.value || 1) }))}
-                style={QTY_INPUT} />
-              <button onClick={() => handleAddAcc(acc.id)} style={BTN}>담기</button>
-            </div>
-          ))}
+          {filteredAcc.length > 0 && (
+            <>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#86868b", marginTop: 10, marginBottom: 2 }}>부자재</div>
+              {filteredAcc.map(acc => (
+                <div key={acc.id} style={CARD}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: "#1d1d1f" }}>{acc.name}</div>
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: "#7b5ea7" }}>₩{acc.price.toLocaleString()}</div>
+                  <input type="number" min={1} value={accQty[acc.id] ?? "1"}
+                    onFocus={e => e.target.select()}
+                    onChange={e => setAccQty(prev => ({ ...prev, [acc.id]: e.target.value }))}
+                    style={QTY} />
+                  <button onClick={() => handleAddAcc(acc.id)} style={BTN}>담기</button>
+                </div>
+              ))}
+            </>
+          )}
+          {filteredCr.length === 0 && filteredAcc.length === 0 && (
+            <div style={{ textAlign: "center", padding: 40, color: "#aeaeb2", fontSize: 14 }}>검색 결과 없음</div>
+          )}
         </div>
       )}
 
       {sub === "도어" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {DOOR_AL_CATEGORIES.map(cat => (
-            <div key={cat}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#86868b", marginBottom: 6, marginTop: cat === "후레임" ? 0 : 12 }}>
-                {cat}
-              </div>
-              {DOOR_AL_ITEMS.filter(i => i.category === cat).map(item => {
-                const p = daPrices[item.id];
-                return (
-                  <div key={item.id} style={{ ...CARD, marginBottom: 8 }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: "#1d1d1f" }}>{item.name}</div>
-                      <div style={{ fontSize: 12, color: "#86868b", marginTop: 2 }}>
-                        {item.unitWeight}kg/m · {item.lengthM}m · {p.weightPerBar}kg/본
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {DOOR_AL_CATEGORIES.map(cat => {
+            const items = filteredDa.filter(i => i.category === cat);
+            if (items.length === 0) return null;
+            return (
+              <div key={cat}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#86868b", marginBottom: 6, marginTop: cat === "후레임" ? 0 : 12 }}>
+                  {cat}
+                </div>
+                {items.map(item => {
+                  const p = daPrices[item.id];
+                  return (
+                    <div key={item.id} style={{ ...CARD, marginBottom: 6 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "#1d1d1f" }}>{item.name}</div>
+                        <div style={{ fontSize: 11, color: "#86868b", marginTop: 2 }}>
+                          {item.unitWeight}kg/m · {item.lengthM}m · {p.weightPerBar}kg/본
+                        </div>
                       </div>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: "#7b5ea7", whiteSpace: "nowrap" }}>
+                        ₩{p.retailPrice.toLocaleString()}
+                      </div>
+                      <input type="number" min={1} value={daQty[item.id] ?? "1"}
+                        onFocus={e => e.target.select()}
+                        onChange={e => setDaQty(prev => ({ ...prev, [item.id]: e.target.value }))}
+                        style={QTY} />
+                      <button onClick={() => handleAddDa(item.id)} style={BTN}>담기</button>
                     </div>
-                    <div style={{ fontSize: 17, fontWeight: 800, color: "#7b5ea7", whiteSpace: "nowrap" }}>
-                      ₩{p.retailPrice.toLocaleString()}
-                    </div>
-                    <input type="number" min={1} value={daQty[item.id] || 1}
-                      onChange={e => setDaQty(prev => ({ ...prev, [item.id]: Math.max(1, +e.target.value || 1) }))}
-                      style={QTY_INPUT} />
-                    <button onClick={() => handleAddDa(item.id)} style={BTN}>담기</button>
-                  </div>
-                );
-              })}
-            </div>
-          ))}
+                  );
+                })}
+              </div>
+            );
+          })}
+          {filteredDa.length === 0 && (
+            <div style={{ textAlign: "center", padding: 40, color: "#aeaeb2", fontSize: 14 }}>검색 결과 없음</div>
+          )}
         </div>
       )}
     </div>
