@@ -48,8 +48,8 @@ export default function PanelTab({ onAddCart }: {
 
   return (
     <div style={{ padding: "20px 16px 40px", maxWidth: 640, margin: "0 auto" }}>
-      <h2 style={{ fontSize: 28, fontWeight: 800, color: "#1d1d1f", marginBottom: 4 }}>조립식판넬</h2>
-      <p style={{ fontSize: 14, color: "#86868b", marginBottom: 20 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 800, color: "#1d1d1f", marginBottom: 4 }}>조립식판넬</h2>
+      <p style={{ fontSize: 12, color: "#86868b", marginBottom: 16 }}>
         매장 항시 구비 · EPS 소골 아이보리 · 장당 판매
       </p>
 
@@ -58,17 +58,17 @@ export default function PanelTab({ onAddCart }: {
           <div key={product.id} style={CARD}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
-                <div style={{ fontSize: 20, fontWeight: 800, color: "#1d1d1f" }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: "#1d1d1f" }}>
                   {product.lengthMm}mm
                 </div>
-                <div style={{ fontSize: 13, color: "#86868b", marginTop: 4 }}>
+                <div style={{ fontSize: 11, color: "#86868b", marginTop: 3 }}>
                   {product.thickness} · {product.material} · {product.profile} · {product.color}
                 </div>
-                <div style={{ fontSize: 12, color: "#aeaeb2", marginTop: 2 }}>
+                <div style={{ fontSize: 10, color: "#aeaeb2", marginTop: 2 }}>
                   {product.hwebePerSheet}훼베 × ₩{product.pricePerHwebe.toLocaleString()}
                 </div>
               </div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#7b5ea7" }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: "#7b5ea7" }}>
                 ₩{product.sellingPrice.toLocaleString()}
                 <span style={{ fontSize: 12, color: "#86868b", fontWeight: 600 }}>/장</span>
               </div>

@@ -48,20 +48,20 @@ export default function AccessoriesTab({ onAddCart }: {
   };
   const BTN: React.CSSProperties = {
     padding: "8px 14px", borderRadius: 10, border: "none", cursor: "pointer",
-    fontSize: 13, fontWeight: 700, background: "#7b5ea7", color: "#fff", whiteSpace: "nowrap",
+    fontSize: 12, fontWeight: 700, background: "#7b5ea7", color: "#fff", whiteSpace: "nowrap",
   };
 
   const renderItem = (item: AccessoryItem) => (
     <div key={item.id} style={CARD}>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: "#1d1d1f" }}>{item.name}</div>
-        <div style={{ fontSize: 11, color: "#86868b", marginTop: 2 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#1d1d1f" }}>{item.name}</div>
+        <div style={{ fontSize: 10, color: "#86868b", marginTop: 2 }}>
           {item.color && <span>{item.color} · </span>}
           {item.unit}
           {item.note && <span> · {item.note}</span>}
         </div>
       </div>
-      <div style={{ fontSize: 16, fontWeight: 800, color: "#7b5ea7", whiteSpace: "nowrap" }}>
+      <div style={{ fontSize: 14, fontWeight: 800, color: "#7b5ea7", whiteSpace: "nowrap" }}>
         ₩{item.sellingPrice.toLocaleString()}
       </div>
       <input type="number" min={1} value={qty[item.id] ?? "1"}
@@ -78,14 +78,14 @@ export default function AccessoriesTab({ onAddCart }: {
 
   return (
     <div style={{ padding: "20px 16px 40px", maxWidth: 640, margin: "0 auto" }}>
-      <h2 style={{ fontSize: 28, fontWeight: 800, color: "#1d1d1f", marginBottom: 4 }}>부자재</h2>
-      <p style={{ fontSize: 14, color: "#86868b", marginBottom: 14 }}>소모품 · 빗물받이 · 철물류</p>
+      <h2 style={{ fontSize: 22, fontWeight: 800, color: "#1d1d1f", marginBottom: 4 }}>부자재</h2>
+      <p style={{ fontSize: 12, color: "#86868b", marginBottom: 12 }}>소모품 · 빗물받이 · 철물류</p>
 
       {/* 검색 */}
       <input type="text" placeholder="🔍 제품명 검색 (실리콘, 칼라피스, 엘보...)"
         value={search} onChange={e => setSearch(e.target.value)}
         style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #d2d2d7",
-          fontSize: 14, marginBottom: 14, boxSizing: "border-box", outline: "none" }}
+          fontSize: 13, marginBottom: 12, boxSizing: "border-box", outline: "none" }}
       />
 
       {/* 서브탭 */}
@@ -93,7 +93,7 @@ export default function AccessoriesTab({ onAddCart }: {
         {(["빗물받이", "일반부자재", "철물"] as SubTab[]).map(t => (
           <button key={t} onClick={() => setSub(t)} style={{
             flex: 1, padding: "9px 0", borderRadius: 10, border: "1px solid #e8e8ed",
-            fontSize: 13, fontWeight: 700, cursor: "pointer",
+            fontSize: 12, fontWeight: 700, cursor: "pointer",
             background: sub === t ? "#7b5ea7" : "#fff",
             color: sub === t ? "#fff" : "#6e6e73",
           }}>{t}</button>
@@ -123,7 +123,7 @@ export default function AccessoriesTab({ onAddCart }: {
             if (items.length === 0) return null;
             return (
               <div key={subcat}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#86868b", marginBottom: 6, marginTop: subcat === "칼라피스" ? 0 : 14 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#86868b", marginBottom: 6, marginTop: subcat === "칼라피스" ? 0 : 14 }}>
                   {subcat}
                 </div>
                 {items.map(renderItem)}
