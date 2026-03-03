@@ -811,6 +811,55 @@ export default function Home() {
     return () => { window.ethereum?.removeListener?.("accountsChanged", handleAccountsChanged); };
   }, []);
 
+  // ═══ 무통장입금 주문 ═══
+  const handleBankOrder = async () => {
+    if (!user) { setShowCart(false); setShowAuth(true); return; }
+    if (cart.length === 0) return;
+    if (delivery !== "self") {
+      const selectedAddr = savedAddresses.find(a => a.id === selectedAddrId);
+      if (!selectedAddr) { alert("배송지를 선택해주세요."); return; }
+    }
+
+    const subtotal = cartTotal;
+    const tax = Math.floor((subtotal + deliveryFee) * 0.1);
+    const totalAmount = subtotal + deliveryFee + tax;
+    const paymentId = `bank-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    if (!confirm(`무통장입금 주문을 진행하시겠습니까?\n\n총 결제금액: ₩${totalAmount.toLocaleString()}\n입금계좌: IBK 기업은행 186-049738-01-018\n예금주: 박재진\n\n주문 후 3일 이내 입금해주세요.`)) return;
+
+    setPaymentLoading(true);
+    try {
+      const order: Order = {
+        id: paymentId,
+        paymentId,
+        status: "pending_payment",
+        items: cart.map(i => ({
+          productName: i.productName, size: i.size, color: i.color,
+          colorSub: i.colorSub, retailPrice: i.retailPrice, qty: i.qty, category: i.category,
+        })),
+        subtotal, deliveryFee, tax, totalAmount,
+        payMethod: "무통장입금",
+        deliveryType: delivery,
+        addressId: selectedAddrId || undefined,
+        paidAt: new Date().toISOString(),
+        deliveryNote: deliveryNote || undefined,
+        preferredDate: deliveryNote === "희망일 지정" ? preferredDate || undefined : undefined,
+        customerMemo: customerMemo || undefined,
+        statusHistory: [{ status: "pending_payment", at: new Date().toISOString() }],
+      };
+      await saveOrder(user.uid, order);
+      await clearCart(user.uid);
+      setCart([]);
+      setShowCart(false);
+      setOrderComplete({ paymentId, totalAmount });
+    } catch (err) {
+      console.error("무통장 주문 실패:", err);
+      alert("주문 처리 중 오류가 발생했습니다.");
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
   const handlePayment = async () => {
     // 1. 로그인 확인
     if (!user) {
@@ -1880,18 +1929,32 @@ export default function Home() {
 
                 {/* 결제방식 */}
                 <div style={{ display: "flex", borderRadius: 12, overflow: "hidden", background: "#e8e8ed", marginBottom: 16 }}>
-                  {[{ key: "krw", label: "₩ 원화 결제" }, { key: "syc", label: "SYC 코인 결제" }].map(m => (
+                  {[{ key: "krw", label: "₩ 원화 결제" }, { key: "bank", label: "🏦 무통장입금" }, { key: "syc", label: "SYC 코인" }].map(m => (
                     <button key={m.key} onClick={() => setPay(m.key)} style={{
-                      flex: 1, padding: "10px 0", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 700, transition: "all 0.2s",
-                      background: pay === m.key ? (m.key === "syc" ? "linear-gradient(135deg, #7b5ea7, #3ee6c4)" : "#1d1d1f") : "transparent",
+                      flex: 1, padding: "10px 0", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, transition: "all 0.2s",
+                      background: pay === m.key ? (m.key === "syc" ? "linear-gradient(135deg, #7b5ea7, #3ee6c4)" : m.key === "bank" ? "#0066b3" : "#1d1d1f") : "transparent",
                       color: pay === m.key ? "#fff" : "#6e6e73", borderRadius: pay === m.key ? 10 : 0,
-                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
                     }}>
-                      {m.key === "syc" && <Image src="/syc-logo.png" alt="" width={16} height={16} style={{ borderRadius: "50%" }} />}
+                      {m.key === "syc" && <Image src="/syc-logo.png" alt="" width={14} height={14} style={{ borderRadius: "50%" }} />}
                       {m.label}
                     </button>
                   ))}
                 </div>
+
+                {/* 무통장입금 안내 */}
+                {pay === "bank" && (
+                  <div style={{ marginBottom: 14, padding: 14, background: "#f0f7ff", borderRadius: 12, border: "1px solid #bbd6f5" }}>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: "#0066b3", marginBottom: 8 }}>🏦 입금 계좌 안내</div>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: "#1d1d1f", marginBottom: 4 }}>IBK 기업은행 186-049738-01-018</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#1d1d1f", marginBottom: 8 }}>예금주: 박재진</div>
+                    <div style={{ fontSize: 11, color: "#5a8ec0", lineHeight: 1.6 }}>
+                      • 주문 후 <b>3일 이내</b> 입금해주세요<br/>
+                      • 입금자명이 다를 경우 메모란에 기재해주세요<br/>
+                      • 입금 확인 후 제작/발송이 진행됩니다
+                    </div>
+                  </div>
+                )}
 
                 {/* 금액 상세 */}
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14, color: "#6e6e73" }}>
@@ -1955,18 +2018,20 @@ export default function Home() {
                     )}
                   </div>
                 )}
-                <button onClick={handlePayment} disabled={paymentLoading} style={{
+                <button onClick={pay === "bank" ? handleBankOrder : handlePayment} disabled={paymentLoading} style={{
                   width: "100%", padding: "clamp(12px,2vw,16px) 0", border: "none", borderRadius: 14,
-                  background: pay === "syc" ? "linear-gradient(135deg, #7b5ea7, #3ee6c4)" : "#1d1d1f",
+                  background: pay === "syc" ? "linear-gradient(135deg, #7b5ea7, #3ee6c4)" : pay === "bank" ? "#0066b3" : "#1d1d1f",
                   color: "#fff", fontSize: "clamp(13px,2vw,16px)", fontWeight: 800, cursor: paymentLoading ? "wait" : "pointer", marginTop: 10,
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                   opacity: paymentLoading ? 0.6 : 1, transition: "opacity 0.2s",
                 }}>
-                  {paymentLoading ? "⏳ 결제 처리 중..." : (
+                  {paymentLoading ? "⏳ 처리 중..." : (
                     <>
                       {pay === "syc" && <Image src="/syc-logo.png" alt="" width={20} height={20} style={{ borderRadius: "50%" }} />}
                       {pay === "syc"
                         ? (wallet ? `${sycFinalTotal.toLocaleString()} SYC 결제하기` : (walletConnecting ? "⏳ 지갑 연결 중..." : "🦊 메타마스크 지갑 연결"))
+                        : pay === "bank"
+                        ? `🏦 무통장입금 주문 (₩${Math.floor((cartTotal + deliveryFee) * 1.1).toLocaleString()})`
                         : "💳 결제하기"}
                     </>
                   )}

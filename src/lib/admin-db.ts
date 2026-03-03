@@ -24,7 +24,7 @@ export interface AdminOrder {
   uid: string;
   paymentId: string;
   orderName?: string;
-  status: "paid" | "confirmed" | "producing" | "shipped" | "delivered" | "completed" | "cancelled";
+  status: "pending_payment" | "paid" | "confirmed" | "producing" | "shipped" | "delivered" | "completed" | "cancelled";
   items: {
     productName: string;
     size: string;

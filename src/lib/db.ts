@@ -59,7 +59,7 @@ export interface OrderItem {
 export interface Order {
   id: string;
   paymentId: string;
-  status: "paid" | "confirmed" | "producing" | "shipped" | "delivered" | "completed" | "cancelled";
+  status: "pending_payment" | "paid" | "confirmed" | "producing" | "shipped" | "delivered" | "completed" | "cancelled";
   items: OrderItem[];
   subtotal: number;
   deliveryFee: number;

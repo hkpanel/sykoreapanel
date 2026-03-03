@@ -15,7 +15,8 @@ interface MyPageModalProps {
 }
 
 const ORDER_STATUS: Record<string, { label: string; icon: string; color: string }> = {
-  paid: { label: "결제완료", icon: "💳", color: "#60a5fa" },
+  pending_payment: { label: "입금대기", icon: "🏦", color: "#f59e0b" },
+  paid: { label: "입금확인", icon: "💳", color: "#60a5fa" },
   confirmed: { label: "주문확인", icon: "✅", color: "#38bdf8" },
   producing: { label: "제작중", icon: "🔨", color: "#fbbf24" },
   shipped: { label: "발송완료", icon: "📦", color: "#a78bfa" },
@@ -262,9 +263,9 @@ export default function MyPageModal({ user, initialTab = "info", onClose }: MyPa
                           <div style={{ padding: "0 16px 16px", borderTop: "1px solid #f0f0f2" }}>
                             {/* 상태 진행 바 */}
                             <div style={{ display: "flex", gap: 2, margin: "12px 0", overflowX: "auto" }}>
-                              {(["paid", "confirmed", "producing", "shipped", "delivered", "completed"] as const).map((key, idx) => {
+                              {(["pending_payment", "paid", "confirmed", "producing", "shipped", "delivered", "completed"] as const).map((key, idx) => {
                                 const s = ORDER_STATUS[key];
-                                const curIdx = ["paid", "confirmed", "producing", "shipped", "delivered", "completed"].indexOf(order.status);
+                                const curIdx = ["pending_payment", "paid", "confirmed", "producing", "shipped", "delivered", "completed"].indexOf(order.status);
                                 const isPast = idx <= curIdx;
                                 const isCurrent = idx === curIdx;
                                 return (
@@ -281,6 +282,13 @@ export default function MyPageModal({ user, initialTab = "info", onClose }: MyPa
                             </div>
 
                             {/* 예상 납기 */}
+                            {order.status === "pending_payment" && (
+                              <div style={{ padding: "10px 12px", borderRadius: 8, background: "#fffbeb", border: "1px solid #fde68a", marginBottom: 8 }}>
+                                <div style={{ fontSize: 12, fontWeight: 800, color: "#b45309", marginBottom: 4 }}>🏦 입금 계좌 안내</div>
+                                <div style={{ fontSize: 13, fontWeight: 800, color: "#1d1d1f" }}>IBK 기업은행 186-049738-01-018</div>
+                                <div style={{ fontSize: 12, color: "#6e6e73" }}>예금주: 박재진 · 3일 이내 입금</div>
+                              </div>
+                            )}
                             {order.estimatedDelivery && (
                               <div style={{ padding: "8px 12px", borderRadius: 8, background: "#f0f9ff", border: "1px solid #bae6fd", marginBottom: 8 }}>
                                 <span style={{ fontSize: 12, fontWeight: 700, color: "#0284c7" }}>⏱ 예상 납기: {order.estimatedDelivery}</span>

@@ -8,7 +8,8 @@ import {
 } from "@/lib/admin-db";
 
 const STATUS_STEPS: { key: AdminOrder["status"]; label: string; icon: string; color: string; bg: string }[] = [
-  { key: "paid", label: "결제완료", icon: "💳", color: "#60a5fa", bg: "rgba(59,130,246,0.12)" },
+  { key: "pending_payment", label: "입금대기", icon: "🏦", color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
+  { key: "paid", label: "입금확인", icon: "💳", color: "#60a5fa", bg: "rgba(59,130,246,0.12)" },
   { key: "confirmed", label: "주문확인", icon: "✅", color: "#38bdf8", bg: "rgba(56,189,248,0.12)" },
   { key: "producing", label: "제작중", icon: "🔨", color: "#fbbf24", bg: "rgba(251,191,36,0.12)" },
   { key: "shipped", label: "발송완료", icon: "📦", color: "#a78bfa", bg: "rgba(167,139,250,0.12)" },

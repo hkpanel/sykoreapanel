@@ -5,6 +5,7 @@ import { fetchAllOrders, type AdminOrder } from "@/lib/admin-db";
 import Link from "next/link";
 
 const STATUS_LABEL: Record<string, { label: string; color: string; bg: string }> = {
+  pending_payment: { label: "입금대기", color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
   paid: { label: "결제완료", color: "#60a5fa", bg: "rgba(59,130,246,0.12)" },
   confirmed: { label: "주문확인", color: "#38bdf8", bg: "rgba(56,189,248,0.12)" },
   producing: { label: "제작중", color: "#fbbf24", bg: "rgba(251,191,36,0.12)" },
@@ -48,7 +49,7 @@ export default function AdminDashboard() {
   const todaySales = todayOrders.reduce((s, o) => s + o.totalAmount, 0);
   const monthSales = monthOrders.reduce((s, o) => s + o.totalAmount, 0);
 
-  const pendingCount = orders.filter((o) => o.status === "paid").length;
+  const pendingCount = orders.filter((o) => o.status === "paid" || o.status === "pending_payment").length;
   const processingCount = orders.filter((o) => o.status === "confirmed" || o.status === "producing" || o.status === "shipped" || o.status === "delivered").length;
 
   const formatKRW = (n: number) => n.toLocaleString("ko-KR") + "원";
