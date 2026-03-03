@@ -427,7 +427,8 @@ export default function HangaDoorEstimator({ onAddCart, alKgPrice }: {
             · 가조립: 조립→해체 출고, 현장에서 쉽게 재조립<br />
             · 부속자재일체: 판넬 제외, 부속+자재 세트 출고<br />
             · 종제작(기본): 판넬을 옆으로 끼움<br />
-            · 횡제작: 판넬을 아래에서 위로 쌓음
+            · 횡제작: 판넬을 아래에서 위로 쌓음<br />
+            · 📦 배송완료까지 약 3~5영업일 (매장판 기준, 생산판 7영업일~)
           </div>
         </div>
       </div>

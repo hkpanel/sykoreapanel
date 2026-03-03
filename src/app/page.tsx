@@ -1937,6 +1937,36 @@ export default function Home() {
       </section>
 
       {/* FOOTER */}
+      {/* ═══ 교환/환불/배송 정책 ═══ */}
+      <section style={{ background: "#f5f5f7", padding: "40px 32px" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24 }}>
+            <div style={{ background: "#fff", borderRadius: 16, padding: 24 }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: "#1d1d1f", marginBottom: 12 }}>📦 배송 안내</div>
+              <div style={{ fontSize: 13, color: "#6e6e73", lineHeight: 1.8 }}>
+                · 주문 제작 상품으로 품목·수량에 따라 소요일이 다릅니다<br />
+                · 후레싱: 배송완료까지 약 1~3영업일<br />
+                · 스윙도어: 배송완료까지 약 1~3영업일 (높이 2500 초과 시 7영업일~)<br />
+                · 행가도어: 배송완료까지 약 3~5영업일 (매장판 기준, 생산판 7영업일~)<br />
+                · 조립식판넬: 배송완료까지 약 2~5영업일<br />
+                · 정확한 예상 납기는 장바구니에서 자동 계산됩니다<br />
+                · 배송방법: 용차(1톤/5톤) 또는 직접수령
+              </div>
+            </div>
+            <div style={{ background: "#fff", borderRadius: 16, padding: 24 }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: "#1d1d1f", marginBottom: 12 }}>🔄 교환 및 환불 정책</div>
+              <div style={{ fontSize: 13, color: "#6e6e73", lineHeight: 1.8 }}>
+                · 주문 제작 상품 특성상 단순 변심에 의한 교환·환불이 불가합니다<br />
+                · 제품 하자 시 수령 후 7일 이내 교환 가능합니다<br />
+                · 교환 요청 시 제품 사진과 함께 고객센터로 연락 부탁드립니다<br />
+                · 고객센터: 031-666-8404<br />
+                · 이메일: info@sykoreapanel.com
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <footer style={{ background: "#1a1a2e", padding: "48px 32px", color: "#86868b", fontSize: 13 }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 32, marginBottom: 32 }}>
@@ -1945,7 +1975,7 @@ export default function Home() {
                 <Image src="/syc-logo.png" alt="SYC" width={28} height={28} style={{ borderRadius: "50%" }} />
                 <span style={{ fontSize: 16, fontWeight: 700, color: "#f5f5f7" }}>SY한국판넬</span>
               </div>
-              <div style={{ lineHeight: 2 }}>경기도 평택시 삼봉로 77-9<br />사업자등록번호: 459-51-00067 | 통신판매업: 2019-경기송탄-0091<br />대표전화: 031-666-8404 | info@sykoreapanel.com</div>
+              <div style={{ lineHeight: 2 }}>경기도 평택시 삼봉로 77-9<br />대표자: 박재진 | 사업자등록번호: 459-51-00067<br />통신판매업: 2019-경기송탄-0091<br />대표전화: 031-666-8404 | info@sykoreapanel.com</div>
             </div>
             <div style={{ display: "flex", gap: 40 }}>
               <div>
