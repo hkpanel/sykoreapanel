@@ -14,6 +14,7 @@ const NAV = [
   { href: "/admin/products", label: "제품/가격", icon: "🏭" },
   { href: "/admin/members", label: "회원 관리", icon: "👥" },
   { href: "/admin/sales", label: "매출 통계", icon: "📈" },
+  { href: "/admin/settings", label: "생산능력 설정", icon: "⚙️" },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
