@@ -32,7 +32,7 @@ export interface CartItem {
   retailPrice: number;
   qty: number;
   image?: string;
-  category?: "flashing" | "swing" | "hanga";
+  category?: "flashing" | "swing" | "hanga" | "cleanroom-al" | "door-al" | "panel" | "gutter" | "accessory" | "hardware";
 }
 
 export interface Address {

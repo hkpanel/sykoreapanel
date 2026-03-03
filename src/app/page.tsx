@@ -17,6 +17,9 @@ import {
 } from "./data/flashingProducts";
 import HangaDoorEstimator from "./components/HangaDoorEstimator";
 import SwingDoorEstimator from "./components/SwingDoorEstimator";
+import AluminumTab from "./components/AluminumTab";
+import PanelTab from "./components/PanelTab";
+import AccessoriesTab from "./components/AccessoriesTab";
 import { usePricingSettings } from "@/lib/pricing";
 import { TRUCK_FEES, calcTruckOptions } from "./data/truckFees";
 import {
@@ -619,7 +622,7 @@ export default function Home() {
   const [detail, setDetail] = useState<FlashingProduct | null>(null);
   const [search, setSearch] = useState("");
   const [showCustom, setShowCustom] = useState(false);
-  const [mainTab, setMainTab] = useState<"후레싱" | "행가도어" | "스윙도어">("후레싱");
+  const [mainTab, setMainTab] = useState<"후레싱" | "행가도어" | "스윙도어" | "알루미늄" | "판넬" | "부자재">("후레싱");
   const [user, setUser] = useState<User | null>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [showMyPage, setShowMyPage] = useState<false | "info" | "address">(false);
@@ -1133,8 +1136,13 @@ export default function Home() {
 
   // 택배비 계산
   const hasHanga = cart.some(i => i.category === "hanga");
+  const hasOversized = cart.some(i =>
+    i.category === "hanga" || i.category === "panel" ||
+    i.category === "cleanroom-al" || i.category === "door-al" ||
+    i.category === "gutter"
+  );
   const calcParcelFee = () => {
-    if (hasHanga) return null; // 행가도어 포함 시 택배 불가
+    if (hasOversized) return null; // 대형/장척물 포함 시 택배 불가
     let fee = 0;
     const flashingQty = cart.filter(i => i.category === "flashing").reduce((s, i) => s + i.qty, 0);
     if (flashingQty > 0) fee += Math.ceil(flashingQty / 10) * 25000;
@@ -1143,6 +1151,9 @@ export default function Home() {
       const panels = isDouble ? 2 : 1;
       fee += panels * i.qty * 30000;
     });
+    // 부자재/철물만 있으면 택배비 5,000원
+    const hasSmallOnly = cart.every(i => i.category === "accessory" || i.category === "hardware");
+    if (hasSmallOnly && cart.length > 0) fee = 5000;
     return fee;
   };
   const parcelFee = calcParcelFee();
@@ -1184,10 +1195,10 @@ export default function Home() {
   const sycTax = Math.floor(sycSubtotalAfterDiscount * 0.1);
   const sycFinalTotal = sycSubtotalAfterDiscount + sycTax;
 
-  // 행가도어 포함 시 택배 선택 불가 → 자동 전환
+  // 대형/장척물 포함 시 택배 선택 불가 → 자동 전환
   useEffect(() => {
-    if (hasHanga && delivery === "parcel") setDelivery("self");
-  }, [hasHanga, delivery]);
+    if (hasOversized && delivery === "parcel") setDelivery("self");
+  }, [hasOversized, delivery]);
 
   return (
     <div style={{ minHeight: "100vh", background: "#f5f5f7" }}>
@@ -1302,7 +1313,7 @@ export default function Home() {
             건축자재의 새로운 가치,<br /><span className="anim-shimmer">SY Korea Panel</span>
           </h1>
           <p className="anim-fadeUp-1 hero-sub" style={{ fontSize: "clamp(13px,1.8vw,15px)", color: "#86868b", marginBottom: "clamp(20px,3vw,28px)" }}>
-            후레싱 · 스윙도어 · 행가도어 — 제조부터 납품까지
+            후레싱 · 도어 · 판넬 · 알루미늄 — 제조부터 납품까지
           </p>
 
           {/* SYC 소개 페이지 배너 (시안B) */}
@@ -1335,46 +1346,70 @@ export default function Home() {
 
       {/* 카테고리 탭 (세그먼트 컨트롤) */}
       <div id="products" style={{ background: "#fff", padding: "16px 20px 8px", borderBottom: "1px solid #e8e8ed" }}>
-        <div style={{ maxWidth: 480, margin: "0 auto", display: "flex", gap: 4, background: "#f0f0f2", borderRadius: 14, padding: 4 }}>
+        <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", gap: 3, background: "#f0f0f2", borderRadius: 14, padding: 4, overflowX: "auto" }}>
           {([
             { id: "후레싱" as const, label: "후레싱",
               icon: (active: boolean) => (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                   <path d="M4 5 L4 17 C4 18.1 4.9 19 6 19 L18 19 C19.1 19 20 18.1 20 17 L20 5" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               )
             },
-            { id: "행가도어" as const, label: "행가도어",
+            { id: "행가도어" as const, label: "행가",
               icon: (active: boolean) => (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                   <line x1="3" y1="4" x2="21" y2="4" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="2.5" strokeLinecap="round"/>
                   <rect x="3" y="6" width="8" height="14" rx="1" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.8" fill="none"/>
                   <rect x="13" y="6" width="8" height="14" rx="1" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.8" fill="none"/>
                 </svg>
               )
             },
-            { id: "스윙도어" as const, label: "스윙도어",
+            { id: "스윙도어" as const, label: "스윙",
               icon: (active: boolean) => (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                   <rect x="4" y="3" width="12" height="18" rx="1" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.8" fill="none"/>
                   <circle cx="14" cy="12" r="1.5" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.3" fill="none"/>
-                  <line x1="14" y1="12" x2="17" y2="11" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.3" strokeLinecap="round"/>
+                </svg>
+              )
+            },
+            { id: "알루미늄" as const, label: "AL",
+              icon: (active: boolean) => (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="8" width="18" height="3" rx="1" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.8" fill="none"/>
+                  <rect x="3" y="13" width="18" height="3" rx="1" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.8" fill="none"/>
+                </svg>
+              )
+            },
+            { id: "판넬" as const, label: "판넬",
+              icon: (active: boolean) => (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="3" width="18" height="18" rx="2" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.8" fill="none"/>
+                  <line x1="3" y1="9" x2="21" y2="9" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.2"/>
+                  <line x1="3" y1="15" x2="21" y2="15" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.2"/>
+                </svg>
+              )
+            },
+            { id: "부자재" as const, label: "부자재",
+              icon: (active: boolean) => (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="3" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.8" fill="none"/>
+                  <path d="M12 2v4M12 18v4M2 12h4M18 12h4" stroke={active ? "#7b5ea7" : "#9a9a9f"} strokeWidth="1.8" strokeLinecap="round"/>
                 </svg>
               )
             },
           ]).map(tab => (
             <button key={tab.id} onClick={() => setMainTab(tab.id)}
               style={{
-                flex: 1, padding: "11px 6px", border: "none", cursor: "pointer",
-                borderRadius: 11,
+                flex: 1, padding: "10px 4px", border: "none", cursor: "pointer",
+                borderRadius: 11, minWidth: 0,
                 background: mainTab === tab.id ? "#fff" : "transparent",
                 boxShadow: mainTab === tab.id ? "0 1px 8px rgba(0,0,0,0.1)" : "none",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
                 transition: "all 0.25s",
               }}>
               {tab.icon(mainTab === tab.id)}
               <span style={{
-                fontSize: 14, fontWeight: 700,
+                fontSize: 12, fontWeight: 700,
                 color: mainTab === tab.id ? "#7b5ea7" : "#9a9a9f",
               }}>{tab.label}</span>
             </button>
@@ -1477,6 +1512,27 @@ export default function Home() {
         }} />
       )}
 
+      {/* 알루미늄 탭 */}
+      {mainTab === "알루미늄" && (
+        <AluminumTab alKgPrice={alKgPrice} onAddCart={(item) => {
+          addToCart(item as any);
+        }} />
+      )}
+
+      {/* 판넬 탭 */}
+      {mainTab === "판넬" && (
+        <PanelTab onAddCart={(item) => {
+          addToCart(item as any);
+        }} />
+      )}
+
+      {/* 부자재 탭 */}
+      {mainTab === "부자재" && (
+        <AccessoriesTab onAddCart={(item) => {
+          addToCart(item as any);
+        }} />
+      )}
+
       {/* GALLERY */}
       <section style={{ background: "#fff", padding: "60px 32px", borderTop: "1px solid rgba(0,0,0,0.06)" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
@@ -1496,7 +1552,7 @@ export default function Home() {
         <div style={{ maxWidth: 800, margin: "0 auto", textAlign: "center" }}>
           <h2 style={{ fontSize: 36, fontWeight: 800, color: "#1d1d1f", marginBottom: 16 }}>SY한국판넬</h2>
           <p style={{ fontSize: 16, color: "#6e6e73", lineHeight: 1.8, marginBottom: 40 }}>
-            평택 소재 건축자재 전문기업으로, 후레싱 · 스윙도어 · 행가도어를 직접 생산하여 전국 현장에 납품하고 있습니다.
+            평택 소재 건축자재 전문기업으로, 후레싱 · 스윙도어 · 행가도어 · 알루미늄 · 판넬을 직접 생산하여 전국 현장에 납품하고 있습니다.
           </p>
           <div className="feature-grid">
             {[
@@ -1681,9 +1737,9 @@ export default function Home() {
                   </div>
 
                   {/* 택배 안내 */}
-                  {hasHanga && delivery !== "self" && delivery !== "truck" && (
+                  {hasOversized && delivery !== "self" && delivery !== "truck" && (
                     <div style={{ fontSize: 11, color: "#e34040", fontWeight: 600, marginTop: 6 }}>
-                      ⚠️ 행가도어 포함 시 택배 불가 (용차 또는 자차방문)
+                      ⚠️ 대형/장척물(도어·판넬·AL·빗물받이) 포함 시 택배 불가
                     </div>
                   )}
                   {delivery === "parcel" && parcelFee !== null && parcelFee > 0 && (
