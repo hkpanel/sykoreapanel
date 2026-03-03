@@ -2306,7 +2306,7 @@ export default function Home() {
 
                 {/* 결제방식 */}
                 <div style={{ display: "flex", borderRadius: 12, overflow: "hidden", background: "#e8e8ed", marginBottom: 16 }}>
-                  {[{ key: "krw", label: "₩ 카드결제", disabled: true }, { key: "bank", label: "🏦 무통장입금", disabled: false }, { key: "syc", label: "SYC 코인", disabled: false }].map(m => (
+                  {[{ key: "krw", label: "₩ 카드결제", disabled: false }, { key: "bank", label: "🏦 무통장입금", disabled: false }, { key: "syc", label: "SYC 코인", disabled: false }].map(m => (
                     <button key={m.key} onClick={() => !m.disabled && setPay(m.key)} style={{
                       flex: 1, padding: "10px 0", border: "none", cursor: m.disabled ? "not-allowed" : "pointer", fontSize: 12, fontWeight: 700, transition: "all 0.2s",
                       background: m.disabled ? "#d1d1d6" : pay === m.key ? (m.key === "syc" ? "linear-gradient(135deg, #7b5ea7, #3ee6c4)" : m.key === "bank" ? "#0066b3" : "#1d1d1f") : "transparent",
