@@ -145,9 +145,15 @@ export function calcTruckOptions(items: CartItemForTruck[], regionCity: string):
   const flashingQty = items.filter(i => i.category === "flashing").reduce((s, i) => s + i.qty, 0);
   const swingPanels = items.filter(i => i.category === "swing").reduce((s, i) => s + toPanels(i), 0);
   const hangaPanels = items.filter(i => i.category === "hanga").reduce((s, i) => s + toPanels(i), 0);
+  const alQty = items.filter(i => i.category === "cleanroom-al" || i.category === "door-al").reduce((s, i) => s + i.qty, 0);
+  const panelQty = items.filter(i => i.category === "panel").reduce((s, i) => s + i.qty, 0);
+  const accQty = items.filter(i => i.category === "gutter" || i.category === "accessory" || i.category === "hardware").reduce((s, i) => s + i.qty, 0);
   const hasHanga = hangaPanels > 0;
   const hasSwing = swingPanels > 0;
   const hasFlashing = flashingQty > 0;
+  const hasAl = alQty > 0;
+  const hasPanel = panelQty > 0;
+  const hasAcc = accQty > 0;
 
   const { maxLeafW, maxMinSide } = getHangaMaxDimensions(items);
 
@@ -166,7 +172,14 @@ export function calcTruckOptions(items: CartItemForTruck[], regionCity: string):
 
   // ━━━ 1톤 적재 판정 ━━━
   const h1Limit = hasHanga ? hanga1tLimit(maxLeafW) : 0;
-  const desc1 = (parts: string[]) => parts.filter(Boolean).join(" + ");
+  const desc1 = (parts: string[]) => {
+    const extras = [
+      hasAl ? `AL ${alQty}본` : "",
+      hasPanel ? `판넬 ${panelQty}장` : "",
+      hasAcc ? `부자재 ${accQty}개` : "",
+    ];
+    return [...parts, ...extras].filter(Boolean).join(" + ");
+  };
 
   if (hasHanga) {
     // 행가 + (스윙/후레싱)
@@ -201,10 +214,17 @@ export function calcTruckOptions(items: CartItemForTruck[], regionCity: string):
     if (flashingQty <= 300) {
       results.push({
         type: "1t", label: "🚛 1톤 용차",
-        desc: `후레싱 ${flashingQty}개`,
+        desc: desc1([`후레싱 ${flashingQty}개`]),
         fee1t, fee5t, trucks: [{ size: "1t", count: 1 }], totalFee: fee1t,
       });
     }
+  } else if (hasAl || hasPanel || hasAcc) {
+    // AL/판넬/부자재 only (행가/스윙/후레싱 없음)
+    results.push({
+      type: "1t", label: "🚛 1톤 용차",
+      desc: desc1([]),
+      fee1t, fee5t, trucks: [{ size: "1t", count: 1 }], totalFee: fee1t,
+    });
   }
 
   // ━━━ 5톤 적재 판정 ━━━
@@ -268,7 +288,7 @@ export function calcTruckOptions(items: CartItemForTruck[], regionCity: string):
     if (flashingQty <= 1000) {
       results.push({
         type: "5t", label: "🚛 5톤 용차",
-        desc: `후레싱 ${flashingQty}개`,
+        desc: desc1([`후레싱 ${flashingQty}개`]),
         fee1t, fee5t, trucks: [{ size: "5t", count: 1 }], totalFee: fee5t,
       });
     } else {
@@ -280,6 +300,13 @@ export function calcTruckOptions(items: CartItemForTruck[], regionCity: string):
         totalFee: fee5t * need5t,
       });
     }
+  } else if (hasAl || hasPanel || hasAcc) {
+    // AL/판넬/부자재 only
+    results.push({
+      type: "5t", label: "🚛 5톤 용차",
+      desc: desc1([]),
+      fee1t, fee5t, trucks: [{ size: "5t", count: 1 }], totalFee: fee5t,
+    });
   }
 
   return results;

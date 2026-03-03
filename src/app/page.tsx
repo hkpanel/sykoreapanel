@@ -1195,10 +1195,30 @@ export default function Home() {
   const sycTax = Math.floor(sycSubtotalAfterDiscount * 0.1);
   const sycFinalTotal = sycSubtotalAfterDiscount + sycTax;
 
-  // 대형/장척물 포함 시 택배 선택 불가 → 자동 전환
+  // 배송방법 자동 선택: 택배/용차 중 싼 것 (대형물은 용차, 둘 다 없으면 자차)
   useEffect(() => {
-    if (hasOversized && delivery === "parcel") setDelivery("self");
-  }, [hasOversized, delivery]);
+    if (cart.length === 0) return;
+    if (hasOversized) {
+      // 택배 불가 → 용차 선택 (용차 옵션 있으면), 없으면 자차
+      if (truckOptions.length > 0 && truckOptions[0].type !== "inquiry") {
+        setDelivery("truck");
+      } else {
+        setDelivery("self");
+      }
+    } else {
+      // 택배/용차 비교
+      const pFee = parcelFee ?? Infinity;
+      const tFee = truckOptions.length > 0 && truckOptions[0].type !== "inquiry" ? truckOptions[0].totalFee : Infinity;
+      if (pFee <= tFee && pFee < Infinity) {
+        setDelivery("parcel");
+      } else if (tFee < Infinity) {
+        setDelivery("truck");
+      } else {
+        setDelivery("parcel");
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasOversized, cart.length, parcelFee, truckOptions.length]);
 
   return (
     <div style={{ minHeight: "100vh", background: "#f5f5f7" }}>
@@ -1672,10 +1692,12 @@ export default function Home() {
                       : item.category === "flashing" ? "개"
                       : "개";
                     return (
-                    <div key={item.key} style={{ fontSize: 11, color: "#6e6e73", marginBottom: 4, lineHeight: 1.5 }}>
-                      <span style={{ fontWeight: 700, color: "#1d1d1f" }}>{item.productName}</span>
-                      {" "}{item.size}{item.color ? ` / ${item.color}` : ""}{item.colorSub ? ` (${item.colorSub})` : ""} × {item.qty}{unitLabel}
-                      <span style={{ float: "right", fontWeight: 700, color: "#1d1d1f" }}>₩{(item.retailPrice * item.qty).toLocaleString()}</span>
+                    <div key={item.key} style={{ fontSize: 11, color: "#6e6e73", marginBottom: 4, lineHeight: 1.5, display: "flex", justifyContent: "space-between", gap: 8 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{ fontWeight: 700, color: "#1d1d1f" }}>{item.productName}</span>
+                        {" "}{item.size}{item.color ? ` / ${item.color}` : ""}{item.colorSub ? ` (${item.colorSub})` : ""} × {item.qty}{unitLabel}
+                      </div>
+                      <span style={{ fontWeight: 700, color: "#1d1d1f", whiteSpace: "nowrap", flexShrink: 0 }}>₩{(item.retailPrice * item.qty).toLocaleString()}</span>
                     </div>
                     );
                   })}
