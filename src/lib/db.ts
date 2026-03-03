@@ -170,10 +170,26 @@ export async function setDefaultAddress(uid: string, addrId: string) {
 /** 주문 저장 */
 export async function saveOrder(uid: string, order: Order) {
   const ref = doc(db, "users", uid, "orders", order.id);
-  const clean = Object.fromEntries(
-    Object.entries({ ...order, createdAt: serverTimestamp() }).filter(([, v]) => v !== undefined)
-  );
-  await setDoc(ref, clean);
+  // 깊은 정리: undefined 값 제거 (Firestore는 undefined 저장 불가)
+  const deepClean = (obj: Record<string, unknown>): Record<string, unknown> => {
+    const cleaned: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (v === undefined) continue;
+      if (Array.isArray(v)) {
+        cleaned[k] = v.map(item =>
+          typeof item === "object" && item !== null ? deepClean(item as Record<string, unknown>) : item
+        );
+      } else if (typeof v === "object" && v !== null && v.constructor === Object) {
+        cleaned[k] = deepClean(v as Record<string, unknown>);
+      } else {
+        cleaned[k] = v;
+      }
+    }
+    return cleaned;
+  };
+  const orderData = deepClean(order as unknown as Record<string, unknown>);
+  orderData.createdAt = serverTimestamp();
+  await setDoc(ref, orderData);
 }
 
 /** 주문 내역 실시간 구독 (최신순) */

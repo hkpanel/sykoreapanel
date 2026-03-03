@@ -833,10 +833,15 @@ export default function Home() {
         id: paymentId,
         paymentId,
         status: "pending_payment",
-        items: cart.map(i => ({
-          productName: i.productName, size: i.size, color: i.color,
-          colorSub: i.colorSub, retailPrice: i.retailPrice, qty: i.qty, category: i.category,
-        })),
+        items: cart.map(i => {
+          const item: Record<string, unknown> = {
+            productName: i.productName, size: i.size, color: i.color,
+            retailPrice: i.retailPrice, qty: i.qty,
+          };
+          if (i.colorSub) item.colorSub = i.colorSub;
+          if (i.category) item.category = i.category;
+          return item;
+        }) as Order["items"],
         subtotal, deliveryFee, tax, totalAmount,
         payMethod: "무통장입금",
         deliveryType: delivery,
