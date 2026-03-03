@@ -306,7 +306,7 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
           const v2x = pts[i+2].x - pts[i+1].x, v2y = pts[i+2].y - pts[i+1].y;
           const cross = v1x * v2y - v1y * v2x;
           const turn = Math.PI - (deg * Math.PI / 180);
-          dir += cross >= 0 ? -turn : turn;
+          dir += cross >= 0 ? turn : -turn;
         }
       }
       const xs = raw.map(p => p.x), ys = raw.map(p => p.y);
