@@ -20,11 +20,11 @@ export function isAdmin(email: string | null | undefined): boolean {
 
 // ═══ 타입 정의 ═══
 export interface AdminOrder {
-  id: string;          // Firestore doc ID
-  uid: string;         // 주문한 유저 UID
+  id: string;
+  uid: string;
   paymentId: string;
   orderName?: string;
-  status: "paid" | "preparing" | "shipping" | "delivered" | "cancelled";
+  status: "paid" | "confirmed" | "producing" | "shipped" | "delivered" | "completed" | "cancelled";
   items: {
     productName: string;
     size: string;
@@ -44,9 +44,21 @@ export interface AdminOrder {
   receiptUrl?: string;
   paidAt?: string;
   createdAt?: Timestamp;
+  // 고객 요청사항
+  deliveryNote?: string;
+  preferredDate?: string;
+  customerMemo?: string;
+  // 관리자 입력
+  trackingNumber?: string;
+  trackingCarrier?: string;
+  truckMemo?: string;
+  estimatedDelivery?: string;
+  adminMemo?: string;
+  statusHistory?: { status: string; at: string; note?: string }[];
   // 유저 정보 (조인)
   userEmail?: string;
   userName?: string;
+  userPhone?: string;
 }
 
 export interface AdminUser {
@@ -92,6 +104,18 @@ export async function fetchAllOrders(): Promise<AdminOrder[]> {
       receiptUrl: data.receiptUrl,
       paidAt: data.paidAt,
       createdAt: data.createdAt,
+      deliveryNote: data.deliveryNote,
+      preferredDate: data.preferredDate,
+      customerMemo: data.customerMemo,
+      trackingNumber: data.trackingNumber,
+      trackingCarrier: data.trackingCarrier,
+      truckMemo: data.truckMemo,
+      estimatedDelivery: data.estimatedDelivery,
+      adminMemo: data.adminMemo,
+      statusHistory: data.statusHistory,
+      userEmail: data.userEmail,
+      userName: data.userName,
+      userPhone: data.userPhone,
     });
   });
 
@@ -107,6 +131,37 @@ export async function updateOrderStatus(
   const ref = doc(db, "users", uid, "orders", orderId);
   await updateDoc(ref, { status: newStatus });
 }
+
+// ═══ 주문 상세 정보 업데이트 (관리자) ═══
+export async function updateOrderDetails(
+  uid: string,
+  orderId: string,
+  updates: Partial<Pick<AdminOrder,
+    "status" | "trackingNumber" | "trackingCarrier" | "truckMemo" |
+    "estimatedDelivery" | "adminMemo" | "statusHistory"
+  >>
+) {
+  const ref = doc(db, "users", uid, "orders", orderId);
+  const clean = Object.fromEntries(
+    Object.entries(updates).filter(([, v]) => v !== undefined)
+  );
+  await updateDoc(ref, clean);
+}
+
+// ═══ 예상 납기 프리셋 ═══
+export const DELIVERY_ESTIMATES = [
+  { value: "1~2일", label: "1~2일 내", desc: "후레싱/부자재 등 단순 상품" },
+  { value: "3~5일", label: "3~5일 내", desc: "스윙도어/알루미늄 가공품" },
+  { value: "5~7일", label: "5~7일 내", desc: "행가도어 (판넬 재고 있음)" },
+  { value: "7~14일", label: "7~14일", desc: "행가도어 (판넬 제작 필요)" },
+  { value: "14일이상", label: "14일 이상", desc: "대량 주문/특수 사양" },
+  { value: "확인후안내", label: "확인 후 안내", desc: "별도 연락 드리겠습니다" },
+];
+
+// ═══ 택배사 목록 ═══
+export const CARRIERS = [
+  "CJ대한통운", "롯데택배", "한진택배", "로젠택배", "우체국택배", "경동택배", "기타",
+];
 
 // ═══ 전체 회원 조회 ═══
 export async function fetchAllUsers(): Promise<AdminUser[]> {

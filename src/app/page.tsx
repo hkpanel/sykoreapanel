@@ -625,7 +625,7 @@ export default function Home() {
   const [mainTab, setMainTab] = useState<"후레싱" | "행가도어" | "스윙도어" | "알루미늄" | "판넬" | "부자재">("후레싱");
   const [user, setUser] = useState<User | null>(null);
   const [showAuth, setShowAuth] = useState(false);
-  const [showMyPage, setShowMyPage] = useState<false | "info" | "address">(false);
+  const [showMyPage, setShowMyPage] = useState<false | "info" | "address" | "orders">(false);
   const [orderComplete, setOrderComplete] = useState<{ paymentId: string; totalAmount: number; receiptUrl?: string } | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -889,6 +889,10 @@ export default function Home() {
           addressId: selectedAddrId || undefined,
           receiptUrl: result.txHash ? `https://bscscan.com/tx/${result.txHash}` : undefined,
           paidAt: new Date().toISOString(),
+          deliveryNote: deliveryNote || undefined,
+          preferredDate: deliveryNote === "희망일 지정" ? preferredDate || undefined : undefined,
+          customerMemo: customerMemo || undefined,
+          statusHistory: [{ status: "paid", at: new Date().toISOString() }],
         };
         await saveOrder(user.uid, order);
 
@@ -1041,6 +1045,10 @@ export default function Home() {
         addressId: selectedAddrId || undefined,
         receiptUrl: verifyResult.payment?.receiptUrl,
         paidAt: verifyResult.payment?.paidAt || new Date().toISOString(),
+        deliveryNote: deliveryNote || undefined,
+        preferredDate: deliveryNote === "희망일 지정" ? preferredDate || undefined : undefined,
+        customerMemo: customerMemo || undefined,
+        statusHistory: [{ status: "paid", at: new Date().toISOString() }],
       };
       await saveOrder(user.uid, order);
 
@@ -1070,6 +1078,11 @@ export default function Home() {
   const [selectedTruck, setSelectedTruck] = useState(0);
   const [savedAddresses, setSavedAddresses] = useState<{ id: string; label: string; address1: string; isDefault: boolean }[]>([]);
   const [selectedAddrId, setSelectedAddrId] = useState<string | null>(null);
+
+  // 고객 요청사항
+  const [deliveryNote, setDeliveryNote] = useState("가능한 빨리");
+  const [preferredDate, setPreferredDate] = useState("");
+  const [customerMemo, setCustomerMemo] = useState("");
 
   // 주소 → 용차 지역 매칭 (축약 주소 대응)
   const matchRegion = useCallback((address: string): string => {
@@ -1310,6 +1323,10 @@ export default function Home() {
                     <button onClick={() => { setShowAuth(false); setShowMyPage("address"); }}
                       style={{ width: "100%", padding: "10px 14px", border: "none", background: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#1d1d1f", textAlign: "left", borderRadius: 10, display: "flex", alignItems: "center", gap: 8 }}>
                       📦 배송지 관리
+                    </button>
+                    <button onClick={() => { setShowAuth(false); setShowMyPage("orders"); }}
+                      style={{ width: "100%", padding: "10px 14px", border: "none", background: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#1d1d1f", textAlign: "left", borderRadius: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                      📋 주문내역
                     </button>
                     <div style={{ height: 1, background: "#f0f0f2", margin: "4px 0" }} />
                     <button onClick={() => { signOut(); setShowAuth(false); }}
@@ -1834,6 +1851,31 @@ export default function Home() {
                       )}
                     </div>
                   )}
+                </div>
+
+                {/* 배송 요청사항 */}
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#1d1d1f", marginBottom: 8 }}>📝 배송 요청사항</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                    {["가능한 빨리", "납기 확인 요청", "희망일 지정"].map(opt => (
+                      <button key={opt} onClick={() => setDeliveryNote(opt)} style={{
+                        padding: "7px 14px", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer",
+                        border: deliveryNote === opt ? "2px solid #7b5ea7" : "1px solid #e8e8ed",
+                        background: deliveryNote === opt ? "rgba(123,94,167,0.08)" : "#fff",
+                        color: deliveryNote === opt ? "#7b5ea7" : "#6e6e73",
+                      }}>{opt}</button>
+                    ))}
+                  </div>
+                  {deliveryNote === "희망일 지정" && (
+                    <input type="datetime-local" value={preferredDate}
+                      onChange={e => setPreferredDate(e.target.value)}
+                      style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid #d2d2d7",
+                        fontSize: 13, marginBottom: 8, boxSizing: "border-box" }} />
+                  )}
+                  <textarea placeholder="추가 요청사항 (예: 문 앞에 놓아주세요, 연락 후 배송 등)"
+                    value={customerMemo} onChange={e => setCustomerMemo(e.target.value)}
+                    rows={2} style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid #d2d2d7",
+                      fontSize: 13, resize: "none", boxSizing: "border-box", outline: "none" }} />
                 </div>
 
                 {/* 결제방식 */}

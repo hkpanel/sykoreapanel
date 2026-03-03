@@ -59,18 +59,29 @@ export interface OrderItem {
 export interface Order {
   id: string;
   paymentId: string;
-  status: "paid" | "preparing" | "shipping" | "delivered" | "cancelled";
+  status: "paid" | "confirmed" | "producing" | "shipped" | "delivered" | "completed" | "cancelled";
   items: OrderItem[];
-  subtotal: number;         // 상품 소계 (부가세 전)
-  deliveryFee: number;      // 배송비
-  tax: number;              // 부가세
-  totalAmount: number;      // 총 결제금액 (부가세 포함)
-  payMethod: string;        // CARD, EASY_PAY 등
-  deliveryType: string;     // self, parcel, truck
-  addressId?: string;       // 배송지 ID
-  receiptUrl?: string;      // 영수증 URL
-  paidAt: string;           // 결제 시각
-  createdAt?: unknown;      // Firestore serverTimestamp
+  subtotal: number;
+  deliveryFee: number;
+  tax: number;
+  totalAmount: number;
+  payMethod: string;
+  deliveryType: string;
+  addressId?: string;
+  receiptUrl?: string;
+  paidAt: string;
+  createdAt?: unknown;
+  // 고객 요청사항
+  deliveryNote?: string;       // "가능한 빨리" | "납기 확인 요청" | "희망일 지정"
+  preferredDate?: string;      // 희망 수령일 (YYYY-MM-DD HH:mm)
+  customerMemo?: string;       // 자유 메모
+  // 관리자 입력
+  trackingNumber?: string;     // 택배 송장번호
+  trackingCarrier?: string;    // 택배사
+  truckMemo?: string;          // 용차 진행 메모
+  estimatedDelivery?: string;  // 예상 납기 ("1~2일" | "3~5일" 등)
+  adminMemo?: string;          // 관리자 내부 메모
+  statusHistory?: { status: string; at: string; note?: string }[];
 }
 
 // ═══════════════════════════════════════

@@ -3,18 +3,29 @@ import { useState, useEffect } from "react";
 import { updateUserProfile, getUserProfile } from "@/lib/auth";
 import {
   subscribeAddresses, saveAddress, deleteAddress, setDefaultAddress,
-  type Address,
+  subscribeOrders,
+  type Address, type Order,
 } from "@/lib/db";
 import type { User } from "firebase/auth";
 
 interface MyPageModalProps {
   user: User;
-  initialTab?: "info" | "address";
+  initialTab?: "info" | "address" | "orders";
   onClose: () => void;
 }
 
+const ORDER_STATUS: Record<string, { label: string; icon: string; color: string }> = {
+  paid: { label: "결제완료", icon: "💳", color: "#60a5fa" },
+  confirmed: { label: "주문확인", icon: "✅", color: "#38bdf8" },
+  producing: { label: "제작중", icon: "🔨", color: "#fbbf24" },
+  shipped: { label: "발송완료", icon: "📦", color: "#a78bfa" },
+  delivered: { label: "배송중", icon: "🚛", color: "#818cf8" },
+  completed: { label: "완료", icon: "✨", color: "#34d399" },
+  cancelled: { label: "취소", icon: "❌", color: "#f87171" },
+};
+
 export default function MyPageModal({ user, initialTab = "info", onClose }: MyPageModalProps) {
-  const [tab, setTab] = useState<"info" | "address">(initialTab);
+  const [tab, setTab] = useState<"info" | "address" | "orders">(initialTab);
   const [name, setName] = useState(user.displayName || "");
   const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
@@ -24,6 +35,10 @@ export default function MyPageModal({ user, initialTab = "info", onClose }: MyPa
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [editAddr, setEditAddr] = useState<Address | null>(null);
   const [showAddrForm, setShowAddrForm] = useState(false);
+
+  // 주문내역
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
 
   // Firestore에서 프로필 로드
   useEffect(() => {
@@ -35,11 +50,15 @@ export default function MyPageModal({ user, initialTab = "info", onClose }: MyPa
     });
   }, [user.uid]);
 
-  // Firestore 배송지 실시간 구독 (PC↔모바일 동기화!)
+  // Firestore 배송지 실시간 구독
   useEffect(() => {
-    const unsub = subscribeAddresses(user.uid, (addrs) => {
-      setAddresses(addrs);
-    });
+    const unsub = subscribeAddresses(user.uid, (addrs) => setAddresses(addrs));
+    return () => unsub();
+  }, [user.uid]);
+
+  // Firestore 주문내역 실시간 구독
+  useEffect(() => {
+    const unsub = subscribeOrders(user.uid, (o) => setOrders(o));
     return () => unsub();
   }, [user.uid]);
 
@@ -117,7 +136,8 @@ export default function MyPageModal({ user, initialTab = "info", onClose }: MyPa
         {/* 탭 */}
         <div style={{ display: "flex", padding: "12px 24px 0", borderBottom: "1px solid #f0f0f2" }}>
           <button onClick={() => setTab("info")} style={tabStyle(tab === "info")}>👤 회원정보</button>
-          <button onClick={() => setTab("address")} style={tabStyle(tab === "address")}>📦 배송지 관리</button>
+          <button onClick={() => setTab("address")} style={tabStyle(tab === "address")}>📦 배송지</button>
+          <button onClick={() => setTab("orders")} style={tabStyle(tab === "orders")}>📋 주문내역</button>
         </div>
 
         <div style={{ padding: "20px 24px 28px" }}>
@@ -194,6 +214,144 @@ export default function MyPageModal({ user, initialTab = "info", onClose }: MyPa
           {/* 배송지 입력 폼 */}
           {tab === "address" && showAddrForm && (
             <AddressForm addr={editAddr} onSave={handleSaveAddr} onCancel={() => { setShowAddrForm(false); setEditAddr(null); }} />
+          )}
+
+          {/* 주문내역 탭 */}
+          {tab === "orders" && (
+            <div>
+              {orders.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "40px 0", color: "#86868b" }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>주문 내역이 없어요</div>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {orders.map(order => {
+                    const st = ORDER_STATUS[order.status] || ORDER_STATUS.paid;
+                    const isExpanded = expandedOrder === order.id;
+                    const formatDate = (d: string) => {
+                      try { return new Date(d).toLocaleDateString("ko-KR"); } catch { return "-"; }
+                    };
+
+                    return (
+                      <div key={order.id} style={{
+                        borderRadius: 14, border: "2px solid #f0f0f2", overflow: "hidden",
+                        background: order.status === "cancelled" ? "#fafafa" : "#fff",
+                      }}>
+                        {/* 요약 */}
+                        <div onClick={() => setExpandedOrder(isExpanded ? null : order.id)} style={{
+                          padding: "14px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10,
+                        }}>
+                          <span style={{
+                            padding: "3px 8px", borderRadius: 6, fontSize: 11, fontWeight: 700,
+                            color: st.color, background: `${st.color}18`,
+                          }}>{st.icon} {st.label}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: "#1d1d1f" }}>
+                              {order.items[0]?.productName || "-"}
+                              {order.items.length > 1 && <span style={{ color: "#86868b" }}> 외 {order.items.length - 1}건</span>}
+                            </div>
+                            <div style={{ fontSize: 11, color: "#86868b", marginTop: 2 }}>{formatDate(order.paidAt)}</div>
+                          </div>
+                          <div style={{ fontSize: 14, fontWeight: 800, color: "#1d1d1f" }}>₩{order.totalAmount.toLocaleString()}</div>
+                          <span style={{ fontSize: 14, transition: "transform 0.2s", transform: isExpanded ? "rotate(180deg)" : "rotate(0)" }}>▾</span>
+                        </div>
+
+                        {/* 상세 */}
+                        {isExpanded && (
+                          <div style={{ padding: "0 16px 16px", borderTop: "1px solid #f0f0f2" }}>
+                            {/* 상태 진행 바 */}
+                            <div style={{ display: "flex", gap: 2, margin: "12px 0", overflowX: "auto" }}>
+                              {(["paid", "confirmed", "producing", "shipped", "delivered", "completed"] as const).map((key, idx) => {
+                                const s = ORDER_STATUS[key];
+                                const curIdx = ["paid", "confirmed", "producing", "shipped", "delivered", "completed"].indexOf(order.status);
+                                const isPast = idx <= curIdx;
+                                const isCurrent = idx === curIdx;
+                                return (
+                                  <div key={key} style={{
+                                    flex: 1, textAlign: "center", padding: "6px 2px", borderRadius: 6, fontSize: 10, fontWeight: 700,
+                                    background: isCurrent ? `${s.color}20` : "transparent",
+                                    color: isPast ? s.color : "#d1d5db",
+                                    borderBottom: isCurrent ? `2px solid ${s.color}` : "2px solid transparent",
+                                  }}>
+                                    {isPast && idx < curIdx ? "✓" : s.icon}<br/>{s.label}
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {/* 예상 납기 */}
+                            {order.estimatedDelivery && (
+                              <div style={{ padding: "8px 12px", borderRadius: 8, background: "#f0f9ff", border: "1px solid #bae6fd", marginBottom: 8 }}>
+                                <span style={{ fontSize: 12, fontWeight: 700, color: "#0284c7" }}>⏱ 예상 납기: {order.estimatedDelivery}</span>
+                              </div>
+                            )}
+
+                            {/* 택배 송장 */}
+                            {order.trackingNumber && (
+                              <div style={{ padding: "8px 12px", borderRadius: 8, background: "#f5f3ff", border: "1px solid #c4b5fd", marginBottom: 8 }}>
+                                <span style={{ fontSize: 12, fontWeight: 700, color: "#7c3aed" }}>
+                                  📦 {order.trackingCarrier || "택배"} 송장번호: {order.trackingNumber}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* 용차 메모 */}
+                            {order.truckMemo && (
+                              <div style={{ padding: "8px 12px", borderRadius: 8, background: "#fefce8", border: "1px solid #fde68a", marginBottom: 8 }}>
+                                <span style={{ fontSize: 12, fontWeight: 700, color: "#a16207" }}>🚛 {order.truckMemo}</span>
+                              </div>
+                            )}
+
+                            {/* 상품 목록 */}
+                            <div style={{ marginBottom: 8 }}>
+                              {order.items.map((item, i) => (
+                                <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 12, color: "#6e6e73" }}>
+                                  <span>{item.productName} <span style={{ color: "#aeaeb2" }}>×{item.qty}</span></span>
+                                  <span style={{ fontWeight: 700, color: "#1d1d1f" }}>₩{(item.retailPrice * item.qty).toLocaleString()}</span>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* 금액 요약 */}
+                            <div style={{ borderTop: "1px solid #f0f0f2", paddingTop: 8, fontSize: 12, color: "#86868b" }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                                <span>상품</span><span>₩{order.subtotal.toLocaleString()}</span>
+                              </div>
+                              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                                <span>배송비</span><span>₩{order.deliveryFee.toLocaleString()}</span>
+                              </div>
+                              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                                <span>부가세</span><span>₩{order.tax.toLocaleString()}</span>
+                              </div>
+                              <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: "#1d1d1f", fontSize: 14, marginTop: 6 }}>
+                                <span>총 결제금액</span><span>₩{order.totalAmount.toLocaleString()}</span>
+                              </div>
+                            </div>
+
+                            {/* 상태 이력 */}
+                            {order.statusHistory && order.statusHistory.length > 0 && (
+                              <div style={{ marginTop: 10, padding: "8px 10px", background: "#f9fafb", borderRadius: 8 }}>
+                                <div style={{ fontSize: 11, fontWeight: 700, color: "#86868b", marginBottom: 4 }}>진행 이력</div>
+                                {order.statusHistory.map((h, i) => {
+                                  const s = ORDER_STATUS[h.status] || ORDER_STATUS.paid;
+                                  return (
+                                    <div key={i} style={{ fontSize: 11, color: "#6e6e73", marginBottom: 2, display: "flex", gap: 6 }}>
+                                      <span style={{ color: s.color, fontWeight: 700 }}>{s.icon} {s.label}</span>
+                                      <span>{new Date(h.at).toLocaleString("ko-KR")}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
