@@ -398,7 +398,7 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
 
   useEffect(() => { draw(); }, [draw]);
 
-  const click = (e: React.MouseEvent) => { if (step!==1||!cvs.current) return; const r = cvs.current.getBoundingClientRect(); const x = (e.clientX-r.left)/r.width*REF_W; const y = (e.clientY-r.top)/r.height*REF_H; setPts(p=>[...p,{x,y}]); if(pts.length>0) setDims(p=>[...p,""]); if(pts.length>1) setAngles(p=>[...p,""]); };
+  const click = (e: React.MouseEvent) => { if (step!==1||!cvs.current) return; const r = cvs.current.getBoundingClientRect(); const x = (e.clientX-r.left)/r.width*REF_W; const y = (e.clientY-r.top)/r.height*REF_H; setPts(p=>[...p,{x,y}]); if(pts.length>0) setDims(p=>[...p,""]); if(pts.length>1) setAngles(p=>[...p,"90"]); };
   const mv = (e: React.MouseEvent) => { if(step!==1||!cvs.current) return; const r = cvs.current.getBoundingClientRect(); setHov({x:(e.clientX-r.left)/r.width*REF_W,y:(e.clientY-r.top)/r.height*REF_H}); };
   const dimCh = (i:number,v:string) => setDims(p => { const n=[...p]; n[i]=v.replace(/[^0-9]/g,""); return n; });
   const angleCh = (i:number,v:string) => setAngles(p => { const n=[...p]; n[i]=v.replace(/[^0-9]/g,""); return n; });
