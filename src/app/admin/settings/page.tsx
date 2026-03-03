@@ -95,6 +95,7 @@ export default function AdminSettingsPage() {
                 style={{
                   flex: 1, padding: "10px 14px", borderRadius: 10, border: "2px solid #e8e8ed",
                   fontSize: 18, fontWeight: 800, textAlign: "center", outline: "none",
+                  color: "#1d1d1f", background: "#fff",
                 }}
                 onFocus={e => e.target.style.borderColor = "#7b5ea7"}
                 onBlur={e => e.target.style.borderColor = "#e8e8ed"}
