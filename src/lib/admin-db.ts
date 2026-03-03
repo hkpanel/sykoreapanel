@@ -143,12 +143,10 @@ export async function updateOrderStatus(
 export async function updateOrderDetails(
   uid: string,
   orderId: string,
-  updates: Partial<Pick<AdminOrder,
-    "status" | "trackingNumber" | "trackingCarrier" | "truckMemo" |
-    "estimatedDelivery" | "adminMemo" | "statusHistory"
-  >>
+  updates: Record<string, unknown>
 ) {
   const ref = doc(db, "users", uid, "orders", orderId);
+  // undefined 값 제거
   const clean = Object.fromEntries(
     Object.entries(updates).filter(([, v]) => v !== undefined)
   );

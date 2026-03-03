@@ -74,17 +74,20 @@ export default function AdminOrders() {
     if (saving) return;
     setSaving(order.id);
     try {
-      const history = [...(order.statusHistory || []), { status: newStatus, at: new Date().toISOString(), note }];
+      const historyEntry: { status: string; at: string; note?: string } = { status: newStatus, at: new Date().toISOString() };
+      if (note) historyEntry.note = note;
+      const history = [...(order.statusHistory || []), historyEntry];
       const ed = editData[order.id] || {};
-      await updateOrderDetails(order.uid, order.id, {
-        status: newStatus,
-        statusHistory: history,
-        trackingNumber: ed.trackingNumber || undefined,
-        trackingCarrier: ed.trackingCarrier || undefined,
-        truckMemo: ed.truckMemo || undefined,
-        estimatedDelivery: ed.estimatedDelivery || undefined,
-        adminMemo: ed.adminMemo || undefined,
-      });
+
+      // undefined 값 제거 (Firestore 에러 방지)
+      const updates: Record<string, unknown> = { status: newStatus, statusHistory: history };
+      if (ed.trackingNumber) updates.trackingNumber = ed.trackingNumber;
+      if (ed.trackingCarrier) updates.trackingCarrier = ed.trackingCarrier;
+      if (ed.truckMemo) updates.truckMemo = ed.truckMemo;
+      if (ed.estimatedDelivery) updates.estimatedDelivery = ed.estimatedDelivery;
+      if (ed.adminMemo) updates.adminMemo = ed.adminMemo;
+
+      await updateOrderDetails(order.uid, order.id, updates);
       setOrders(prev => prev.map(o => o.id === order.id ? {
         ...o, status: newStatus, statusHistory: history,
         ...ed,
@@ -103,13 +106,13 @@ export default function AdminOrders() {
     setSaving(order.id);
     try {
       const ed = editData[order.id] || {};
-      await updateOrderDetails(order.uid, order.id, {
-        trackingNumber: ed.trackingNumber || undefined,
-        trackingCarrier: ed.trackingCarrier || undefined,
-        truckMemo: ed.truckMemo || undefined,
-        estimatedDelivery: ed.estimatedDelivery || undefined,
-        adminMemo: ed.adminMemo || undefined,
-      });
+      const updates: Record<string, unknown> = {};
+      if (ed.trackingNumber) updates.trackingNumber = ed.trackingNumber;
+      if (ed.trackingCarrier) updates.trackingCarrier = ed.trackingCarrier;
+      if (ed.truckMemo) updates.truckMemo = ed.truckMemo;
+      if (ed.estimatedDelivery) updates.estimatedDelivery = ed.estimatedDelivery;
+      if (ed.adminMemo) updates.adminMemo = ed.adminMemo;
+      await updateOrderDetails(order.uid, order.id, updates);
       setOrders(prev => prev.map(o => o.id === order.id ? { ...o, ...ed } : o));
       alert("저장 완료!");
     } catch (err) {
@@ -251,17 +254,24 @@ export default function AdminOrders() {
                     {/* 주문 상품 */}
                     <Section title="주문 상품">
                       {order.items.map((item, i) => (
-                        <div key={i} style={{
-                          display: "flex", justifyContent: "space-between", alignItems: "center",
-                          padding: "6px 10px", background: "rgba(255,255,255,0.02)", borderRadius: 8, marginBottom: 3, fontSize: 13,
-                        }}>
-                          <div>
-                            <span style={{ fontWeight: 600 }}>{item.productName}</span>
-                            <span style={{ color: "#86868b", marginLeft: 8 }}>{item.size}{item.color ? ` / ${item.color}` : ""}</span>
-                          </div>
-                          <div style={{ whiteSpace: "nowrap" }}>
-                            <span style={{ color: "#86868b" }}>{item.qty}개</span>
-                            <span style={{ fontWeight: 700, marginLeft: 10 }}>{formatKRW(item.retailPrice * item.qty)}</span>
+                        <div key={i} style={{ marginBottom: 4 }}>
+                          {(item as Record<string, unknown>).image && (
+                            <div style={{ marginBottom: 4, borderRadius: 8, overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)", maxWidth: 200 }}>
+                              <img src={(item as Record<string, unknown>).image as string} alt="절곡 도면" style={{ width: "100%", height: "auto", display: "block" }} />
+                            </div>
+                          )}
+                          <div style={{
+                            display: "flex", justifyContent: "space-between", alignItems: "center",
+                            padding: "6px 10px", background: "rgba(255,255,255,0.02)", borderRadius: 8, fontSize: 13,
+                          }}>
+                            <div>
+                              <span style={{ fontWeight: 600 }}>{item.productName}</span>
+                              <span style={{ color: "#86868b", marginLeft: 8 }}>{item.size}{item.color ? ` / ${item.color}` : ""}</span>
+                            </div>
+                            <div style={{ whiteSpace: "nowrap" }}>
+                              <span style={{ color: "#86868b" }}>{item.qty}개</span>
+                              <span style={{ fontWeight: 700, marginLeft: 10 }}>{formatKRW(item.retailPrice * item.qty)}</span>
+                            </div>
                           </div>
                         </div>
                       ))}

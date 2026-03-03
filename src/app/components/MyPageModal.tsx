@@ -314,9 +314,16 @@ export default function MyPageModal({ user, initialTab = "info", onClose }: MyPa
                             {/* 상품 목록 */}
                             <div style={{ marginBottom: 8 }}>
                               {order.items.map((item, i) => (
-                                <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 12, color: "#6e6e73" }}>
-                                  <span>{item.productName} <span style={{ color: "#aeaeb2" }}>×{item.qty}</span></span>
-                                  <span style={{ fontWeight: 700, color: "#1d1d1f" }}>₩{(item.retailPrice * item.qty).toLocaleString()}</span>
+                                <div key={i} style={{ padding: "4px 0" }}>
+                                  {(item as Record<string, unknown>).image && (
+                                    <div style={{ marginBottom: 4, borderRadius: 8, overflow: "hidden", border: "1px solid #e8e8ed" }}>
+                                      <img src={(item as Record<string, unknown>).image as string} alt="절곡 도면" style={{ width: "100%", height: "auto", display: "block" }} />
+                                    </div>
+                                  )}
+                                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#6e6e73" }}>
+                                    <span>{item.productName} <span style={{ color: "#aeaeb2" }}>×{item.qty}</span></span>
+                                    <span style={{ fontWeight: 700, color: "#1d1d1f" }}>₩{(item.retailPrice * item.qty).toLocaleString()}</span>
+                                  </div>
                                 </div>
                               ))}
                             </div>

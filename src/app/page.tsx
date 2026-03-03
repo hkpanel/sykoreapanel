@@ -841,6 +841,7 @@ export default function Home() {
           };
           if (i.colorSub) item.colorSub = i.colorSub;
           if (i.category) item.category = i.category;
+          if (i.image) item.image = i.image;
           return item as unknown as Order["items"][number];
         }),
         subtotal, deliveryFee, tax, totalAmount,
@@ -926,15 +927,16 @@ export default function Home() {
           id: paymentId,
           paymentId: result.txHash || paymentId,
           status: "paid",
-          items: cart.map(i => ({
-            productName: i.productName,
-            size: i.size,
-            color: i.color,
-            colorSub: i.colorSub,
-            retailPrice: i.retailPrice,
-            qty: i.qty,
-            category: i.category,
-          })),
+          items: cart.map(i => {
+            const item: Record<string, unknown> = {
+              productName: i.productName, size: i.size, color: i.color,
+              retailPrice: i.retailPrice, qty: i.qty,
+            };
+            if (i.colorSub) item.colorSub = i.colorSub;
+            if (i.category) item.category = i.category;
+            if (i.image) item.image = i.image;
+            return item as unknown as Order["items"][number];
+          }),
           subtotal,
           deliveryFee,
           tax,
@@ -1082,15 +1084,16 @@ export default function Home() {
         id: paymentId,
         paymentId,
         status: "paid",
-        items: cart.map(i => ({
-          productName: i.productName,
-          size: i.size,
-          color: i.color,
-          colorSub: i.colorSub,
-          retailPrice: i.retailPrice,
-          qty: i.qty,
-          category: i.category,
-        })),
+        items: cart.map(i => {
+          const item: Record<string, unknown> = {
+            productName: i.productName, size: i.size, color: i.color,
+            retailPrice: i.retailPrice, qty: i.qty,
+          };
+          if (i.colorSub) item.colorSub = i.colorSub;
+          if (i.category) item.category = i.category;
+          if (i.image) item.image = i.image;
+          return item as unknown as Order["items"][number];
+        }),
         subtotal,
         deliveryFee,
         tax,

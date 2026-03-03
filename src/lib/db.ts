@@ -54,6 +54,7 @@ export interface OrderItem {
   retailPrice: number;
   qty: number;
   category?: string;
+  image?: string;
 }
 
 export interface Order {
