@@ -812,6 +812,19 @@ export default function Home() {
     return () => { window.ethereum?.removeListener?.("accountsChanged", handleAccountsChanged); };
   }, []);
 
+  // ═══ 주소 정보 빌드 헬퍼 ═══
+  const buildAddrFields = () => {
+    const addr = savedAddresses.find(a => a.id === selectedAddrId);
+    if (!addr || delivery === "self") return {};
+    return {
+      addressId: addr.id,
+      addressLabel: addr.label,
+      addressFull: `${addr.address1} ${addr.address2}`.trim(),
+      addressPhone: addr.phone,
+      addressReceiver: addr.name,
+    };
+  };
+
   // ═══ 무통장입금 주문 ═══
   const handleBankOrder = async () => {
     if (!user) { setShowCart(false); setShowAuth(true); return; }
@@ -847,7 +860,7 @@ export default function Home() {
         subtotal, deliveryFee, tax, totalAmount,
         payMethod: "무통장입금",
         deliveryType: delivery,
-        addressId: selectedAddrId || undefined,
+        ...buildAddrFields(),
         paidAt: new Date().toISOString(),
         deliveryNote: deliveryNote || undefined,
         preferredDate: deliveryNote === "희망일 지정" ? preferredDate || undefined : undefined,
@@ -943,7 +956,7 @@ export default function Home() {
           totalAmount,
           payMethod: "SYC",
           deliveryType: delivery,
-          addressId: selectedAddrId || undefined,
+          ...buildAddrFields(),
           receiptUrl: result.txHash ? `https://bscscan.com/tx/${result.txHash}` : undefined,
           paidAt: new Date().toISOString(),
           deliveryNote: deliveryNote || undefined,
@@ -1100,7 +1113,7 @@ export default function Home() {
         totalAmount,
         payMethod: verifyResult.payment?.method || "CARD",
         deliveryType: delivery,
-        addressId: selectedAddrId || undefined,
+        ...buildAddrFields(),
         receiptUrl: verifyResult.payment?.receiptUrl,
         paidAt: verifyResult.payment?.paidAt || new Date().toISOString(),
         deliveryNote: deliveryNote || undefined,
@@ -1134,7 +1147,7 @@ export default function Home() {
   const [delivery, setDelivery] = useState<"self" | "parcel" | "truck">("parcel");
   const [truckRegion, setTruckRegion] = useState("");
   const [selectedTruck, setSelectedTruck] = useState(0);
-  const [savedAddresses, setSavedAddresses] = useState<{ id: string; label: string; address1: string; isDefault: boolean }[]>([]);
+  const [savedAddresses, setSavedAddresses] = useState<{ id: string; label: string; name: string; phone: string; zipcode: string; address1: string; address2: string; isDefault: boolean }[]>([]);
   const [selectedAddrId, setSelectedAddrId] = useState<string | null>(null);
 
   // 고객 요청사항

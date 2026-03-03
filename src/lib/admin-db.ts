@@ -5,7 +5,7 @@
  * 관리자 이메일: bbajae1@naver.com
  */
 import {
-  collection, collectionGroup, getDocs, doc, updateDoc,
+  collection, collectionGroup, getDocs, doc, updateDoc, deleteDoc,
   query,
   type Timestamp,
 } from "firebase/firestore";
@@ -42,6 +42,10 @@ export interface AdminOrder {
   payMethod: string;
   deliveryType: string;
   addressId?: string;
+  addressLabel?: string;
+  addressFull?: string;
+  addressPhone?: string;
+  addressReceiver?: string;
   receiptUrl?: string;
   paidAt?: string;
   createdAt?: Timestamp;
@@ -102,6 +106,10 @@ export async function fetchAllOrders(): Promise<AdminOrder[]> {
       payMethod: data.payMethod || "",
       deliveryType: data.deliveryType || "",
       addressId: data.addressId,
+      addressLabel: data.addressLabel,
+      addressFull: data.addressFull,
+      addressPhone: data.addressPhone,
+      addressReceiver: data.addressReceiver,
       receiptUrl: data.receiptUrl,
       paidAt: data.paidAt,
       createdAt: data.createdAt,
@@ -152,6 +160,12 @@ export async function updateOrderDetails(
     Object.entries(updates).filter(([, v]) => v !== undefined)
   );
   await updateDoc(ref, clean);
+}
+
+// ═══ 주문 영구 삭제 (관리자) ═══
+export async function deleteOrder(uid: string, orderId: string) {
+  const ref = doc(db, "users", uid, "orders", orderId);
+  await deleteDoc(ref);
 }
 
 // ═══ 예상 납기 프리셋 ═══

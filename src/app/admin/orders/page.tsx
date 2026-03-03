@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
-  fetchAllOrders, updateOrderDetails,
+  fetchAllOrders, updateOrderDetails, deleteOrder,
   DELIVERY_ESTIMATES, CARRIERS,
   type AdminOrder,
 } from "@/lib/admin-db";
@@ -133,6 +133,82 @@ export default function AdminOrders() {
       return d.toLocaleDateString("ko-KR") + " " + d.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
     }
     return o.paidAt ? new Date(o.paidAt).toLocaleDateString("ko-KR") : "-";
+  };
+
+  // 주문 영구 삭제
+  const handleDelete = async (order: AdminOrder) => {
+    if (!confirm(`⚠️ "${order.items[0]?.productName || ""}" 주문을 영구 삭제합니다.\n\n이 작업은 되돌릴 수 없습니다. 정말 삭제하시겠습니까?`)) return;
+    if (!confirm("정말로 영구 삭제하시겠습니까? 마지막 확인입니다.")) return;
+    setSaving(order.id);
+    try {
+      await deleteOrder(order.uid, order.id);
+      setOrders(prev => prev.filter(o => o.id !== order.id));
+      setExpandedId(null);
+    } catch (err) {
+      console.error("삭제 실패:", err);
+      alert("삭제에 실패했습니다.");
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  // PDF 작업지시서 인쇄
+  const handlePrint = (order: AdminOrder) => {
+    const statusLabel = STATUS_STEPS.find(s => s.key === order.status)?.label || order.status;
+    const itemRows = order.items.map(item =>
+      `<tr>
+        <td style="padding:6px 8px;border:1px solid #ddd;">${item.productName}</td>
+        <td style="padding:6px 8px;border:1px solid #ddd;">${item.size}</td>
+        <td style="padding:6px 8px;border:1px solid #ddd;">${item.color || "-"}</td>
+        <td style="padding:6px 8px;border:1px solid #ddd;text-align:center;">${item.qty}</td>
+        <td style="padding:6px 8px;border:1px solid #ddd;text-align:right;">${formatKRW(item.retailPrice * item.qty)}</td>
+      </tr>`
+    ).join("");
+    const imageRows = order.items
+      .filter(item => item.image)
+      .map(item => `<div style="margin:8px 0;"><p style="font-size:12px;font-weight:bold;margin:0 0 4px;">${item.productName}</p><img src="${item.image}" style="max-width:300px;border:1px solid #ddd;border-radius:4px;"/></div>`)
+      .join("");
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>작업지시서 - ${order.paymentId}</title>
+    <style>body{font-family:'맑은 고딕',sans-serif;padding:20px;color:#333;font-size:13px;}
+    h1{font-size:20px;margin:0 0 4px;} .info{display:flex;flex-wrap:wrap;gap:16px;margin:12px 0;}
+    .info div{flex:1;min-width:180px;} .label{color:#888;font-size:11px;margin-bottom:2px;}
+    table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12px;}
+    th{background:#f5f5f5;padding:6px 8px;border:1px solid #ddd;text-align:left;font-size:11px;}
+    .total{font-size:16px;font-weight:bold;text-align:right;margin:8px 0;}
+    .memo{background:#fff8e1;padding:10px;border-radius:6px;margin:8px 0;font-size:12px;}
+    .addr{background:#f0f7ff;padding:10px;border-radius:6px;margin:8px 0;font-size:12px;}
+    @media print{body{padding:10px;} button{display:none!important;}}</style></head><body>
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #333;padding-bottom:8px;margin-bottom:12px;">
+      <div><h1>📋 작업지시서</h1><span style="color:#888;font-size:12px;">SY한국판넬</span></div>
+      <div style="text-align:right;"><div style="font-size:11px;color:#888;">주문번호</div><div style="font-size:12px;font-weight:bold;">${order.paymentId}</div>
+      <div style="font-size:11px;color:#888;margin-top:4px;">${formatDate(order)}</div></div>
+    </div>
+    <div class="info">
+      <div><div class="label">상태</div><div style="font-weight:bold;">${statusLabel}</div></div>
+      <div><div class="label">결제방법</div><div>${order.payMethod}</div></div>
+      <div><div class="label">배송방식</div><div>${order.deliveryType === "parcel" ? "택배" : order.deliveryType === "truck" ? "용차" : "직접수령"}</div></div>
+      ${order.estimatedDelivery ? `<div><div class="label">예상납기</div><div style="font-weight:bold;color:#0066b3;">${order.estimatedDelivery}</div></div>` : ""}
+    </div>
+    ${order.addressFull ? `<div class="addr"><strong>📍 배송지</strong><br/>${order.addressReceiver || ""} ${order.addressPhone || ""}<br/>${order.addressFull}</div>` : ""}
+    ${(order.deliveryNote || order.customerMemo) ? `<div class="memo"><strong>📝 고객 요청</strong><br/>
+      ${order.deliveryNote ? `배송: ${order.deliveryNote}${order.preferredDate ? ` (${order.preferredDate})` : ""}<br/>` : ""}
+      ${order.customerMemo ? `메모: ${order.customerMemo}` : ""}</div>` : ""}
+    <table><thead><tr><th>상품명</th><th>규격</th><th>색상</th><th style="text-align:center;">수량</th><th style="text-align:right;">금액</th></tr></thead>
+    <tbody>${itemRows}</tbody></table>
+    ${imageRows ? `<div style="border-top:1px solid #ddd;padding-top:8px;"><strong>📐 절곡 도면</strong>${imageRows}</div>` : ""}
+    <div style="border-top:2px solid #333;padding-top:8px;margin-top:8px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#666;"><span>상품합계</span><span>${formatKRW(order.subtotal)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#666;"><span>배송비</span><span>${formatKRW(order.deliveryFee)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#666;"><span>부가세</span><span>${formatKRW(order.tax)}</span></div>
+      <div class="total">${formatKRW(order.totalAmount)}</div>
+    </div>
+    ${order.adminMemo ? `<div style="margin-top:12px;padding:8px;background:#f5f5f5;border-radius:6px;font-size:11px;color:#666;">관리자 메모: ${order.adminMemo}</div>` : ""}
+    <div style="margin-top:20px;text-align:center;">
+      <button onclick="window.print()" style="padding:10px 30px;font-size:14px;font-weight:bold;background:#333;color:#fff;border:none;border-radius:8px;cursor:pointer;">🖨️ 인쇄하기</button>
+    </div></body></html>`;
+    const w = window.open("", "_blank");
+    if (w) { w.document.write(html); w.document.close(); }
   };
 
   if (loading) {
@@ -296,6 +372,19 @@ export default function AdminOrders() {
                       </Section>
                     )}
 
+                    {/* 배송지 */}
+                    {order.addressFull && (
+                      <Section title="📍 배송지">
+                        <div style={{ padding: "10px 12px", background: "rgba(59,130,246,0.06)", borderRadius: 10, border: "1px solid rgba(59,130,246,0.2)" }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: "#60a5fa", marginBottom: 4 }}>
+                            {order.addressLabel || "배송지"} · {order.addressReceiver || ""}
+                          </div>
+                          <div style={{ fontSize: 13, color: "#d1d5db" }}>{order.addressFull}</div>
+                          {order.addressPhone && <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>📞 {order.addressPhone}</div>}
+                        </div>
+                      </Section>
+                    )}
+
                     {/* 주문 정보 */}
                     <Section title="주문 정보">
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, fontSize: 12 }}>
@@ -371,8 +460,12 @@ export default function AdminOrders() {
                           style={{ width: "100%", padding: "7px 10px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "#e5e7eb", fontSize: 12, resize: "none", boxSizing: "border-box" }} />
                       </div>
 
-                      {/* 저장 + 취소 버튼 */}
-                      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                      {/* 저장 + 인쇄 + 취소 + 삭제 버튼 */}
+                      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
+                        <button onClick={() => handlePrint(order)}
+                          style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "#d1d5db", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                          🖨️ 작업지시서
+                        </button>
                         <button onClick={() => handleSaveDetails(order)}
                           disabled={saving === order.id}
                           style={{
@@ -388,6 +481,11 @@ export default function AdminOrders() {
                             주문취소
                           </button>
                         )}
+                        <button onClick={() => handleDelete(order)}
+                          disabled={saving === order.id}
+                          style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid rgba(248,113,113,0.5)", background: "rgba(248,113,113,0.1)", color: "#f87171", fontSize: 12, fontWeight: 700, cursor: "pointer", opacity: saving === order.id ? 0.5 : 1 }}>
+                          🗑️ 영구삭제
+                        </button>
                       </div>
                     </div>
 

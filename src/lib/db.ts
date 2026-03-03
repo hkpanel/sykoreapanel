@@ -69,6 +69,10 @@ export interface Order {
   payMethod: string;
   deliveryType: string;
   addressId?: string;
+  addressLabel?: string;       // 배송지 이름 (집, 회사 등)
+  addressFull?: string;        // 전체 주소
+  addressPhone?: string;       // 수령인 연락처
+  addressReceiver?: string;    // 수령인 이름
   receiptUrl?: string;
   paidAt: string;
   createdAt?: unknown;

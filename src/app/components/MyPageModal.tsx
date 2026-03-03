@@ -289,6 +289,15 @@ export default function MyPageModal({ user, initialTab = "info", onClose }: MyPa
                                 <div style={{ fontSize: 12, color: "#6e6e73" }}>예금주: 박재진 · 3일 이내 입금</div>
                               </div>
                             )}
+
+                            {/* 배송지 */}
+                            {order.addressFull && (
+                              <div style={{ padding: "10px 12px", borderRadius: 8, background: "#f0f7ff", border: "1px solid #bbd6f5", marginBottom: 8 }}>
+                                <div style={{ fontSize: 12, fontWeight: 800, color: "#0066b3", marginBottom: 2 }}>📍 {order.addressLabel || "배송지"}</div>
+                                <div style={{ fontSize: 13, color: "#1d1d1f" }}>{order.addressReceiver} · {order.addressPhone}</div>
+                                <div style={{ fontSize: 12, color: "#6e6e73" }}>{order.addressFull}</div>
+                              </div>
+                            )}
                             {order.estimatedDelivery && (
                               <div style={{ padding: "8px 12px", borderRadius: 8, background: "#f0f9ff", border: "1px solid #bae6fd", marginBottom: 8 }}>
                                 <span style={{ fontSize: 12, fontWeight: 700, color: "#0284c7" }}>⏱ 예상 납기: {order.estimatedDelivery}</span>
