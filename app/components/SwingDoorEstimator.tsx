@@ -58,9 +58,9 @@ export default function SwingDoorEstimator({ onAddCart, alKgPrice }: {
   const [material, setMaterial] = useState("EPS");
   const [color, setColor] = useState("아이보리");
 
-  // 우레탄: 아이보리/양면백색만 (은회색 불가 - 생산안됨)
+  // 우레탄: 아이보리/양면백색만 (은회색 불가 - 생산안됨), extra 문구도 제거
   const availableColors = material === "우레탄"
-    ? SWING_COLORS.filter(c => c.id !== "일면은회색")
+    ? SWING_COLORS.filter(c => c.id !== "일면은회색").map(c => ({ ...c, extra: undefined }))
     : SWING_COLORS;
 
   // 우레탄으로 변경 시 은회색이면 자동 리셋

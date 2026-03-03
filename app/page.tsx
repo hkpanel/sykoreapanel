@@ -27,6 +27,9 @@ import {
   getSycPrice, krwToSyc, sendSycPayment,
   type WalletInfo, type SycPrice,
 } from "@/lib/syc-payment";
+import {
+  fetchProductionCapacity, DEFAULT_CAPACITY, type ProductionCapacity,
+} from "@/lib/admin-db";
 
 // PortOne V2 SDK 글로벌 타입
 declare global {
@@ -1178,6 +1181,12 @@ export default function Home() {
   // 고객 요청사항
   const [deliveryNote, setDeliveryNote] = useState("가능한 빨리");
   const [preferredDate, setPreferredDate] = useState("");
+  const [prodCap, setProdCap] = useState<ProductionCapacity>(DEFAULT_CAPACITY);
+
+  // ═══ 생산능력 설정 Firestore에서 가져오기 ═══
+  useEffect(() => {
+    fetchProductionCapacity().then(setProdCap).catch(() => setProdCap(DEFAULT_CAPACITY));
+  }, []);
   const [customerMemo, setCustomerMemo] = useState("");
 
   // 주소 → 용차 지역 매칭 (축약 주소 대응)
@@ -1346,16 +1355,15 @@ export default function Home() {
     let totalDays = 0;
     let needsInquiry = false;
 
-    // 후레싱: 100개당 1일
+    // 후레싱
     const flashingQty = cart.filter(i => i.category === "flashing").reduce((s, i) => s + i.qty, 0);
     if (flashingQty > 0) {
-      const d = flashingQty / 100;
-      const dCeil = Math.ceil(d * 10) / 10; // 0.1일 단위
-      lines.push({ label: `후레싱 ${flashingQty}개`, days: parseFloat(dCeil.toFixed(1)) });
+      const d = flashingQty / prodCap.flashingPerDay;
+      lines.push({ label: `후레싱 ${flashingQty}개`, days: parseFloat(d.toFixed(1)) });
       totalDays += d;
     }
 
-    // 스윙도어 (≤2500): 20조당 1일
+    // 스윙도어 (≤2500)
     const swingItems = cart.filter(i => i.category === "swing");
     if (swingItems.length > 0) {
       const shortSwing = swingItems.filter(i => {
@@ -1368,9 +1376,8 @@ export default function Home() {
       });
       if (shortSwing.length > 0) {
         const qty = shortSwing.reduce((s, i) => s + i.qty, 0);
-        const d = qty / 20;
-        const dCeil = Math.ceil(d * 10) / 10;
-        lines.push({ label: `스윙도어 (≤2500) ${qty}조`, days: parseFloat(dCeil.toFixed(1)) });
+        const d = qty / prodCap.swingPerDay;
+        lines.push({ label: `스윙도어 (≤2500) ${qty}조`, days: parseFloat(d.toFixed(1)) });
         totalDays += d;
       }
       if (longSwing.length > 0) {
@@ -1380,7 +1387,7 @@ export default function Home() {
       }
     }
 
-    // 행가도어 (매장판): 1조당 1일
+    // 행가도어 (매장판)
     const hangaItems = cart.filter(i => i.category === "hanga");
     if (hangaItems.length > 0) {
       const stockHanga = hangaItems.filter(i => {
@@ -1394,8 +1401,8 @@ export default function Home() {
       const prodHanga = hangaItems.filter(i => !stockHanga.includes(i));
       if (stockHanga.length > 0) {
         const qty = stockHanga.reduce((s, i) => s + i.qty, 0);
-        const d = qty; // 1조당 1일
-        lines.push({ label: `행가도어 (매장판) ${qty}조`, days: d });
+        const d = qty / prodCap.hangaPerDay;
+        lines.push({ label: `행가도어 (매장판) ${qty}조`, days: parseFloat(d.toFixed(1)) });
         totalDays += d;
       }
       if (prodHanga.length > 0) {
@@ -1405,30 +1412,27 @@ export default function Home() {
       }
     }
 
-    // 알루미늄: 50개당 1일
+    // 알루미늄
     const alQty = cart.filter(i => i.category === "cleanroom-al" || i.category === "door-al").reduce((s, i) => s + i.qty, 0);
     if (alQty > 0) {
-      const d = alQty / 50;
-      const dCeil = Math.ceil(d * 10) / 10;
-      lines.push({ label: `알루미늄 ${alQty}개`, days: parseFloat(dCeil.toFixed(1)) });
+      const d = alQty / prodCap.aluminumPerDay;
+      lines.push({ label: `알루미늄 ${alQty}개`, days: parseFloat(d.toFixed(1)) });
       totalDays += d;
     }
 
-    // 판넬: 10훼베당 1일
+    // 판넬
     const panelQty = cart.filter(i => i.category === "panel").reduce((s, i) => s + i.qty, 0);
     if (panelQty > 0) {
-      const d = panelQty / 10;
-      const dCeil = Math.ceil(d * 10) / 10;
-      lines.push({ label: `판넬 ${panelQty}훼베`, days: parseFloat(dCeil.toFixed(1)) });
+      const d = panelQty / prodCap.panelPerDay;
+      lines.push({ label: `판넬 ${panelQty}훼베`, days: parseFloat(d.toFixed(1)) });
       totalDays += d;
     }
 
-    // 부자재: 100개당 1일
+    // 부자재
     const accQty = cart.filter(i => i.category === "accessory" || i.category === "hardware").reduce((s, i) => s + i.qty, 0);
     if (accQty > 0) {
-      const d = accQty / 100;
-      const dCeil = Math.ceil(d * 10) / 10;
-      lines.push({ label: `부자재 ${accQty}개`, days: parseFloat(dCeil.toFixed(1)) });
+      const d = accQty / prodCap.accessoryPerDay;
+      lines.push({ label: `부자재 ${accQty}개`, days: parseFloat(d.toFixed(1)) });
       totalDays += d;
     }
 
