@@ -87,7 +87,8 @@ export default function PanelTab({ onAddCart }: {
         <div style={{ fontSize: 13, fontWeight: 700, color: "#6e6e73", marginBottom: 6 }}>안내사항</div>
         <div style={{ fontSize: 12, color: "#86868b", lineHeight: 1.6 }}>
           • 판넬은 택배 발송이 불가하며 용차(1톤/5톤)로만 배송됩니다.<br/>
-          • 75T, 100T 판넬은 준비 중입니다.<br/>
+          • 4000mm 이상 판넬은 5톤 전용입니다 (1톤 적재 불가).<br/>
+          • 4000/5000/6000mm 판넬은 구하는 시간이 더 소요됩니다.<br/>
           • 대량 주문 시 카카오톡으로 문의해주세요.
         </div>
       </div>

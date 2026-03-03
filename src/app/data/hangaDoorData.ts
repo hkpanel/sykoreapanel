@@ -524,6 +524,24 @@ export const TRACK_TYPES = [
   { id: "M트랙", label: "M트랙 (중량용)", retail: 300000 },
 ];
 
+// ─── 매장판 사이즈 (50T EPS 소골 아이보리 전용) ───
+export const STOCK_PANEL_SIZES = [2000, 2500, 3000, 4000, 5000, 6000];
+
+export function getStockPanelLength(mm: number): number | null {
+  for (const s of STOCK_PANEL_SIZES) {
+    if (mm <= s) return s;
+  }
+  return null; // > 6000 → 매장판 불가, 생산판
+}
+
+// ─── EPS 외 물류비 (생산판 가져오는 물류비) ───
+// 1~4조: 총 5만원 분담, 5조+: 총 10만원 분담
+export function calcLogisticsCost(qty: number): number {
+  if (qty <= 0) return 0;
+  if (qty <= 4) return Math.ceil(50000 / qty);
+  return Math.ceil(100000 / qty);
+}
+
 // ─── 전체 행가도어 견적 계산 ───
 // 엑셀 M6 공식:
 // ROUNDUP( ROUNDUP((자재원가+인건비)/(1-마진),-3) + 판넬비 - 마감차감 - 트랙차감, -3)
@@ -541,12 +559,15 @@ export function calcHangaDoorEstimate(input: {
   panelType: string;       // "내장" | "외장" | "징크"
   panelMaterial: string;   // "EPS" | "난연EPS" | "준불연EPS"
   panelThickness: string;  // "50T"~"150T"
-  panelColor: string;      // "아이보리" | "일면은회색" | "양면백색"
+  panelSubType?: string;   // "소골" | "민판" | "500골" | "1000골" | "징크"
+  panelColor: string;      // "아이보리" | "은회색" 등
   mfgType: "종제작" | "횡제작";
   hasSideDoor: boolean;
+  qty?: number;            // 주문 수량 (물류비 분담 계산용)
   alKgPrice?: number;      // 알루미늄 kg당 단가 (Firestore에서 전달)
 }) {
   const alKgPrice = input.alKgPrice ?? DEFAULT_AL_KG_PRICE;
+  const qty = input.qty ?? 1;
 
   // 1. AL + 부자재 + 쪽문
   const al = calcAlParts(
@@ -559,7 +580,23 @@ export function calcHangaDoorEstimate(input: {
   );
 
   // 2. 판넬 (훼베 계산 → 단가) — 마진 미적용!
-  const hwebe = calcHwebe(input.widthMm, input.heightMm, input.doorType, input.mfgType);
+  // ── 4번: 매장판 조건 (50T + EPS + 소골 + 아이보리 + 높이≤6000) → 높이를 매장판 사이즈로 올림 ──
+  const isStockPanel =
+    input.doorThick === "50T" &&
+    input.panelMaterial === "EPS" &&
+    (input.panelSubType || "소골") === "소골" &&
+    input.panelColor === "아이보리" &&
+    input.heightMm <= 6000;
+
+  let hwebe: { sheets: number; hwebe: number };
+  if (isStockPanel && input.assembly !== "부속자재일체") {
+    // 매장판: 높이를 매장판 사이즈로 올림 (2000,2500,3000,4000,5000,6000)
+    const stockH = getStockPanelLength(input.heightMm) ?? input.heightMm;
+    hwebe = calcHwebe(input.widthMm, stockH, input.doorType, input.mfgType);
+  } else {
+    hwebe = calcHwebe(input.widthMm, input.heightMm, input.doorType, input.mfgType);
+  }
+
   const panelCost = input.assembly === "부속자재일체"
     ? 0  // 부속자재일체는 판넬 제외
     : calcPanelCost(hwebe.hwebe, input.panelType, input.panelMaterial, input.panelThickness) ?? 0;
@@ -577,10 +614,23 @@ export function calcHangaDoorEstimate(input: {
   // 트랙 없음 → 트랙 AL비용 차감 (현재 옵션에 없지만 대비)
   const trackDeduct = 0;
 
+  // ── 1번: 쪽문 덧방(스킨) 비용 ── 마진 미적용 (이미 마진 포함 금액)
+  const PRINT_COLORS = ["징크블랙", "리얼징크", "유니스톤"];
+  const NO_SKIN_COLORS = ["아이보리", "은회색"];
+  let skinCost = 0;
+  if (input.hasSideDoor && !NO_SKIN_COLORS.includes(input.panelColor)) {
+    skinCost = PRINT_COLORS.includes(input.panelColor) ? 50000 : 35000;
+  }
+
+  // ── 5번: EPS 외 물류비 ── 마진 미적용 (실비)
+  const logisticsCost = (input.panelMaterial !== "EPS" && input.assembly !== "부속자재일체")
+    ? calcLogisticsCost(qty)
+    : 0;
+
   // 6. 최종 견적가
-  // 자재+인건비에 마진 적용 → 판넬비 + 쪽문(이미 소매가) 별도 합산
+  // 자재+인건비에 마진 적용 → 판넬비 + 쪽문 + 덧방 + 물류비(이미 소매가/실비) 별도 합산
   const marginApplied = Math.ceil((materialCost + labor) / (1 - RETAIL_MARGIN) / 1000) * 1000;
-  const retailPrice = Math.ceil((marginApplied + panelCost + al.sideDoorCost - finishDeduct - trackDeduct) / 1000) * 1000;
+  const retailPrice = Math.ceil((marginApplied + panelCost + al.sideDoorCost + skinCost + logisticsCost - finishDeduct - trackDeduct) / 1000) * 1000;
 
   return {
     // 입력 요약
@@ -593,7 +643,10 @@ export function calcHangaDoorEstimate(input: {
     panelHwebe: hwebe.hwebe,
     panelSheets: hwebe.sheets,
     sideDoorCost: al.sideDoorCost,
+    skinCost,
+    logisticsCost,
     laborCost: labor,
+    isStockPanel,
     // 마진 계산
     materialCost,           // 자재원가 (판넬 제외)
     marginApplied,          // 마진 적용가

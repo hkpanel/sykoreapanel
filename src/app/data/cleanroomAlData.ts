@@ -29,8 +29,6 @@ export const CLEANROOM_AL_ITEMS: CleanroomAlItem[] = [
   { id: "cr-jmold", name: "J 몰드", unitWeight: 0.548, lengthM: 6.2, unit: "본" },
   { id: "cr-tbar", name: "T 바", unitWeight: 0.731, lengthM: 6.2, unit: "본" },
   { id: "cr-hbar", name: "H 바", unitWeight: 0.723, lengthM: 6.2, unit: "본" },
-  { id: "cr-38x38-15t", name: "38×38 1.5T", unitWeight: 0.299, lengthM: 6.2, unit: "본" },
-  { id: "cr-120x60-tbar", name: "120×60 T바", unitWeight: 0.904, lengthM: 6.2, unit: "본" },
 ];
 
 // ─── 크린룸 부자재 (코너포인트) ───

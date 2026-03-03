@@ -124,9 +124,9 @@ export default function HangaDoorEstimator({ onAddCart, alKgPrice }: {
     return calcHangaDoorEstimate({
       widthMm, heightMm, doorType, doorThick, finishThick,
       trackType, assembly, panelType, panelMaterial, panelThickness: doorThick,
-      panelColor, mfgType, hasSideDoor, alKgPrice,
+      panelSubType, panelColor, mfgType, hasSideDoor, qty, alKgPrice,
     });
-  }, [widthMm, heightMm, doorType, doorThick, finishThick, trackType, assembly, panelType, panelMaterial, panelColor, mfgType, hasSideDoor, junBulConflict, alKgPrice]);
+  }, [widthMm, heightMm, doorType, doorThick, finishThick, trackType, assembly, panelType, panelMaterial, panelSubType, panelColor, mfgType, hasSideDoor, qty, junBulConflict, alKgPrice]);
 
   const handleAddCart = () => {
     if (!estimate) return;
@@ -351,12 +351,27 @@ export default function HangaDoorEstimator({ onAddCart, alKgPrice }: {
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                     <span style={{ fontSize: 13, color: "#6e6e73" }}>판넬</span>
-                    <span style={{ fontSize: 13, fontWeight: 700 }}>{estimate.panelSheets}장 ({estimate.panelHwebe.toFixed(1)}훼베)</span>
+                    <span style={{ fontSize: 13, fontWeight: 700 }}>
+                      {estimate.panelSheets}장 ({estimate.panelHwebe.toFixed(1)}훼베)
+                      {estimate.isStockPanel && <span style={{ fontSize: 10, color: "#10b981", marginLeft: 4 }}>매장판</span>}
+                    </span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
                     <span style={{ fontSize: 13, color: "#6e6e73" }}>사양</span>
                     <span style={{ fontSize: 13, fontWeight: 700 }}>{doorThick} / {assembly}</span>
                   </div>
+                  {estimate.skinCost > 0 && (
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+                      <span style={{ fontSize: 13, color: "#e67e22" }}>쪽문 덧방(스킨)</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: "#e67e22" }}>+₩{estimate.skinCost.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {estimate.logisticsCost > 0 && (
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+                      <span style={{ fontSize: 13, color: "#8b5cf6" }}>물류비 ({qty}조 분담)</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: "#8b5cf6" }}>+₩{estimate.logisticsCost.toLocaleString()}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* 최종 가격 */}

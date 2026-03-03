@@ -1420,12 +1420,32 @@ export default function Home() {
       totalDays += d;
     }
 
-    // 판넬
-    const panelQty = cart.filter(i => i.category === "panel").reduce((s, i) => s + i.qty, 0);
-    if (panelQty > 0) {
-      const d = panelQty / prodCap.panelPerDay;
-      lines.push({ label: `판넬 ${panelQty}훼베`, days: parseFloat(d.toFixed(1)) });
-      totalDays += d;
+    // 판넬 — 장→훼베 변환, 4000mm+ 긴 판넬은 소요기간 3배
+    const panelItems = cart.filter(i => i.category === "panel");
+    if (panelItems.length > 0) {
+      let shortHwebe = 0;
+      let longHwebe = 0;
+      for (const item of panelItems) {
+        const lenMatch = item.size.match(/×\s*(\d+)mm/);
+        const lenMm = lenMatch ? parseInt(lenMatch[1]) : 3000;
+        const hwebePerSheet = lenMm / 1000;
+        if (lenMm > 3000) {
+          longHwebe += hwebePerSheet * item.qty;
+        } else {
+          shortHwebe += hwebePerSheet * item.qty;
+        }
+      }
+      if (shortHwebe > 0) {
+        const d = shortHwebe / prodCap.panelPerDay;
+        lines.push({ label: `판넬 ${shortHwebe.toFixed(1)}훼베`, days: parseFloat(d.toFixed(1)) });
+        totalDays += d;
+      }
+      if (longHwebe > 0) {
+        const longRate = prodCap.panelPerDay / 3; // 4000mm+ 는 1/3 속도
+        const d = longHwebe / longRate;
+        lines.push({ label: `판넬(장척) ${longHwebe.toFixed(1)}훼베`, days: parseFloat(d.toFixed(1)) });
+        totalDays += d;
+      }
     }
 
     // 부자재

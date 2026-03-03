@@ -147,6 +147,12 @@ export function calcTruckOptions(items: CartItemForTruck[], regionCity: string):
   const hangaPanels = items.filter(i => i.category === "hanga").reduce((s, i) => s + toPanels(i), 0);
   const alQty = items.filter(i => i.category === "cleanroom-al" || i.category === "door-al").reduce((s, i) => s + i.qty, 0);
   const panelQty = items.filter(i => i.category === "panel").reduce((s, i) => s + i.qty, 0);
+  // 판넬 최대 길이 확인 (4000/5000/6000mm는 1톤 불가)
+  const panelMaxLen = items.filter(i => i.category === "panel").reduce((max, i) => {
+    const m = i.size.match(/×\s*(\d+)mm/);
+    return m ? Math.max(max, parseInt(m[1])) : max;
+  }, 0);
+  const hasLongPanel = panelMaxLen > 3000; // 1톤 적재 불가 판넬
   const accQty = items.filter(i => i.category === "gutter" || i.category === "accessory" || i.category === "hardware").reduce((s, i) => s + i.qty, 0);
   const hasHanga = hangaPanels > 0;
   const hasSwing = swingPanels > 0;
@@ -171,6 +177,8 @@ export function calcTruckOptions(items: CartItemForTruck[], regionCity: string):
   }
 
   // ━━━ 1톤 적재 판정 ━━━
+  // 4000mm 이상 판넬이 있으면 1톤 불가 (적재함 길이 3000mm)
+  if (!hasLongPanel) {
   const h1Limit = hasHanga ? hanga1tLimit(maxLeafW) : 0;
   const desc1 = (parts: string[]) => {
     const extras = [
@@ -219,13 +227,14 @@ export function calcTruckOptions(items: CartItemForTruck[], regionCity: string):
       });
     }
   } else if (hasAl || hasPanel || hasAcc) {
-    // AL/판넬/부자재 only (행가/스윙/후레싱 없음)
+    // AL/판넬/부자재 only
     results.push({
       type: "1t", label: "🚛 1톤 용차",
       desc: desc1([]),
       fee1t, fee5t, trucks: [{ size: "1t", count: 1 }], totalFee: fee1t,
     });
   }
+  } // end !hasLongPanel
 
   // ━━━ 5톤 적재 판정 ━━━
   if (hasHanga) {

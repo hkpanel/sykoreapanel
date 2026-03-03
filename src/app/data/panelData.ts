@@ -44,6 +44,24 @@ export const PANEL_PRODUCTS: PanelProduct[] = [
     lengthMm: 3000, hwebePerSheet: 3, pricePerHwebe: 11000,
     sellingPrice: 33000, widthMm: 1000,
   },
+  {
+    id: "panel-50t-4000",
+    thickness: "50T", material: "EPS", profile: "소골", color: "아이보리",
+    lengthMm: 4000, hwebePerSheet: 4, pricePerHwebe: 11000,
+    sellingPrice: 44000, widthMm: 1000,
+  },
+  {
+    id: "panel-50t-5000",
+    thickness: "50T", material: "EPS", profile: "소골", color: "아이보리",
+    lengthMm: 5000, hwebePerSheet: 5, pricePerHwebe: 11000,
+    sellingPrice: 55000, widthMm: 1000,
+  },
+  {
+    id: "panel-50t-6000",
+    thickness: "50T", material: "EPS", profile: "소골", color: "아이보리",
+    lengthMm: 6000, hwebePerSheet: 6, pricePerHwebe: 11000,
+    sellingPrice: 66000, widthMm: 1000,
+  },
 ];
 
 // ─── 판넬 적재 계산 (운반비용) ───
