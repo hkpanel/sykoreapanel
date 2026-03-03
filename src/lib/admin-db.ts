@@ -5,7 +5,7 @@
  * 관리자 이메일: bbajae1@naver.com
  */
 import {
-  collection, collectionGroup, getDocs, doc, updateDoc, deleteDoc,
+  collection, collectionGroup, getDocs, getDoc, setDoc, doc, updateDoc, deleteDoc,
   query,
   type Timestamp,
 } from "firebase/firestore";
@@ -263,4 +263,37 @@ export function aggregateSalesByMonth(orders: AdminOrder[]): SalesStat[] {
   }
 
   return Array.from(map.values()).sort((a, b) => a.date.localeCompare(b.date));
+}
+
+// ═══ 생산능력 설정 ═══
+export interface ProductionCapacity {
+  flashingPerDay: number;     // 후레싱: 일당 개수 (기본 200)
+  swingPerDay: number;        // 스윙도어(≤2500): 일당 조 (기본 20)
+  hangaPerDay: number;        // 행가도어(매장판): 일당 조 (기본 2)
+  panelPerDay: number;        // 판넬: 일당 훼베 (기본 100)
+  aluminumPerDay: number;     // 알루미늄: 일당 개 (기본 50)
+  accessoryPerDay: number;    // 부자재: 일당 개 (기본 100)
+}
+
+export const DEFAULT_CAPACITY: ProductionCapacity = {
+  flashingPerDay: 200,
+  swingPerDay: 20,
+  hangaPerDay: 2,
+  panelPerDay: 100,
+  aluminumPerDay: 50,
+  accessoryPerDay: 100,
+};
+
+export async function fetchProductionCapacity(): Promise<ProductionCapacity> {
+  const ref = doc(db, "settings", "production");
+  const docSnap = await getDoc(ref);
+  if (docSnap.exists()) {
+    return { ...DEFAULT_CAPACITY, ...docSnap.data() } as ProductionCapacity;
+  }
+  return DEFAULT_CAPACITY;
+}
+
+export async function saveProductionCapacity(cap: ProductionCapacity): Promise<void> {
+  const ref = doc(db, "settings", "production");
+  await setDoc(ref, { ...cap, updatedAt: new Date().toISOString() });
 }
