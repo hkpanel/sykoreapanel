@@ -166,7 +166,7 @@ export default function AdminOrders() {
     ).join("");
     const imageRows = order.items
       .filter(item => item.image)
-      .map(item => `<div style="margin:8px 0;"><p style="font-size:12px;font-weight:bold;margin:0 0 4px;">${item.productName}</p><img src="${item.image}" style="max-width:300px;border:1px solid #ddd;border-radius:4px;"/></div>`)
+      .map(item => `<div style="margin:8px 0;"><p style="font-size:12px;font-weight:bold;margin:0 0 4px;">${item.productName} — ${item.size}</p><img src="${item.image}" style="width:100%;max-width:500px;border:1px solid #ddd;border-radius:4px;"/></div>`)
       .join("");
 
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>작업지시서 - ${order.paymentId}</title>

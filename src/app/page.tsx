@@ -290,32 +290,62 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
     for (let x = 0; x < W; x += 20) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
     for (let y = 0; y < H; y += 20) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
     if (!pts.length) return;
-    ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
-    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+
+    // ── step >= 2이고 모든 치수 입력 완료 → 실제 비율로 리페인트 ──
+    let dp = pts;
+    const parsedDims = dims.map(d => parseInt(d) || 0);
+    if (step >= 2 && parsedDims.length > 0 && parsedDims.every(d => d > 0) && pts.length >= 2) {
+      let dir = Math.atan2(pts[1].y - pts[0].y, pts[1].x - pts[0].x);
+      const raw: {x:number;y:number}[] = [{ x: 0, y: 0 }];
+      for (let i = 0; i < parsedDims.length; i++) {
+        const last = raw[raw.length - 1];
+        raw.push({ x: last.x + Math.cos(dir) * parsedDims[i], y: last.y + Math.sin(dir) * parsedDims[i] });
+        if (i < parsedDims.length - 1 && i + 2 < pts.length) {
+          const deg = angles[i] && parseInt(angles[i]) > 0 ? parseInt(angles[i]) : calcAngleDeg(pts[i], pts[i+1], pts[i+2]);
+          const v1x = pts[i+1].x - pts[i].x, v1y = pts[i+1].y - pts[i].y;
+          const v2x = pts[i+2].x - pts[i+1].x, v2y = pts[i+2].y - pts[i+1].y;
+          const cross = v1x * v2y - v1y * v2x;
+          const turn = Math.PI - (deg * Math.PI / 180);
+          dir += cross >= 0 ? -turn : turn;
+        }
+      }
+      const xs = raw.map(p => p.x), ys = raw.map(p => p.y);
+      const minX = Math.min(...xs), maxX = Math.max(...xs);
+      const minY = Math.min(...ys), maxY = Math.max(...ys);
+      const spanX = (maxX - minX) || 1, spanY = (maxY - minY) || 1;
+      const pad = 50;
+      const scale = Math.min((W - pad*2) / spanX, (H - pad*2) / spanY);
+      dp = raw.map(p => ({
+        x: pad + (p.x - minX) * scale + ((W - pad*2) - spanX * scale) / 2,
+        y: pad + (p.y - minY) * scale + ((H - pad*2) - spanY * scale) / 2,
+      }));
+    }
+
+    ctx.beginPath(); ctx.moveTo(dp[0].x, dp[0].y);
+    for (let i = 1; i < dp.length; i++) ctx.lineTo(dp[i].x, dp[i].y);
     ctx.strokeStyle = "#7b5ea7"; ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.stroke();
-    for (let i = 0; i < pts.length - 1; i++) {
-      const p1 = pts[i], p2 = pts[i+1], mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2, d = dims[i]||"";
+    for (let i = 0; i < dp.length - 1; i++) {
+      const p1 = dp[i], p2 = dp[i+1], mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2, d = dims[i]||"";
       ctx.save(); ctx.font = "bold 11px sans-serif";
       const t = d ? `${d}mm` : "?", tw = ctx.measureText(t).width;
       ctx.fillStyle = d ? "rgba(123,94,167,0.9)" : "rgba(180,180,180,0.9)";
       ctx.beginPath(); ctx.roundRect(mx-tw/2-6, my-8, tw+12, 16, 4); ctx.fill();
       ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(t, mx, my); ctx.restore();
     }
-    pts.forEach((p, i) => {
+    dp.forEach((p, i) => {
       ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI*2);
       ctx.fillStyle = i===0 ? "#3ee6c4" : "#7b5ea7"; ctx.fill(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
       ctx.fillStyle = "#fff"; ctx.font = "bold 9px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(i+1), p.x, p.y);
     });
     // 각도 표시 (90도 아닌 경우만 빨간색으로)
-    for (let i = 1; i < pts.length - 1; i++) {
-      const deg = angles[i-1] && parseInt(angles[i-1]) > 0 ? parseInt(angles[i-1]) : calcAngleDeg(pts[i-1], pts[i], pts[i+1]);
+    for (let i = 1; i < dp.length - 1; i++) {
+      const deg = angles[i-1] && parseInt(angles[i-1]) > 0 ? parseInt(angles[i-1]) : calcAngleDeg(dp[i-1], dp[i], dp[i+1]);
       if (deg === 0 || deg === 90) continue;  // 90도는 표시 안 함
-      const p = pts[i];
-      const a1 = Math.atan2(pts[i-1].y - p.y, pts[i-1].x - p.x);
-      const a2 = Math.atan2(pts[i+1].y - p.y, pts[i+1].x - p.x);
+      const p = dp[i];
+      const a1 = Math.atan2(dp[i-1].y - p.y, dp[i-1].x - p.x);
+      const a2 = Math.atan2(dp[i+1].y - p.y, dp[i+1].x - p.x);
       ctx.save();
       const r = 22;
-      // 안쪽(좁은 각도)에 호 그리기
       const normDiff = ((a2 - a1) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
       const ccw = normDiff > Math.PI;
       ctx.beginPath(); ctx.moveTo(p.x, p.y);
@@ -329,7 +359,6 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
       ctx.font = "bold 11px sans-serif";
       ctx.fillStyle = "#dc2626";
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      // 호의 중간점에 텍스트
       const midA = ccw
         ? a1 - ((2*Math.PI - normDiff) / 2)
         : a1 + (normDiff / 2);
