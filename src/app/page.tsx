@@ -840,8 +840,8 @@ export default function Home() {
           };
           if (i.colorSub) item.colorSub = i.colorSub;
           if (i.category) item.category = i.category;
-          return item;
-        }) as Order["items"],
+          return item as unknown as Order["items"][number];
+        }),
         subtotal, deliveryFee, tax, totalAmount,
         payMethod: "무통장입금",
         deliveryType: delivery,
