@@ -18,11 +18,15 @@ const STATUS_LABEL: Record<string, { label: string; color: string; bg: string }>
 export default function AdminDashboard() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAllOrders()
       .then(setOrders)
-      .catch((err) => console.error("주문 조회 실패:", err))
+      .catch((err) => {
+        console.error("주문 조회 실패:", err);
+        setError(`${err?.message || err}`);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -77,6 +81,13 @@ export default function AdminDashboard() {
         <h1 style={{ fontSize: 26, fontWeight: 900, marginBottom: 4 }}>대시보드</h1>
         <p style={{ fontSize: 14, color: "#86868b" }}>{today} 기준</p>
       </div>
+
+      {/* 에러 표시 */}
+      {error && (
+        <div style={{ padding: 16, background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: 12, marginBottom: 16, fontSize: 13, color: "#f87171", lineHeight: 1.6 }}>
+          ⚠️ 주문 조회 실패: {error}
+        </div>
+      )}
 
       {/* ═══ 통계 카드 4개 ═══ */}
       <div style={{

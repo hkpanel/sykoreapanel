@@ -5,7 +5,7 @@ import type { User } from "firebase/auth";
 import { onAuthChange, signOut } from "@/lib/auth";
 import {
   subscribeCart, setCartItem, removeCartItem, clearCart,
-  subscribeAddresses, migrateLocalData, saveOrder,
+  subscribeAddresses, migrateLocalData, saveOrder, subscribeOrders,
   type CartItem, type Order,
 } from "@/lib/db";
 import AuthModal from "./components/AuthModal";
@@ -628,6 +628,7 @@ export default function Home() {
   const [showMyPage, setShowMyPage] = useState<false | "info" | "address" | "orders">(false);
   const [orderComplete, setOrderComplete] = useState<{ paymentId: string; totalAmount: number; receiptUrl?: string; payMethod?: string } | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [activeOrderCount, setActiveOrderCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // ═══ SYC 코인 결제 상태 ═══
@@ -1190,6 +1191,16 @@ export default function Home() {
     return () => unsub();
   }, [user, selectedAddrId, matchRegion]);
 
+  // 진행 중인 주문 구독 (헤더 알림용)
+  useEffect(() => {
+    if (!user) { setActiveOrderCount(0); return; }
+    const unsub = subscribeOrders(user.uid, (orders) => {
+      const active = orders.filter(o => o.status !== "completed" && o.status !== "cancelled");
+      setActiveOrderCount(active.length);
+    });
+    return () => unsub();
+  }, [user]);
+
   // 배송지 선택 시 지역 매칭
   const selectAddr = (addrId: string) => {
     setSelectedAddrId(addrId);
@@ -1291,6 +1302,7 @@ export default function Home() {
     <div style={{ minHeight: "100vh", background: "#f5f5f7" }}>
       {/* 모바일 반응형 스타일 */}
       <style>{`
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
         .product-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -1356,14 +1368,40 @@ export default function Home() {
             {user ? (
               <div style={{ position: "relative" }} ref={dropdownRef}>
                 <button onClick={() => setShowAuth(!showAuth)}
-                  style={{ display: "flex", alignItems: "center", gap: 6, background: scrolled ? "#f5f5f7" : "rgba(255,255,255,0.1)", padding: "6px 10px", borderRadius: 20, border: "none", cursor: "pointer", transition: "all 0.3s" }}>
-                  <div style={{ width: 24, height: 24, borderRadius: 12, background: "linear-gradient(135deg, #7b5ea7, #3ee6c4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: 800 }}>
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", borderRadius: 20, border: "none", cursor: "pointer", transition: "all 0.3s",
+                    background: activeOrderCount > 0
+                      ? (scrolled ? "linear-gradient(135deg, rgba(123,94,167,0.15), rgba(62,230,196,0.15))" : "rgba(123,94,167,0.3)")
+                      : (scrolled ? "#f5f5f7" : "rgba(255,255,255,0.1)"),
+                    boxShadow: activeOrderCount > 0 ? "0 0 0 2px #7b5ea7" : "none",
+                  }}>
+                  <div style={{ width: 24, height: 24, borderRadius: 12, background: "linear-gradient(135deg, #7b5ea7, #3ee6c4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: 800, position: "relative" }}>
                     {(user.displayName || user.email || "U").charAt(0).toUpperCase()}
+                    {activeOrderCount > 0 && (
+                      <span style={{
+                        position: "absolute", top: -4, right: -6, width: 16, height: 16, borderRadius: 8,
+                        background: "#ff3b30", color: "#fff", fontSize: 9, fontWeight: 800,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        border: "2px solid " + (scrolled ? "#fff" : "#1a1a2e"),
+                      }}>{activeOrderCount}</span>
+                    )}
                   </div>
                   <span className="hide-mobile" style={{ fontSize: 12, fontWeight: 700, color: scrolled ? "#1d1d1f" : "#f5f5f7", maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {user.displayName || user.email?.split("@")[0] || "회원"}
                   </span>
                 </button>
+                {/* 주문 알림 말풍선 */}
+                {activeOrderCount > 0 && !showAuth && !showCart && (
+                  <div style={{
+                    position: "absolute", top: "calc(100% + 6px)", right: 0, whiteSpace: "nowrap",
+                    background: "#7b5ea7", color: "#fff", padding: "6px 12px", borderRadius: 10,
+                    fontSize: 12, fontWeight: 700, boxShadow: "0 4px 12px rgba(123,94,167,0.4)",
+                    animation: "pulse 2s infinite",
+                  }}>
+                    📋 진행 중인 주문 {activeOrderCount}건
+                    <div style={{ position: "absolute", top: -5, right: 16, width: 0, height: 0, borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderBottom: "5px solid #7b5ea7" }} />
+                  </div>
+                )}
                 {showAuth && (
                   <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "#fff", borderRadius: 16, boxShadow: "0 4px 24px rgba(0,0,0,0.12)", padding: 8, minWidth: 180, zIndex: 100 }}>
                     <div style={{ padding: "10px 14px", fontSize: 12, color: "#86868b", borderBottom: "1px solid #f0f0f2" }}>

@@ -23,6 +23,7 @@ const getStep = (key: string) => STATUS_STEPS.find(s => s.key === key) || STATUS
 export default function AdminOrders() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
@@ -35,9 +36,13 @@ export default function AdminOrders() {
 
   const loadOrders = () => {
     setLoading(true);
+    setError(null);
     fetchAllOrders()
-      .then(setOrders)
-      .catch(err => console.error("주문 조회 실패:", err))
+      .then(data => { setOrders(data); setError(null); })
+      .catch(err => {
+        console.error("주문 조회 실패:", err);
+        setError(`주문 조회 실패: ${err?.message || err}. Firestore 콘솔에서 collectionGroup 인덱스를 확인해주세요.`);
+      })
       .finally(() => setLoading(false));
   };
 
@@ -150,6 +155,14 @@ export default function AdminOrders() {
           background: "rgba(255,255,255,0.05)", color: "#60a5fa", fontSize: 13, fontWeight: 700, cursor: "pointer",
         }}>🔄 새로고침</button>
       </div>
+
+      {/* 에러 표시 */}
+      {error && (
+        <div style={{ padding: 16, background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: 12, marginBottom: 16, fontSize: 13, color: "#f87171", lineHeight: 1.6 }}>
+          ⚠️ {error}
+          <button onClick={loadOrders} style={{ marginLeft: 12, padding: "4px 12px", borderRadius: 6, border: "1px solid #f87171", background: "transparent", color: "#f87171", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>다시 시도</button>
+        </div>
+      )}
 
       {/* 필터 탭 */}
       <div style={{ display: "flex", gap: 6, marginBottom: 20, flexWrap: "wrap" }}>
