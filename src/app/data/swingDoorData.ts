@@ -79,6 +79,59 @@ export const SWING_GLASS_TYPES = [
   { id: "아크릴", label: "아크릴" },
 ];
 
+// ─── 덧방(스킨) 색상 ── 후레싱 색상 전체 (금속류 제외) ───
+export const SKIN_COLORS = [
+  { id: "없음", label: "없음", category: "없음" },
+  { id: "아이보리", label: "아이보리", category: "아이보리" },
+  { id: "청색", label: "청색", category: "기성단색" },
+  { id: "은회색", label: "은회색", category: "기성단색" },
+  { id: "백색", label: "백색", category: "기성단색" },
+  { id: "군청색", label: "군청색", category: "기성단색" },
+  { id: "진회색", label: "진회색", category: "특이단색" },
+  { id: "티타늄실버", label: "티타늄실버", category: "특이단색" },
+  { id: "징크블랙", label: "징크블랙", category: "프린트" },
+  { id: "리얼징크", label: "리얼징크", category: "프린트" },
+  { id: "유니스톤", label: "유니스톤", category: "프린트" },
+];
+
+// 덧방 가격 (일면 기준, 마진 이미 포함)
+export const SKIN_PRICES: Record<string, number> = {
+  "없음": 0,
+  "아이보리": 30000,
+  "기성단색": 35000,
+  "특이단색": 35000,
+  "프린트": 50000,
+};
+
+export function calcSkinCost(skinColorId: string): number {
+  const skin = SKIN_COLORS.find(c => c.id === skinColorId);
+  if (!skin || skin.category === "없음") return 0;
+  return SKIN_PRICES[skin.category] ?? 0;
+}
+
+// 기본색상 → 외부/내부 변환
+export function baseColorToDisplay(color: string): { outer: string; inner: string } {
+  if (color === "일면은회색") return { outer: "은회색", inner: "아이보리" };
+  if (color === "양면백색") return { outer: "백색", inner: "백색" };
+  return { outer: "아이보리", inner: "아이보리" };
+}
+
+// 덧방 포함 최종 색상 표기
+export function buildColorDisplay(
+  baseColor: string,
+  outerSkin: string,
+  innerSkin: string,
+): string {
+  const base = baseColorToDisplay(baseColor);
+  const outerStr = outerSkin !== "없음"
+    ? `${base.outer}(${outerSkin}덧방)`
+    : base.outer;
+  const innerStr = innerSkin !== "없음"
+    ? `${base.inner}(${innerSkin}덧방)`
+    : base.inner;
+  return `${outerStr}/${innerStr}`;
+}
+
 // ─── 소매 마진 (행가도어와 동일) ───
 export const RETAIL_MARGIN = 0.20;
 
@@ -266,6 +319,8 @@ export function calcSwingDoorEstimate(input: {
   fixH: number;
   glassType: string;       // "일반유리" | "강화유리" | "아크릴"
   lockType: string;        // "없음" | "원형락" | ...
+  outerSkin?: string;      // 외부 덧방 색상 id ("없음" | "징크블랙" 등)
+  innerSkin?: string;      // 내부 덧방 색상 id
   alKgPrice?: number;      // 알루미늄 kg당 단가 (Firestore에서 전달)
 }) {
   const { widthMm: w, heightMm: h, doorType } = input;
@@ -301,11 +356,24 @@ export function calcSwingDoorEstimate(input: {
   const wholesaleRaw = hw.total * 1.3 + lockCost + fix.total + al.total * 1.3 + panel.cost + labor;
   const wholesale = Math.ceil(wholesaleRaw / 1000) * 1000;
 
-  // 8. 소매가 (25% 마진, 천원올림)
-  const retailPrice = Math.ceil(wholesale / (1 - RETAIL_MARGIN) / 1000) * 1000;
+  // 8. 소매가 (20% 마진, 천원올림)
+  const retailBase = Math.ceil(wholesale / (1 - RETAIL_MARGIN) / 1000) * 1000;
+
+  // 9. 덧방(스킨) 비용 — 이미 마진 포함 금액이므로 소매가에 직접 합산
+  const outerSkinCost = calcSkinCost(input.outerSkin ?? "없음");
+  const innerSkinCost = calcSkinCost(input.innerSkin ?? "없음");
+  const skinCost = outerSkinCost + innerSkinCost;
+  const retailPrice = retailBase + skinCost;
 
   // 높이 2100 안내
   const sizeNote = h === 2100 ? "(실제사이즈는 2080입니다)" : "";
+
+  // 색상 표기
+  const colorDisplay = buildColorDisplay(
+    input.color,
+    input.outerSkin ?? "없음",
+    input.innerSkin ?? "없음",
+  );
 
   return {
     // 원가 상세
@@ -319,10 +387,14 @@ export function calcSwingDoorEstimate(input: {
     panelCost: panel.cost,
     panelHwebe: panel.hwebe,
     laborCost: labor,
+    skinCost,
+    outerSkinCost,
+    innerSkinCost,
     // 합계
     wholesale,
     retailPrice,
     // 참고
     sizeNote,
+    colorDisplay,
   };
 }

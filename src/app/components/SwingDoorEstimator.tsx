@@ -4,6 +4,7 @@ import {
   SWING_DOOR_TYPES, SWING_MATERIALS, SWING_COLORS,
   SWING_FRAME_THICKNESSES, SWING_FRAME_SIDES,
   SWING_LOCKS, SWING_GLASS_TYPES,
+  SKIN_COLORS, calcSkinCost,
   calcSwingDoorEstimate,
 } from "../data/swingDoorData";
 
@@ -86,6 +87,10 @@ export default function SwingDoorEstimator({ onAddCart, alKgPrice }: {
   // 도어락
   const [lockType, setLockType] = useState("원형락");
 
+  // 덧방(스킨)
+  const [outerSkin, setOuterSkin] = useState("없음");
+  const [innerSkin, setInnerSkin] = useState("없음");
+
   const [qty, setQty] = useState(1);
 
   // 견적 계산
@@ -94,9 +99,10 @@ export default function SwingDoorEstimator({ onAddCart, alKgPrice }: {
     return calcSwingDoorEstimate({
       widthMm, heightMm, doorType, material, color,
       frameThick, frameSides, hasFrame,
-      hasFixWindow, fixW, fixH, glassType, lockType, alKgPrice,
+      hasFixWindow, fixW, fixH, glassType, lockType,
+      outerSkin, innerSkin, alKgPrice,
     });
-  }, [widthMm, heightMm, doorType, material, color, frameThick, frameSides, hasFrame, hasFixWindow, fixW, fixH, glassType, lockType, alKgPrice]);
+  }, [widthMm, heightMm, doorType, material, color, frameThick, frameSides, hasFrame, hasFixWindow, fixW, fixH, glassType, lockType, outerSkin, innerSkin, alKgPrice]);
 
   const handleAddCart = () => {
     if (!estimate) return;
@@ -112,7 +118,7 @@ export default function SwingDoorEstimator({ onAddCart, alKgPrice }: {
       productId: "swing-door",
       productName: `스윙도어 ${doorType}`,
       size: sizeParts.join(" / "),
-      color,
+      color: estimate.colorDisplay,
       retailPrice: estimate.retailPrice,
       qty,
     });
@@ -195,6 +201,42 @@ export default function SwingDoorEstimator({ onAddCart, alKgPrice }: {
             </div>
           </div>
 
+          {/* 덧방(스킨) */}
+          <div style={{ marginBottom: 28 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 800, color: "#1d1d1f", marginBottom: 16, paddingBottom: 8, borderBottom: "2px solid #f0f0f2" }}>
+              🎨 덧방(스킨)
+              <span style={{ fontSize: 11, fontWeight: 500, color: "#86868b", marginLeft: 8 }}>판넬 위에 다른 색상 시트 부착</span>
+            </h3>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              <div>
+                <label style={LABEL_STYLE}>외부 덧방</label>
+                <select value={outerSkin} onChange={e => setOuterSkin(e.target.value)} style={SELECT_STYLE}>
+                  {SKIN_COLORS.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.id === "없음" ? "없음" : `${c.label} (+${(calcSkinCost(c.id) / 10000).toFixed(1)}만)`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={LABEL_STYLE}>내부 덧방</label>
+                <select value={innerSkin} onChange={e => setInnerSkin(e.target.value)} style={SELECT_STYLE}>
+                  {SKIN_COLORS.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.id === "없음" ? "없음" : `${c.label} (+${(calcSkinCost(c.id) / 10000).toFixed(1)}만)`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            {(outerSkin !== "없음" || innerSkin !== "없음") && estimate && (
+              <div style={{ marginTop: 10, padding: "8px 12px", borderRadius: 8, background: "#f0ebf8", fontSize: 12, color: "#7b5ea7", fontWeight: 600 }}>
+                색상 표기: {estimate.colorDisplay}
+                {estimate.skinCost > 0 && <span style={{ marginLeft: 8, color: "#e67e22" }}>+₩{estimate.skinCost.toLocaleString()}</span>}
+              </div>
+            )}
+          </div>
+
           {/* 후레임 */}
           <div style={{ marginBottom: 28 }}>
             <h3 style={{ fontSize: 16, fontWeight: 800, color: "#1d1d1f", marginBottom: 16, paddingBottom: 8, borderBottom: "2px solid #f0f0f2" }}>🔧 후레임</h3>
@@ -271,6 +313,10 @@ export default function SwingDoorEstimator({ onAddCart, alKgPrice }: {
                     <span style={{ fontSize: 13, fontWeight: 700 }}>{material} / {estimate.panelHwebe.toFixed(1)}훼베</span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                    <span style={{ fontSize: 13, color: "#6e6e73" }}>색상</span>
+                    <span style={{ fontSize: 13, fontWeight: 700 }}>{estimate.colorDisplay}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                     <span style={{ fontSize: 13, color: "#6e6e73" }}>후레임</span>
                     <span style={{ fontSize: 13, fontWeight: 700 }}>{hasFrame ? `${frameThick} ${frameSides}` : "없음"}</span>
                   </div>
@@ -279,9 +325,15 @@ export default function SwingDoorEstimator({ onAddCart, alKgPrice }: {
                     <span style={{ fontSize: 13, fontWeight: 700 }}>{lockType}</span>
                   </div>
                   {hasFixWindow && (
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                       <span style={{ fontSize: 13, color: "#6e6e73" }}>픽스창</span>
                       <span style={{ fontSize: 13, fontWeight: 700 }}>{fixW}×{fixH} / {glassType}</span>
+                    </div>
+                  )}
+                  {estimate.skinCost > 0 && (
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
+                      <span style={{ fontSize: 13, color: "#e67e22" }}>덧방(스킨)</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: "#e67e22" }}>+₩{estimate.skinCost.toLocaleString()}</span>
                     </div>
                   )}
                 </div>
@@ -340,7 +392,8 @@ export default function SwingDoorEstimator({ onAddCart, alKgPrice }: {
             · 높이 2100mm = 실제 2080mm (표준 규격)<br />
             · 높이 1800mm = 실제 1780mm (표준 규격)<br />
             · 우레탄 판넬: EPS 대비 +40,000원<br />
-            · 일면은회색 +1,500/훼베, 양면백색 +3,000/훼베 (EPS만)
+            · 일면은회색 +1,500/훼베, 양면백색 +3,000/훼베 (EPS만)<br />
+            · 덧방(스킨): 아이보리 +3만 / 기성·특이단색 +3.5만 / 프린트 +5만 (일면당)
           </div>
         </div>
       </div>
