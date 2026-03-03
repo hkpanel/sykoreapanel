@@ -313,11 +313,13 @@ export default function MyPageModal({ user, initialTab = "info", onClose }: MyPa
 
                             {/* 상품 목록 */}
                             <div style={{ marginBottom: 8 }}>
-                              {order.items.map((item, i) => (
+                              {order.items.map((item, i) => {
+                                const itemImage = (item as Record<string, unknown>).image as string | undefined;
+                                return (
                                 <div key={i} style={{ padding: "4px 0" }}>
-                                  {(item as Record<string, unknown>).image && (
+                                  {itemImage && (
                                     <div style={{ marginBottom: 4, borderRadius: 8, overflow: "hidden", border: "1px solid #e8e8ed" }}>
-                                      <img src={(item as Record<string, unknown>).image as string} alt="절곡 도면" style={{ width: "100%", height: "auto", display: "block" }} />
+                                      <img src={itemImage} alt="절곡 도면" style={{ width: "100%", height: "auto", display: "block" }} />
                                     </div>
                                   )}
                                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#6e6e73" }}>
@@ -325,7 +327,8 @@ export default function MyPageModal({ user, initialTab = "info", onClose }: MyPa
                                     <span style={{ fontWeight: 700, color: "#1d1d1f" }}>₩{(item.retailPrice * item.qty).toLocaleString()}</span>
                                   </div>
                                 </div>
-                              ))}
+                                );
+                              })}
                             </div>
 
                             {/* 금액 요약 */}

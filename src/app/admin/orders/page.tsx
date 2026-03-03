@@ -253,11 +253,13 @@ export default function AdminOrders() {
 
                     {/* 주문 상품 */}
                     <Section title="주문 상품">
-                      {order.items.map((item, i) => (
+                      {order.items.map((item, i) => {
+                        const itemImage = (item as Record<string, unknown>).image as string | undefined;
+                        return (
                         <div key={i} style={{ marginBottom: 4 }}>
-                          {(item as Record<string, unknown>).image && (
+                          {itemImage && (
                             <div style={{ marginBottom: 4, borderRadius: 8, overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)", maxWidth: 200 }}>
-                              <img src={(item as Record<string, unknown>).image as string} alt="절곡 도면" style={{ width: "100%", height: "auto", display: "block" }} />
+                              <img src={itemImage} alt="절곡 도면" style={{ width: "100%", height: "auto", display: "block" }} />
                             </div>
                           )}
                           <div style={{
@@ -274,7 +276,8 @@ export default function AdminOrders() {
                             </div>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </Section>
 
                     {/* 고객 요청사항 */}

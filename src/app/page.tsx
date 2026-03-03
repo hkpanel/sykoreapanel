@@ -618,7 +618,7 @@ export default function Home() {
   const [cartAddedItem, setCartAddedItem] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [vis, setVis] = useState(false);
-  const [pay, setPay] = useState("krw");
+  const [pay, setPay] = useState("bank");
   const [detail, setDetail] = useState<FlashingProduct | null>(null);
   const [search, setSearch] = useState("");
   const [showCustom, setShowCustom] = useState(false);
@@ -1973,17 +1973,29 @@ export default function Home() {
                       fontSize: 13, resize: "none", boxSizing: "border-box", outline: "none" }} />
                 </div>
 
+                {/* 카드결제 준비중 안내 */}
+                <div style={{ marginBottom: 12, padding: "10px 14px", background: "#fff3cd", borderRadius: 10, border: "1px solid #ffc107", display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 18 }}>🚧</span>
+                  <div style={{ fontSize: 12, color: "#856404", fontWeight: 600, lineHeight: 1.5 }}>
+                    카드결제는 현재 준비중입니다.<br/>
+                    <b>무통장입금</b> 또는 <b>SYC 코인</b>으로 결제해주세요.
+                  </div>
+                </div>
+
                 {/* 결제방식 */}
                 <div style={{ display: "flex", borderRadius: 12, overflow: "hidden", background: "#e8e8ed", marginBottom: 16 }}>
-                  {[{ key: "krw", label: "₩ 원화 결제" }, { key: "bank", label: "🏦 무통장입금" }, { key: "syc", label: "SYC 코인" }].map(m => (
-                    <button key={m.key} onClick={() => setPay(m.key)} style={{
-                      flex: 1, padding: "10px 0", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, transition: "all 0.2s",
-                      background: pay === m.key ? (m.key === "syc" ? "linear-gradient(135deg, #7b5ea7, #3ee6c4)" : m.key === "bank" ? "#0066b3" : "#1d1d1f") : "transparent",
-                      color: pay === m.key ? "#fff" : "#6e6e73", borderRadius: pay === m.key ? 10 : 0,
+                  {[{ key: "krw", label: "₩ 카드결제", disabled: true }, { key: "bank", label: "🏦 무통장입금", disabled: false }, { key: "syc", label: "SYC 코인", disabled: false }].map(m => (
+                    <button key={m.key} onClick={() => !m.disabled && setPay(m.key)} style={{
+                      flex: 1, padding: "10px 0", border: "none", cursor: m.disabled ? "not-allowed" : "pointer", fontSize: 12, fontWeight: 700, transition: "all 0.2s",
+                      background: m.disabled ? "#d1d1d6" : pay === m.key ? (m.key === "syc" ? "linear-gradient(135deg, #7b5ea7, #3ee6c4)" : m.key === "bank" ? "#0066b3" : "#1d1d1f") : "transparent",
+                      color: m.disabled ? "#aeaeb2" : pay === m.key ? "#fff" : "#6e6e73", borderRadius: pay === m.key ? 10 : 0,
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
+                      opacity: m.disabled ? 0.6 : 1,
+                      textDecoration: m.disabled ? "line-through" : "none",
                     }}>
                       {m.key === "syc" && <Image src="/syc-logo.png" alt="" width={14} height={14} style={{ borderRadius: "50%" }} />}
                       {m.label}
+                      {m.disabled && <span style={{ fontSize: 9, marginLeft: 2 }}>준비중</span>}
                     </button>
                   ))}
                 </div>
@@ -2064,7 +2076,7 @@ export default function Home() {
                     )}
                   </div>
                 )}
-                <button onClick={pay === "bank" ? handleBankOrder : handlePayment} disabled={paymentLoading} style={{
+                <button onClick={() => { if (pay === "krw") { alert("카드결제는 현재 준비중입니다. 무통장입금 또는 SYC 코인을 이용해주세요."); setPay("bank"); return; } (pay === "bank" ? handleBankOrder : handlePayment)(); }} disabled={paymentLoading} style={{
                   width: "100%", padding: "clamp(12px,2vw,16px) 0", border: "none", borderRadius: 14,
                   background: pay === "syc" ? "linear-gradient(135deg, #7b5ea7, #3ee6c4)" : pay === "bank" ? "#0066b3" : "#1d1d1f",
                   color: "#fff", fontSize: "clamp(13px,2vw,16px)", fontWeight: 800, cursor: paymentLoading ? "wait" : "pointer", marginTop: 10,
