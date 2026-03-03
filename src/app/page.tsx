@@ -247,13 +247,13 @@ function ProductDetail({ product, onClose, onAddCart }: {
 }
 
 const CUSTOM_COLORS = [
-  { id: "ivory", name: "아이보리", price: 35, hex: "#F5F0E1", jjambap: true, hasSide: true },
-  { id: "standard", name: "기성단색", price: 40, hex: "#607D8B", sub: ["은회색", "백색", "군청색"], jjambap: true, hasSide: true },
-  { id: "special", name: "특이단색", price: 45, hex: "#424242", sub: ["진회색", "티타늄실버"], jjambap: true, hasSide: true },
-  { id: "print", name: "프린트", price: 50, hex: "#2C2C2C", sub: ["징크블랙", "리얼징크", "유니스톤"], jjambap: true, hasSide: true },
-  { id: "galv10", name: "아연 1.0T", price: 70, hex: "#B0BEC5", jjambap: false, hasSide: false },
-  { id: "galv12", name: "아연 1.2T", price: 90, hex: "#90A4AE", jjambap: false, hasSide: false },
-  { id: "steel", name: "스틸 1.0T", price: 80, hex: "#546E7A", jjambap: false, hasSide: true },
+  { id: "ivory", name: "아이보리", price: 35, hex: "#F5F0E1", jjambap: true, hasSide: true, coilW: 1040 },
+  { id: "standard", name: "기성단색", price: 40, hex: "#607D8B", sub: ["은회색", "백색", "군청색"], jjambap: true, hasSide: true, coilW: 1219 },
+  { id: "special", name: "특이단색", price: 45, hex: "#424242", sub: ["진회색", "티타늄실버"], jjambap: true, hasSide: true, coilW: 1219 },
+  { id: "print", name: "프린트", price: 50, hex: "#2C2C2C", sub: ["징크블랙", "리얼징크", "유니스톤"], jjambap: true, hasSide: true, coilW: 1219 },
+  { id: "galv10", name: "아연 1.0T", price: 70, hex: "#B0BEC5", jjambap: false, hasSide: false, coilW: 1219 },
+  { id: "galv12", name: "아연 1.2T", price: 90, hex: "#90A4AE", jjambap: false, hasSide: false, coilW: 1219 },
+  { id: "steel", name: "스틸 1.0T", price: 80, hex: "#546E7A", jjambap: false, hasSide: true, coilW: 1219 },
 ];
 
 function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAddCart: (item: CartItem) => void }) {
@@ -326,11 +326,17 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
     ctx.strokeStyle = "#7b5ea7"; ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.stroke();
     for (let i = 0; i < dp.length - 1; i++) {
       const p1 = dp[i], p2 = dp[i+1], mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2, d = dims[i]||"";
+      // 선분 수직 방향으로 라벨 오프셋 (겹침 방지)
+      const dx = p2.x - p1.x, dy = p2.y - p1.y;
+      const len = Math.sqrt(dx*dx + dy*dy) || 1;
+      const nx = -dy / len, ny = dx / len; // 수직 벡터
+      const off = 14; // 선에서 떨어지는 거리
+      const lx = mx + nx * off, ly = my + ny * off;
       ctx.save(); ctx.font = "bold 11px sans-serif";
       const t = d ? `${d}mm` : "?", tw = ctx.measureText(t).width;
       ctx.fillStyle = d ? "rgba(123,94,167,0.9)" : "rgba(180,180,180,0.9)";
-      ctx.beginPath(); ctx.roundRect(mx-tw/2-6, my-8, tw+12, 16, 4); ctx.fill();
-      ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(t, mx, my); ctx.restore();
+      ctx.beginPath(); ctx.roundRect(lx-tw/2-6, ly-8, tw+12, 16, 4); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(t, lx, ly); ctx.restore();
     }
     dp.forEach((p, i) => {
       ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI*2);
@@ -391,6 +397,7 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
 
   const handleAddCart = () => {
     if (!cObj) return;
+    if (calcW > cObj.coilW) return; // 코일폭 초과 시 차단
     const key = `custom_${Date.now()}`;
     const canvasImage = cvs.current ? cvs.current.toDataURL("image/png") : undefined;
     const angleInfo = angles.length > 0 ? angles.map((a,i) => {
@@ -523,18 +530,27 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
           {step===3 && (
             <div style={{ background:"#fff",borderRadius:16,padding:16 }}>
               <div style={{ fontSize:14,fontWeight:700,marginBottom:4 }}>색상 / 소재</div>
-              <div style={{ fontSize:12,color:"#86868b",marginBottom:10 }}>총폭 {totalW}mm × mm당 단가</div>
-              {CUSTOM_COLORS.map(c => (
+              <div style={{ fontSize:12,color:"#86868b",marginBottom:10 }}>총폭 {totalW}mm × mm당 단가 <span style={{ fontSize:10 }}>(코일폭: 아이보리 1,040 / 기타 1,219mm)</span></div>
+              {CUSTOM_COLORS.map(c => {
+                const cW = totalW + (c.jjambap ? 20 : 0);
+                const overCoil = cW > c.coilW;
+                return (
                 <div key={c.id} style={{ marginBottom:4 }}>
-                  <button onClick={()=>{setCId(c.id);setCSub("");}} style={{ width:"100%",padding:"10px 14px",borderRadius:10,border:`2px solid ${cId===c.id?"#7b5ea7":"#eee"}`,background:cId===c.id?"rgba(123,94,167,0.04)":"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between" }}>
+                  <button onClick={()=>{ if (!overCoil) { setCId(c.id);setCSub(""); }}} style={{ width:"100%",padding:"10px 14px",borderRadius:10,border:`2px solid ${cId===c.id?"#7b5ea7":overCoil?"#fcc":"#eee"}`,background:cId===c.id?"rgba(123,94,167,0.04)":overCoil?"#fff5f5":"#fff",cursor:overCoil?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",opacity:overCoil?0.6:1 }}>
                     <div style={{ display:"flex",alignItems:"center",gap:8 }}>
                       <div style={{ width:18,height:18,borderRadius:9,background:c.hex,border:"1px solid rgba(0,0,0,0.1)" }}/>
-                      <span style={{ fontSize:13,fontWeight:600,color:cId===c.id?"#7b5ea7":"#1d1d1f" }}>{c.name}</span>
+                      <span style={{ fontSize:13,fontWeight:600,color:overCoil?"#cc0000":cId===c.id?"#7b5ea7":"#1d1d1f" }}>{c.name}</span>
                       {c.jjambap && <span style={{ fontSize:9,color:"#86868b",background:"#f0f0f2",padding:"1px 5px",borderRadius:4 }}>+짬밥20</span>}
+                      {overCoil && <span style={{ fontSize:9,color:"#cc0000",background:"#ffe0e0",padding:"1px 5px",borderRadius:4,fontWeight:700 }}>코일폭{c.coilW}mm 초과</span>}
                     </div>
                     <div style={{ textAlign:"right" }}>
-                      <span style={{ fontSize:13,fontWeight:700,color:cId===c.id?"#7b5ea7":"#1d1d1f" }}>₩{((totalW+(c.jjambap?20:0))*c.price).toLocaleString()}</span>
-                      <span style={{ fontSize:10,color:"#86868b",marginLeft:4 }}>@{c.price}/mm</span>
+                      {overCoil
+                        ? <span style={{ fontSize:12,fontWeight:700,color:"#cc0000" }}>절곡불가</span>
+                        : <>
+                            <span style={{ fontSize:13,fontWeight:700,color:cId===c.id?"#7b5ea7":"#1d1d1f" }}>₩{(cW*c.price).toLocaleString()}</span>
+                            <span style={{ fontSize:10,color:"#86868b",marginLeft:4 }}>@{c.price}/mm</span>
+                          </>
+                      }
                     </div>
                   </button>
                   {cId===c.id && c.sub && (
@@ -543,8 +559,10 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
                     </div>
                   )}
                 </div>
-              ))}
+                );
+              })}
               {cObj?.jjambap && <div style={{ marginTop:8,padding:8,background:"rgba(62,230,196,0.06)",borderRadius:8,fontSize:11,color:"#0f8a6c",lineHeight:1.5 }}>📐 C/S 짬밥 +20mm → 계산폭: {totalW}+20 = <b>{totalW+20}mm</b></div>}
+              {cObj && calcW > cObj.coilW && <div style={{ marginTop:6,padding:8,background:"#fff0f0",borderRadius:8,fontSize:11,color:"#cc0000",lineHeight:1.5,fontWeight:600 }}>⚠️ 총폭 {calcW}mm &gt; {cObj.name} 코일폭 {cObj.coilW}mm — 절곡 불가!</div>}
               {cObj?.hasSide && (
                 <div style={{ marginTop:12 }}>
                   <div style={{ fontSize:14,fontWeight:700,marginBottom:8 }}>마감 방향</div>
@@ -585,7 +603,7 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
               )}
               <div style={{ display:"flex",gap:8,marginTop:14 }}>
                 <button onClick={()=>setStep(2)} style={{ flex:1,padding:"10px 0",borderRadius:10,border:"2px solid #e0e0e0",background:"#fff",fontSize:13,fontWeight:600,cursor:"pointer" }}>← 치수</button>
-                <button onClick={()=>{if(cId)setStep(4);}} disabled={!cId} style={{ flex:2,padding:"10px 0",border:"none",borderRadius:10,background:cId?"linear-gradient(135deg,#7b5ea7,#3ee6c4)":"#e0e0e0",color:"#fff",fontSize:13,fontWeight:700,cursor:cId?"pointer":"default" }}>다음: 견적 확인 →</button>
+                <button onClick={()=>{if(cId && cObj && calcW <= cObj.coilW)setStep(4);}} disabled={!cId || (!!cObj && calcW > cObj.coilW)} style={{ flex:2,padding:"10px 0",border:"none",borderRadius:10,background:(cId && cObj && calcW <= cObj.coilW)?"linear-gradient(135deg,#7b5ea7,#3ee6c4)":"#e0e0e0",color:"#fff",fontSize:13,fontWeight:700,cursor:(cId && cObj && calcW <= cObj.coilW)?"pointer":"default" }}>다음: 견적 확인 →</button>
               </div>
             </div>
           )}
