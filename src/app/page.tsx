@@ -281,26 +281,38 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
     return raw;
   };
 
+  const REF_W = 600, REF_H = 240;
   const draw = useCallback(() => {
     const c = cvs.current; if (!c) return;
     const ctx = c.getContext("2d")!;
-    const W = c.width, H = c.height;
+    // 모바일 HiDPI 대응
+    const rect = c.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const cw = Math.round(rect.width * dpr), ch = Math.round(rect.height * dpr);
+    if (c.width !== cw || c.height !== ch) { c.width = cw; c.height = ch; }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // 매번 리셋 후 스케일 적용
+    const W = rect.width, H = rect.height;
     ctx.clearRect(0, 0, W, H);
     ctx.strokeStyle = "rgba(0,0,0,0.04)"; ctx.lineWidth = 1;
     for (let x = 0; x < W; x += 20) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
     for (let y = 0; y < H; y += 20) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
     if (!pts.length) return;
 
-    // ── step >= 2이고 모든 치수 입력 완료 → 실제 비율로 리페인트 ──
-    let dp = pts;
+    // ── step >= 2이고 모든 치수 입력 완료 → 실제 비율로 리페인트 (최소 길이 보장) ──
+    let dp = pts.map(p => ({ x: p.x / REF_W * W, y: p.y / REF_H * H })); // 600×240 → CSS 크기
     const parsedDims = dims.map(d => parseInt(d) || 0);
     if (step >= 2 && parsedDims.length > 0 && parsedDims.every(d => d > 0) && pts.length >= 2) {
+      // 최소 길이 보장: 가장 긴 구간 대비 짧은 구간이 너무 작으면 보정
+      const maxDim = Math.max(...parsedDims);
+      const MIN_RATIO = 0.15; // 가장 긴 구간 대비 최소 15%
+      const adjusted = parsedDims.map(d => Math.max(d, maxDim * MIN_RATIO));
+
       let dir = Math.atan2(pts[1].y - pts[0].y, pts[1].x - pts[0].x);
       const raw: {x:number;y:number}[] = [{ x: 0, y: 0 }];
-      for (let i = 0; i < parsedDims.length; i++) {
+      for (let i = 0; i < adjusted.length; i++) {
         const last = raw[raw.length - 1];
-        raw.push({ x: last.x + Math.cos(dir) * parsedDims[i], y: last.y + Math.sin(dir) * parsedDims[i] });
-        if (i < parsedDims.length - 1 && i + 2 < pts.length) {
+        raw.push({ x: last.x + Math.cos(dir) * adjusted[i], y: last.y + Math.sin(dir) * adjusted[i] });
+        if (i < adjusted.length - 1 && i + 2 < pts.length) {
           const deg = angles[i] && parseInt(angles[i]) > 0 ? parseInt(angles[i]) : calcAngleDeg(pts[i], pts[i+1], pts[i+2]);
           const v1x = pts[i+1].x - pts[i].x, v1y = pts[i+1].y - pts[i].y;
           const v2x = pts[i+2].x - pts[i+1].x, v2y = pts[i+2].y - pts[i+1].y;
@@ -324,19 +336,22 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
     ctx.beginPath(); ctx.moveTo(dp[0].x, dp[0].y);
     for (let i = 1; i < dp.length; i++) ctx.lineTo(dp[i].x, dp[i].y);
     ctx.strokeStyle = "#7b5ea7"; ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.stroke();
-    for (let i = 0; i < dp.length - 1; i++) {
-      const p1 = dp[i], p2 = dp[i+1], mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2, d = dims[i]||"";
-      // 선분 수직 방향으로 라벨 오프셋 (겹침 방지)
-      const dx = p2.x - p1.x, dy = p2.y - p1.y;
-      const len = Math.sqrt(dx*dx + dy*dy) || 1;
-      const nx = -dy / len, ny = dx / len; // 수직 벡터
-      const off = 14; // 선에서 떨어지는 거리
-      const lx = mx + nx * off, ly = my + ny * off;
-      ctx.save(); ctx.font = "bold 11px sans-serif";
-      const t = d ? `${d}mm` : "?", tw = ctx.measureText(t).width;
-      ctx.fillStyle = d ? "rgba(123,94,167,0.9)" : "rgba(180,180,180,0.9)";
-      ctx.beginPath(); ctx.roundRect(lx-tw/2-6, ly-8, tw+12, 16, 4); ctx.fill();
-      ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(t, lx, ly); ctx.restore();
+    // 치수 라벨 (step >= 2에서만 표시, step 1에서는 숨김)
+    if (step >= 2) {
+      for (let i = 0; i < dp.length - 1; i++) {
+        const p1 = dp[i], p2 = dp[i+1], mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2, d = dims[i]||"";
+        if (!d) continue; // 미입력이면 숨김
+        const dx = p2.x - p1.x, dy = p2.y - p1.y;
+        const len = Math.sqrt(dx*dx + dy*dy) || 1;
+        const nx = -dy / len, ny = dx / len;
+        const off = 14;
+        const lx = mx + nx * off, ly = my + ny * off;
+        ctx.save(); ctx.font = "bold 11px sans-serif";
+        const t = `${d}mm`, tw = ctx.measureText(t).width;
+        ctx.fillStyle = "rgba(123,94,167,0.9)";
+        ctx.beginPath(); ctx.roundRect(lx-tw/2-6, ly-8, tw+12, 16, 4); ctx.fill();
+        ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(t, lx, ly); ctx.restore();
+      }
     }
     dp.forEach((p, i) => {
       ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI*2);
@@ -346,7 +361,7 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
     // 각도 표시 (90도 아닌 경우만 빨간색으로)
     for (let i = 1; i < dp.length - 1; i++) {
       const deg = angles[i-1] && parseInt(angles[i-1]) > 0 ? parseInt(angles[i-1]) : calcAngleDeg(dp[i-1], dp[i], dp[i+1]);
-      if (deg === 0 || deg === 90) continue;  // 90도는 표시 안 함
+      if (deg === 0 || deg === 90) continue;
       const p = dp[i];
       const a1 = Math.atan2(dp[i-1].y - p.y, dp[i-1].x - p.x);
       const a2 = Math.atan2(dp[i+1].y - p.y, dp[i+1].x - p.x);
@@ -372,16 +387,17 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
       ctx.restore();
     }
     if (hov && pts.length > 0 && step === 1) {
-      const last = pts[pts.length-1];
-      ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(hov.x, hov.y);
+      const last = dp[dp.length-1];
+      const hovScaled = { x: hov.x / REF_W * W, y: hov.y / REF_H * H };
+      ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(hovScaled.x, hovScaled.y);
       ctx.strokeStyle = "rgba(123,94,167,0.3)"; ctx.lineWidth = 2; ctx.setLineDash([6,3]); ctx.stroke(); ctx.setLineDash([]);
     }
   }, [pts, dims, angles, hov, step]);
 
   useEffect(() => { draw(); }, [draw]);
 
-  const click = (e: React.MouseEvent) => { if (step!==1||!cvs.current) return; const r = cvs.current.getBoundingClientRect(); const x = (e.clientX-r.left)*(cvs.current.width/r.width); const y = (e.clientY-r.top)*(cvs.current.height/r.height); setPts(p=>[...p,{x,y}]); if(pts.length>0) setDims(p=>[...p,""]); if(pts.length>1) setAngles(p=>[...p,""]); };
-  const mv = (e: React.MouseEvent) => { if(step!==1||!cvs.current) return; const r = cvs.current.getBoundingClientRect(); setHov({x:(e.clientX-r.left)*(cvs.current.width/r.width),y:(e.clientY-r.top)*(cvs.current.height/r.height)}); };
+  const click = (e: React.MouseEvent) => { if (step!==1||!cvs.current) return; const r = cvs.current.getBoundingClientRect(); const x = (e.clientX-r.left)/r.width*REF_W; const y = (e.clientY-r.top)/r.height*REF_H; setPts(p=>[...p,{x,y}]); if(pts.length>0) setDims(p=>[...p,""]); if(pts.length>1) setAngles(p=>[...p,""]); };
+  const mv = (e: React.MouseEvent) => { if(step!==1||!cvs.current) return; const r = cvs.current.getBoundingClientRect(); setHov({x:(e.clientX-r.left)/r.width*REF_W,y:(e.clientY-r.top)/r.height*REF_H}); };
   const dimCh = (i:number,v:string) => setDims(p => { const n=[...p]; n[i]=v.replace(/[^0-9]/g,""); return n; });
   const angleCh = (i:number,v:string) => setAngles(p => { const n=[...p]; n[i]=v.replace(/[^0-9]/g,""); return n; });
   const undo = () => { if(pts.length<=1){setPts([]);setDims([]);setAngles([]);}else{setPts(p=>p.slice(0,-1));setDims(p=>p.slice(0,-1));if(angles.length>0)setAngles(p=>p.slice(0,-1));} };
