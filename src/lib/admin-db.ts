@@ -6,7 +6,7 @@
  */
 import {
   collection, collectionGroup, getDocs, doc, updateDoc,
-  query, orderBy,
+  query,
   type Timestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
@@ -74,9 +74,9 @@ export interface AdminUser {
 
 // ═══ 전체 주문 조회 ═══
 export async function fetchAllOrders(): Promise<AdminOrder[]> {
+  // orderBy 없이 조회 → 인덱스 불필요!
   const q = query(
     collectionGroup(db, "orders"),
-    orderBy("createdAt", "desc"),
   );
   const snap = await getDocs(q);
   const orders: AdminOrder[] = [];
@@ -117,6 +117,13 @@ export async function fetchAllOrders(): Promise<AdminOrder[]> {
       userName: data.userName,
       userPhone: data.userPhone,
     });
+  });
+
+  // 클라이언트에서 최신순 정렬
+  orders.sort((a, b) => {
+    const tA = a.createdAt ? a.createdAt.seconds : 0;
+    const tB = b.createdAt ? b.createdAt.seconds : 0;
+    return tB - tA;
   });
 
   return orders;
