@@ -308,6 +308,8 @@ function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAd
       const adjusted = parsedDims.map(d => Math.max(d, maxDim * MIN_RATIO));
 
       let dir = Math.atan2(pts[1].y - pts[0].y, pts[1].x - pts[0].x);
+      // 손그림 방향 → 가장 가까운 90° 단위로 스냅 (기울어짐 방지)
+      dir = Math.round(dir / (Math.PI / 2)) * (Math.PI / 2);
       const raw: {x:number;y:number}[] = [{ x: 0, y: 0 }];
       for (let i = 0; i < adjusted.length; i++) {
         const last = raw[raw.length - 1];
