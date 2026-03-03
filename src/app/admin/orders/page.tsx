@@ -300,24 +300,54 @@ export default function AdminOrders() {
                 {isExpanded && (
                   <div style={{ padding: "0 18px 18px", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
 
-                    {/* 상태 진행 바 */}
+                    {/* 상태 진행 바 (미래 단계 클릭 → 중간 단계 자동 완료) */}
                     <div style={{ display: "flex", gap: 4, margin: "16px 0", overflowX: "auto", paddingBottom: 4 }}>
                       {STATUS_STEPS.filter(s => s.key !== "cancelled").map((step, idx) => {
                         const curIdx = STATUS_STEPS.findIndex(s => s.key === order.status);
                         const stepIdx = idx;
                         const isActive = order.status === step.key;
                         const isPast = stepIdx < curIdx;
-                        const isNext = stepIdx === curIdx + 1;
+                        const isFuture = stepIdx > curIdx;
                         return (
                           <button key={step.key}
-                            disabled={saving === order.id || (!isNext && !isActive)}
-                            onClick={() => isNext && handleStatusChange(order, step.key)}
+                            disabled={saving === order.id || isActive || isPast}
+                            onClick={() => {
+                              if (!isFuture) return;
+                              const skipped = STATUS_STEPS.filter(s => s.key !== "cancelled")
+                                .slice(curIdx + 1, stepIdx)
+                                .map(s => s.label);
+                              const msg = skipped.length > 0
+                                ? `"${step.label}" 단계로 점프합니다.\n\n건너뛰는 단계: ${skipped.join(" → ")}\n(자동 완료 처리됩니다)\n\n진행하시겠습니까?`
+                                : `"${step.label}" 단계로 진행하시겠습니까?`;
+                              if (!confirm(msg)) return;
+                              // 중간 단계 히스토리 자동 생성
+                              const now = new Date().toISOString();
+                              const history = [...(order.statusHistory || [])];
+                              STATUS_STEPS.filter(s => s.key !== "cancelled")
+                                .slice(curIdx + 1, stepIdx)
+                                .forEach(s => history.push({ status: s.key, at: now, note: "자동 완료 (점프)" }));
+                              history.push({ status: step.key, at: now });
+                              const updates: Record<string, unknown> = { status: step.key, statusHistory: history };
+                              const ed = editData[order.id] || {};
+                              if (ed.trackingNumber) updates.trackingNumber = ed.trackingNumber;
+                              if (ed.trackingCarrier) updates.trackingCarrier = ed.trackingCarrier;
+                              if (ed.truckMemo) updates.truckMemo = ed.truckMemo;
+                              if (ed.estimatedDelivery) updates.estimatedDelivery = ed.estimatedDelivery;
+                              if (ed.adminMemo) updates.adminMemo = ed.adminMemo;
+                              setSaving(order.id);
+                              updateOrderDetails(order.uid, order.id, updates)
+                                .then(() => {
+                                  setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: step.key, statusHistory: history, ...ed } : o));
+                                })
+                                .catch(() => alert("상태 변경에 실패했습니다."))
+                                .finally(() => setSaving(null));
+                            }}
                             style={{
                               flex: 1, minWidth: 60, padding: "8px 4px", borderRadius: 8, fontSize: 11, fontWeight: 700,
-                              border: isActive ? `2px solid ${step.color}` : isNext ? "2px dashed rgba(123,94,167,0.5)" : "1px solid rgba(255,255,255,0.06)",
+                              border: isActive ? `2px solid ${step.color}` : isFuture ? "2px dashed rgba(123,94,167,0.4)" : "1px solid rgba(255,255,255,0.06)",
                               background: isActive ? step.bg : isPast ? "rgba(52,211,153,0.06)" : "transparent",
-                              color: isActive ? step.color : isPast ? "#34d399" : isNext ? "#a78bfa" : "#4a4a4a",
-                              cursor: isNext ? "pointer" : "default",
+                              color: isActive ? step.color : isPast ? "#34d399" : isFuture ? "#a78bfa" : "#4a4a4a",
+                              cursor: isFuture ? "pointer" : "default",
                               opacity: saving === order.id ? 0.5 : 1,
                               textAlign: "center",
                             }}>
