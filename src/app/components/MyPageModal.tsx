@@ -39,7 +39,7 @@ export default function MyPageModal({ user, initialTab = "info", onClose }: MyPa
 
   // 주문내역
   const [orders, setOrders] = useState<Order[]>([]);
-  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [collapsedOrder, setCollapsedOrder] = useState<Set<string>>(new Set());
 
   // Firestore에서 프로필 로드
   useEffect(() => {
@@ -229,7 +229,7 @@ export default function MyPageModal({ user, initialTab = "info", onClose }: MyPa
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {orders.map(order => {
                     const st = ORDER_STATUS[order.status] || ORDER_STATUS.paid;
-                    const isExpanded = expandedOrder === order.id;
+                    const isExpanded = !collapsedOrder.has(order.id);
                     const formatDate = (d: string) => {
                       try { return new Date(d).toLocaleDateString("ko-KR"); } catch { return "-"; }
                     };
@@ -240,7 +240,7 @@ export default function MyPageModal({ user, initialTab = "info", onClose }: MyPa
                         background: order.status === "cancelled" ? "#fafafa" : "#fff",
                       }}>
                         {/* 요약 */}
-                        <div onClick={() => setExpandedOrder(isExpanded ? null : order.id)} style={{
+                        <div onClick={() => setCollapsedOrder(prev => { const next = new Set(prev); if (next.has(order.id)) next.delete(order.id); else next.add(order.id); return next; })} style={{
                           padding: "14px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10,
                         }}>
                           <span style={{
