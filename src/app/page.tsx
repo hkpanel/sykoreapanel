@@ -626,7 +626,7 @@ export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [showMyPage, setShowMyPage] = useState<false | "info" | "address" | "orders">(false);
-  const [orderComplete, setOrderComplete] = useState<{ paymentId: string; totalAmount: number; receiptUrl?: string } | null>(null);
+  const [orderComplete, setOrderComplete] = useState<{ paymentId: string; totalAmount: number; receiptUrl?: string; payMethod?: string } | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -856,7 +856,7 @@ export default function Home() {
       await clearCart(user.uid);
       setCart([]);
       setShowCart(false);
-      setOrderComplete({ paymentId, totalAmount });
+      setOrderComplete({ paymentId, totalAmount, payMethod: "bank" });
     } catch (err) {
       console.error("무통장 주문 실패:", err);
       alert("주문 처리 중 오류가 발생했습니다.");
@@ -2114,12 +2114,45 @@ export default function Home() {
             background: "#fff", borderRadius: 24, padding: "40px 32px", width: "min(400px, 90vw)",
             textAlign: "center", boxShadow: "0 24px 80px rgba(0,0,0,0.25)",
           }}>
-            <div style={{ fontSize: 56, marginBottom: 16 }}>✅</div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: "#1d1d1f", marginBottom: 8 }}>결제가 완료되었습니다!</div>
-            <div style={{ fontSize: 14, color: "#86868b", marginBottom: 8 }}>주문번호: {orderComplete.paymentId}</div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: "#7b5ea7", marginBottom: 24 }}>
-              ₩{orderComplete.totalAmount.toLocaleString()}
-            </div>
+            {orderComplete.payMethod === "bank" ? (
+              <>
+                <div style={{ fontSize: 56, marginBottom: 16 }}>🏦</div>
+                <div style={{ fontSize: 22, fontWeight: 900, color: "#1d1d1f", marginBottom: 8 }}>주문이 접수되었습니다!</div>
+                <div style={{ fontSize: 14, color: "#86868b", marginBottom: 8 }}>주문번호: {orderComplete.paymentId}</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: "#0066b3", marginBottom: 20 }}>
+                  ₩{orderComplete.totalAmount.toLocaleString()}
+                </div>
+
+                <div style={{ background: "#f0f7ff", borderRadius: 14, padding: "16px 20px", marginBottom: 16, textAlign: "left", border: "1px solid #bbd6f5" }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: "#0066b3", marginBottom: 10 }}>입금 계좌 안내</div>
+                  <div style={{ fontSize: 16, fontWeight: 900, color: "#1d1d1f", marginBottom: 4 }}>IBK 기업은행 186-049738-01-018</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "#1d1d1f", marginBottom: 8 }}>예금주: 박재진</div>
+                  <div style={{ fontSize: 13, color: "#5a8ec0", lineHeight: 1.8 }}>
+                    · 주문 후 <b>3일 이내</b> 입금해주세요<br/>
+                    · 입금자명이 다를 경우 카톡으로 알려주세요<br/>
+                    · 입금 확인 후 제작/발송이 진행됩니다
+                  </div>
+                </div>
+
+                <button onClick={() => {
+                  const text = `IBK 기업은행 186-049738-01-018 박재진`;
+                  navigator.clipboard.writeText(text).catch(() => {});
+                  alert("계좌번호가 복사되었습니다!");
+                }} style={{
+                  width: "100%", padding: "12px 0", borderRadius: 12, border: "2px solid #0066b3",
+                  background: "rgba(0,102,179,0.05)", fontSize: 14, fontWeight: 700, color: "#0066b3", cursor: "pointer", marginBottom: 10,
+                }}>📋 계좌번호 복사</button>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 56, marginBottom: 16 }}>✅</div>
+                <div style={{ fontSize: 22, fontWeight: 900, color: "#1d1d1f", marginBottom: 8 }}>결제가 완료되었습니다!</div>
+                <div style={{ fontSize: 14, color: "#86868b", marginBottom: 8 }}>주문번호: {orderComplete.paymentId}</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: "#7b5ea7", marginBottom: 24 }}>
+                  ₩{orderComplete.totalAmount.toLocaleString()}
+                </div>
+              </>
+            )}
 
             <div style={{ background: "#f5f5f7", borderRadius: 14, padding: "16px 20px", marginBottom: 24, textAlign: "left" }}>
               <div style={{ fontSize: 13, color: "#86868b", marginBottom: 8 }}>안내사항</div>
