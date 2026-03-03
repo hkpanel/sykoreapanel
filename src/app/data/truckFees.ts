@@ -177,8 +177,6 @@ export function calcTruckOptions(items: CartItemForTruck[], regionCity: string):
   }
 
   // ━━━ 1톤 적재 판정 ━━━
-  // 4000mm 이상 판넬이 있으면 1톤 불가 (적재함 길이 3000mm)
-  if (!hasLongPanel) {
   const h1Limit = hasHanga ? hanga1tLimit(maxLeafW) : 0;
   const desc1 = (parts: string[]) => {
     const extras = [
@@ -188,6 +186,9 @@ export function calcTruckOptions(items: CartItemForTruck[], regionCity: string):
     ];
     return [...parts, ...extras].filter(Boolean).join(" + ");
   };
+
+  // 4000mm 이상 판넬이 있으면 1톤 불가 (적재함 길이 3000mm)
+  if (!hasLongPanel) {
 
   if (hasHanga) {
     // 행가 + (스윙/후레싱)
