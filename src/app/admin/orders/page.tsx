@@ -254,7 +254,7 @@ export default function AdminOrders() {
                     {/* 주문 상품 */}
                     <Section title="주문 상품">
                       {order.items.map((item, i) => {
-                        const itemImage = (item as Record<string, unknown>).image as string | undefined;
+                        const itemImage = item.image;
                         return (
                         <div key={i} style={{ marginBottom: 4 }}>
                           {itemImage && (

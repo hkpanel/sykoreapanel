@@ -33,6 +33,7 @@ export interface AdminOrder {
     retailPrice: number;
     qty: number;
     category?: string;
+    image?: string;
   }[];
   subtotal: number;
   deliveryFee: number;

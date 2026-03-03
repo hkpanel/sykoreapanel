@@ -314,7 +314,7 @@ export default function MyPageModal({ user, initialTab = "info", onClose }: MyPa
                             {/* 상품 목록 */}
                             <div style={{ marginBottom: 8 }}>
                               {order.items.map((item, i) => {
-                                const itemImage = (item as Record<string, unknown>).image as string | undefined;
+                                const itemImage = item.image;
                                 return (
                                 <div key={i} style={{ padding: "4px 0" }}>
                                   {itemImage && (
