@@ -153,7 +153,7 @@ export default function SycPage() {
           <Image src="/syc-logo.png" alt="SYC" width={28} height={28} style={{ borderRadius: "50%" }} />
           <span style={{ fontSize: "clamp(12px,1.8vw,16px)", fontWeight: 800, color: "#f5f5f7", whiteSpace: "nowrap" }}>SY Korea Panel</span>
         </Link>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
+        <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
           {!loading && price && (
             <div className="ticker" style={{
               background: "rgba(62,230,196,0.1)", border: "1px solid rgba(62,230,196,0.2)",
@@ -162,12 +162,19 @@ export default function SycPage() {
               1 SYC ≈ ₩{price.krw < 1 ? price.krw.toFixed(4) : price.krw.toFixed(2)}
             </div>
           )}
+          <a href="https://syai.co.kr" target="_blank" rel="noopener noreferrer" style={{
+            padding: "6px 10px", borderRadius: 8, fontSize: "clamp(11px,1.4vw,13px)", fontWeight: 700,
+            background: "linear-gradient(135deg, #FF6B35, #FF2E63)", color: "#fff", textDecoration: "none",
+            whiteSpace: "nowrap",
+          }}>
+            🤖 AI
+          </a>
           <Link href="/" style={{
-            padding: "6px 12px", borderRadius: 8, fontSize: "clamp(11px,1.4vw,13px)", fontWeight: 700,
+            padding: "6px 10px", borderRadius: 8, fontSize: "clamp(11px,1.4vw,13px)", fontWeight: 700,
             background: "rgba(255,255,255,0.08)", color: "#f5f5f7", textDecoration: "none",
             border: "1px solid rgba(255,255,255,0.1)", whiteSpace: "nowrap",
           }}>
-            🏠 홈으로
+            🏠
           </Link>
         </div>
       </nav>
