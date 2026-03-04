@@ -268,8 +268,8 @@ export function aggregateSalesByMonth(orders: AdminOrder[]): SalesStat[] {
 // ═══ 생산능력 설정 ═══
 export interface ProductionCapacity {
   flashingPerDay: number;     // 후레싱: 일당 개수 (기본 200)
-  swingPerDay: number;        // 스윙도어(≤2500): 일당 조 (기본 20)
-  hangaPerDay: number;        // 행가도어(매장판): 일당 조 (기본 2)
+  swingPerDay: number;        // 스윙도어(≤2500): 일당 편개 기준 조 (기본 20, 양개=편개×2)
+  hangaPerDay: number;        // 행가도어(매장판): 일당 편개 기준 조 (기본 2, 양개=편개×2)
   panelPerDay: number;        // 판넬: 일당 훼베 (기본 100)
   aluminumPerDay: number;     // 알루미늄: 일당 개 (기본 50)
   accessoryPerDay: number;    // 부자재: 일당 개 (기본 100)

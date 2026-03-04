@@ -1400,7 +1400,7 @@ export default function Home() {
       totalDays += d;
     }
 
-    // 스윙도어 (≤2500)
+    // 스윙도어 (≤2500) — 일일생산량 편개 기준 (양개=편개×2)
     const swingItems = cart.filter(i => i.category === "swing");
     if (swingItems.length > 0) {
       const shortSwing = swingItems.filter(i => {
@@ -1413,7 +1413,9 @@ export default function Home() {
       });
       if (shortSwing.length > 0) {
         const qty = shortSwing.reduce((s, i) => s + i.qty, 0);
-        const d = qty / prodCap.swingPerDay;
+        // 편개 기준 환산: 양개 1조 = 편개 2조분
+        const eqQty = shortSwing.reduce((s, i) => s + i.qty * (i.productName.includes("양개") ? 2 : 1), 0);
+        const d = eqQty / prodCap.swingPerDay;
         lines.push({ label: `스윙도어 (≤2500) ${qty}조`, days: parseFloat(d.toFixed(1)) });
         totalDays += d;
       }
@@ -1424,7 +1426,7 @@ export default function Home() {
       }
     }
 
-    // 행가도어 (매장판)
+    // 행가도어 (매장판) — 일일생산량 편개 기준 (양개=편개×2)
     const hangaItems = cart.filter(i => i.category === "hanga");
     if (hangaItems.length > 0) {
       const stockHanga = hangaItems.filter(i => {
@@ -1438,7 +1440,9 @@ export default function Home() {
       const prodHanga = hangaItems.filter(i => !stockHanga.includes(i));
       if (stockHanga.length > 0) {
         const qty = stockHanga.reduce((s, i) => s + i.qty, 0);
-        const d = qty / prodCap.hangaPerDay;
+        // 편개 기준 환산: 양개 1조 = 편개 2조분
+        const eqQty = stockHanga.reduce((s, i) => s + i.qty * (i.productName.includes("양개") ? 2 : 1), 0);
+        const d = eqQty / prodCap.hangaPerDay;
         lines.push({ label: `행가도어 (매장판) ${qty}조`, days: parseFloat(d.toFixed(1)) });
         totalDays += d;
       }
