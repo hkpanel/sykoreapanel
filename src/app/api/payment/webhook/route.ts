@@ -46,6 +46,31 @@ async function getImpToken(): Promise<string | null> {
   return data.code === 0 ? data.response.access_token : null;
 }
 
+// 모든 유저의 orders에서 주문 찾기 (인덱스 불필요)
+async function findOrder(merchantUid: string, impUid: string) {
+  const usersSnap = await adminDb.collection("users").get();
+  for (const userDoc of usersSnap.docs) {
+    const ordersSnap = await adminDb
+      .collection("users").doc(userDoc.id)
+      .collection("orders")
+      .where("id", "==", merchantUid)
+      .get();
+    if (!ordersSnap.empty) {
+      return ordersSnap.docs[0];
+    }
+    // id로 못 찾으면 paymentId로
+    const ordersSnap2 = await adminDb
+      .collection("users").doc(userDoc.id)
+      .collection("orders")
+      .where("paymentId", "==", impUid)
+      .get();
+    if (!ordersSnap2.empty) {
+      return ordersSnap2.docs[0];
+    }
+  }
+  return null;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -72,106 +97,66 @@ export async function POST(req: NextRequest) {
     const payment = paymentData.response;
     const status = payment.status; // paid, cancelled, failed, ready
 
-    // 2. Firestore에서 해당 주문 찾기 (collectionGroup으로 모든 유저의 orders 검색)
-    const ordersQuery = adminDb.collectionGroup("orders")
-      .where("id", "==", merchant_uid || payment.merchant_uid);
-    const snapshot = await ordersQuery.get();
-
-    if (snapshot.empty) {
-      // id로 못 찾으면 paymentId로 재시도
-      const ordersQuery2 = adminDb.collectionGroup("orders")
-        .where("paymentId", "==", imp_uid);
-      const snapshot2 = await ordersQuery2.get();
-      
-      if (snapshot2.empty) {
-        console.log(`웹훅: 주문 못 찾음 (merchant_uid: ${merchant_uid}, imp_uid: ${imp_uid})`);
-        return NextResponse.json({ success: true, message: "주문 없음 (무시)" });
-      }
-      
-      // 찾은 주문 업데이트
-      for (const doc of snapshot2.docs) {
-        await updateOrder(doc, status, payment);
-      }
-    } else {
-      for (const doc of snapshot.docs) {
-        await updateOrder(doc, status, payment);
-      }
+    // 2. Firestore에서 해당 주문 찾기
+    const orderDoc = await findOrder(merchant_uid || payment.merchant_uid, imp_uid);
+    if (!orderDoc) {
+      console.log(`웹훅: 주문 못 찾음 (merchant_uid: ${merchant_uid}, imp_uid: ${imp_uid})`);
+      return NextResponse.json({ success: true, message: "주문 없음 (무시)" });
     }
+
+    // 3. 상태 매핑
+    const statusMap: Record<string, string> = {
+      paid: "paid",
+      cancelled: "cancelled",
+      failed: "failed",
+      ready: "pending",
+    };
+    const newStatus = statusMap[status] || status;
+    const data = orderDoc.data();
+
+    // 같은 상태면 무시
+    if (data.status === newStatus) {
+      return NextResponse.json({ success: true, message: "상태 동일 (무시)" });
+    }
+
+    // 4. Firestore 업데이트
+    const updateData: Record<string, unknown> = {
+      status: newStatus,
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (status === "cancelled") {
+      updateData.cancelledAt = new Date().toISOString();
+      updateData.cancelReason = payment.cancel_reason || "PG 취소";
+    }
+
+    const history = data.statusHistory || [];
+    history.push({ status: newStatus, at: new Date().toISOString() });
+    updateData.statusHistory = history;
+
+    await orderDoc.ref.update(updateData);
+
+    // 5. 텔레그램 알림
+    const itemSummary = data.items?.length > 0
+      ? `${data.items[0].productName}${data.items.length > 1 ? ` 외 ${data.items.length - 1}건` : ""}`
+      : "상품";
+
+    const statusEmoji: Record<string, string> = { cancelled: "❌", failed: "⚠️", paid: "✅", pending: "⏳" };
+    const statusLabel: Record<string, string> = { cancelled: "결제 취소", failed: "결제 실패", paid: "결제 완료", pending: "입금 대기" };
+
+    await sendTelegram([
+      `${statusEmoji[newStatus] || "📋"} *${statusLabel[newStatus] || newStatus}*`,
+      ``,
+      `📦 ${itemSummary}`,
+      `💰 ₩${Number(data.totalAmount).toLocaleString()}`,
+      status === "cancelled" ? `📝 사유: ${payment.cancel_reason || "없음"}` : "",
+      ``,
+      `🔗 [관리자 페이지](https://sykoreapanel.com/admin/orders)`,
+    ].filter(Boolean).join("\n"));
 
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("웹훅 처리 오류:", err);
     return NextResponse.json({ success: false, message: String(err) }, { status: 500 });
   }
-}
-
-// 주문 상태 업데이트 헬퍼
-async function updateOrder(
-  doc: FirebaseFirestore.QueryDocumentSnapshot,
-  status: string,
-  payment: Record<string, unknown>
-) {
-  const data = doc.data();
-  const currentStatus = data.status;
-
-  // 상태 매핑: 아임포트 → 우리 시스템
-  const statusMap: Record<string, string> = {
-    paid: "paid",
-    cancelled: "cancelled",
-    failed: "failed",
-    ready: "pending", // 가상계좌 입금 대기
-  };
-
-  const newStatus = statusMap[status] || status;
-
-  // 같은 상태면 무시
-  if (currentStatus === newStatus) return;
-
-  // Firestore 업데이트
-  const updateData: Record<string, unknown> = {
-    status: newStatus,
-    updatedAt: new Date().toISOString(),
-  };
-
-  // 취소/환불 시 추가 정보
-  if (status === "cancelled") {
-    updateData.cancelledAt = new Date().toISOString();
-    updateData.cancelReason = (payment as Record<string, string>).cancel_reason || "PG 취소";
-  }
-
-  // statusHistory에 추가
-  const history = data.statusHistory || [];
-  history.push({ status: newStatus, at: new Date().toISOString() });
-  updateData.statusHistory = history;
-
-  await doc.ref.update(updateData);
-
-  // 텔레그램 알림
-  const itemSummary = data.items?.length > 0
-    ? `${data.items[0].productName}${data.items.length > 1 ? ` 외 ${data.items.length - 1}건` : ""}`
-    : "상품";
-
-  const statusEmoji: Record<string, string> = {
-    cancelled: "❌",
-    failed: "⚠️",
-    paid: "✅",
-    pending: "⏳",
-  };
-
-  const statusLabel: Record<string, string> = {
-    cancelled: "결제 취소",
-    failed: "결제 실패",
-    paid: "결제 완료",
-    pending: "입금 대기",
-  };
-
-  await sendTelegram([
-    `${statusEmoji[newStatus] || "📋"} *${statusLabel[newStatus] || newStatus}*`,
-    ``,
-    `📦 ${itemSummary}`,
-    `💰 ₩${Number(data.totalAmount).toLocaleString()}`,
-    status === "cancelled" ? `📝 사유: ${(payment as Record<string, string>).cancel_reason || "없음"}` : "",
-    ``,
-    `🔗 [관리자 페이지](https://sykoreapanel.com/admin/orders)`,
-  ].filter(Boolean).join("\n"));
 }
