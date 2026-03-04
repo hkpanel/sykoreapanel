@@ -4,6 +4,7 @@
  */
 import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
+import { getFirestore } from "firebase-admin/firestore";
 
 if (getApps().length === 0) {
   // 방법1: JSON 통째로 (FIREBASE_SERVICE_ACCOUNT_JSON)
@@ -25,3 +26,4 @@ if (getApps().length === 0) {
 }
 
 export const adminAuth = getAuth();
+export const adminDb = getFirestore();
