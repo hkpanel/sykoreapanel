@@ -31,20 +31,28 @@ import {
   fetchProductionCapacity, DEFAULT_CAPACITY, type ProductionCapacity,
 } from "@/lib/admin-db";
 
-// PortOne V2 SDK 글로벌 타입
+// 아임포트(포트원 V1) SDK 글로벌 타입
 declare global {
   interface Window {
-    PortOne?: {
-      requestPayment: (params: {
-        storeId: string;
-        channelKey: string;
-        paymentId: string;
-        orderName: string;
-        totalAmount: number;
-        currency: string;
-        payMethod: string;
-        customer?: { fullName?: string; phoneNumber?: string; email?: string };
-      }) => Promise<{ code?: string; message?: string; txId?: string; paymentId?: string }>;
+    IMP?: {
+      init: (merchantId: string) => void;
+      request_pay: (params: {
+        pg: string;
+        pay_method: string;
+        merchant_uid: string;
+        name: string;
+        amount: number;
+        buyer_email?: string;
+        buyer_name?: string;
+        buyer_tel?: string;
+        m_redirect_url?: string;
+      }, callback?: (response: {
+        success: boolean;
+        imp_uid?: string;
+        merchant_uid?: string;
+        error_msg?: string;
+        error_code?: string;
+      }) => void) => void;
     };
   }
 }
@@ -1081,7 +1089,7 @@ export default function Home() {
       return;
     }
 
-    // ──── 원화 카드 결제 (기존 로직) ────
+    // ──── 원화 카드 결제 (아임포트 V1 + KG이니시스) ────
     const subtotal = cartTotal;
     const tax = Math.floor((subtotal + deliveryFee) * 0.1);
     const totalAmount = subtotal + deliveryFee + tax;
@@ -1090,150 +1098,114 @@ export default function Home() {
       : `${cart[0].productName} 외 ${cart.length - 1}건`;
     const paymentId = `order-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-    // 5. PortOne SDK 확인
-    if (!window.PortOne) {
+    // 5. 아임포트 SDK 확인
+    if (!window.IMP) {
       alert("결제 모듈을 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
       return;
     }
 
     setPaymentLoading(true);
+    setShowCart(false);
+
+    // 아임포트 초기화
+    window.IMP.init("imp12835110");
 
     // 모바일 여부 판별
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-    // ═══════════════════════════════════════════
-    // 모바일: 리다이렉트 방식 (await 사용 안 함!)
-    // ═══════════════════════════════════════════
-    if (isMobile) {
-      // 주문정보를 sessionStorage에 저장 (결제 완료 후 복원용)
-      sessionStorage.setItem("pendingOrder", JSON.stringify({
-        paymentId, orderName, totalAmount, cartSnapshot: cart,
-        delivery, deliveryFee, selectedAddrId, truckRegion,
-        subtotal, tax,
-      }));
-
-      // 장바구니 닫기
-      setShowCart(false);
-
-      // requestPayment 호출 (await 안 함! 페이지가 이동하므로)
-      (window.PortOne.requestPayment as Function)({
-        storeId: process.env.NEXT_PUBLIC_PORTONE_STORE_ID || "store-7d43cea3-aa09-4466-a1fb-4a2840baf3fd",
-        channelKey: process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || "channel-key-f238aa16-fa21-42c6-8b96-3eb108805040",
-        paymentId,
-        orderName,
-        totalAmount,
-        currency: "CURRENCY_KRW",
-        payMethod: "CARD",
-        customer: {
-          fullName: user.displayName || undefined,
-          email: user.email || undefined,
-        },
-        redirectUrl: `${window.location.origin}/payment/complete`,
-      });
-      // 모바일은 여기서 페이지 자체가 이동함 → 아래 코드 실행 안 됨
-      return;
-    }
-
-    // ═══════════════════════════════════════════
-    // PC: 팝업(iframe) 방식 (기존 await 방식)
-    // ═══════════════════════════════════════════
-    setShowCart(false);
-
-    try {
-      const response = await window.PortOne.requestPayment({
-        storeId: process.env.NEXT_PUBLIC_PORTONE_STORE_ID || "store-7d43cea3-aa09-4466-a1fb-4a2840baf3fd",
-        channelKey: process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || "channel-key-f238aa16-fa21-42c6-8b96-3eb108805040",
-        paymentId,
-        orderName,
-        totalAmount,
-        currency: "CURRENCY_KRW",
-        payMethod: "CARD",
-        customer: {
-          fullName: user.displayName || undefined,
-          email: user.email || undefined,
-        },
-      });
-
-      // 7. 사용자 취소 또는 에러
-      if (response.code) {
-        if (response.code !== "USER_CANCEL") {
-          alert(`결제 실패: ${response.message || "알 수 없는 오류"}`);
+    // 결제 요청
+    window.IMP.request_pay({
+      pg: "html5_inicis.MOI9324338",
+      pay_method: "card",
+      merchant_uid: paymentId,
+      name: orderName,
+      amount: totalAmount,
+      buyer_email: user.email || undefined,
+      buyer_name: user.displayName || undefined,
+      ...(isMobile ? { m_redirect_url: `${window.location.origin}/payment/complete?merchant_uid=${paymentId}&amount=${totalAmount}` } : {}),
+    }, async (response) => {
+      // 모바일은 m_redirect_url로 이동하므로 이 콜백은 PC에서만 실행
+      if (!response.success) {
+        if (response.error_code !== "F0000") { // F0000 = 사용자 취소
+          alert(`결제 실패: ${response.error_msg || "알 수 없는 오류"}`);
         }
-        setPaymentLoading(false);
-        setShowCart(true); // 결제 취소/실패 시 장바구니 다시 열기
-        return;
-      }
-
-      // 8. 서버에서 결제 검증
-      const verifyRes = await fetch("/api/payment/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paymentId, totalAmount }),
-      });
-      const verifyResult = await verifyRes.json();
-
-      if (!verifyResult.success) {
-        alert(`결제 검증 실패: ${verifyResult.message}`);
         setPaymentLoading(false);
         setShowCart(true);
         return;
       }
 
-      // 9. Firestore에 주문 저장
-      const order: Order = {
-        id: paymentId,
-        paymentId,
-        status: "paid",
-        items: cart.map(i => {
-          const item: Record<string, unknown> = {
-            productName: i.productName, size: i.size, color: i.color,
-            retailPrice: i.retailPrice, qty: i.qty,
-          };
-          if (i.colorSub) item.colorSub = i.colorSub;
-          if (i.category) item.category = i.category;
-          if (i.image) item.image = i.image;
-          return item as unknown as Order["items"][number];
-        }),
-        subtotal,
-        deliveryFee,
-        tax,
-        totalAmount,
-        payMethod: verifyResult.payment?.method || "CARD",
-        deliveryType: delivery,
-        ...buildAddrFields(),
-        receiptUrl: verifyResult.payment?.receiptUrl,
-        paidAt: verifyResult.payment?.paidAt || new Date().toISOString(),
-        deliveryNote: deliveryNote || undefined,
-        preferredDate: deliveryNote === "희망일 지정" ? preferredDate || undefined : undefined,
-        customerMemo: customerMemo || undefined,
-        estimatedDelivery: deliveryEstimate.needsInquiry ? "납기 확인 필요 (7일~)" : deliveryEstimate.totalDays > 0 ? `약 ${deliveryEstimate.totalDays}일` : undefined,
-        statusHistory: [{ status: "paid", at: new Date().toISOString() }],
-      };
-      await saveOrder(user.uid, order);
-      // 텔레그램 알림
-      sendNotify("new_order", {
-        ...order, userName: user.displayName || "", userEmail: user.email || "",
-        ...buildAddrFields(),
-      });
+      try {
+        // 서버에서 결제 검증
+        const verifyRes = await fetch("/api/payment/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imp_uid: response.imp_uid, merchant_uid: response.merchant_uid, totalAmount }),
+        });
+        const verifyResult = await verifyRes.json();
 
-      // 10. 장바구니 비우기
-      await clearCart(user.uid);
-      setCart([]);
+        if (!verifyResult.success) {
+          alert(`결제 검증 실패: ${verifyResult.message}`);
+          setPaymentLoading(false);
+          setShowCart(true);
+          return;
+        }
 
-      // 11. 결제 완료 표시
-      setShowCart(false);
-      setOrderComplete({
-        paymentId,
-        totalAmount,
-        receiptUrl: verifyResult.payment?.receiptUrl,
-      });
-    } catch (err) {
-      console.error("결제 처리 오류:", err);
-      alert("결제 중 오류가 발생했습니다. 다시 시도해주세요.");
-      setShowCart(true);
-    } finally {
-      setPaymentLoading(false);
-    }
+        // Firestore에 주문 저장
+        const order: Order = {
+          id: paymentId,
+          paymentId: response.imp_uid || paymentId,
+          status: "paid",
+          items: cart.map(i => {
+            const item: Record<string, unknown> = {
+              productName: i.productName, size: i.size, color: i.color,
+              retailPrice: i.retailPrice, qty: i.qty,
+            };
+            if (i.colorSub) item.colorSub = i.colorSub;
+            if (i.category) item.category = i.category;
+            if (i.image) item.image = i.image;
+            return item as unknown as Order["items"][number];
+          }),
+          subtotal,
+          deliveryFee,
+          tax,
+          totalAmount,
+          payMethod: verifyResult.payment?.method || "CARD",
+          deliveryType: delivery,
+          ...buildAddrFields(),
+          receiptUrl: verifyResult.payment?.receiptUrl,
+          paidAt: verifyResult.payment?.paidAt || new Date().toISOString(),
+          deliveryNote: deliveryNote || undefined,
+          preferredDate: deliveryNote === "희망일 지정" ? preferredDate || undefined : undefined,
+          customerMemo: customerMemo || undefined,
+          estimatedDelivery: deliveryEstimate.needsInquiry ? "납기 확인 필요 (7일~)" : deliveryEstimate.totalDays > 0 ? `약 ${deliveryEstimate.totalDays}일` : undefined,
+          statusHistory: [{ status: "paid", at: new Date().toISOString() }],
+        };
+        await saveOrder(user.uid, order);
+        // 텔레그램 알림
+        sendNotify("new_order", {
+          ...order, userName: user.displayName || "", userEmail: user.email || "",
+          ...buildAddrFields(),
+        });
+
+        // 장바구니 비우기
+        await clearCart(user.uid);
+        setCart([]);
+
+        // 결제 완료 표시
+        setShowCart(false);
+        setOrderComplete({
+          paymentId,
+          totalAmount,
+          receiptUrl: verifyResult.payment?.receiptUrl,
+        });
+      } catch (err) {
+        console.error("결제 처리 오류:", err);
+        alert("결제 중 오류가 발생했습니다. 다시 시도해주세요.");
+        setShowCart(true);
+      } finally {
+        setPaymentLoading(false);
+      }
+    });
   };
 
   // 배송
@@ -2295,15 +2267,6 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* 카드결제 준비중 안내 */}
-                <div style={{ marginBottom: 12, padding: "10px 14px", background: "#fff3cd", borderRadius: 10, border: "1px solid #ffc107", display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 18 }}>🚧</span>
-                  <div style={{ fontSize: 12, color: "#856404", fontWeight: 600, lineHeight: 1.5 }}>
-                    카드결제는 현재 준비중입니다.<br/>
-                    <b>무통장입금</b> 또는 <b>SYC 코인</b>으로 결제해주세요.
-                  </div>
-                </div>
-
                 {/* 결제방식 */}
                 <div style={{ display: "flex", borderRadius: 12, overflow: "hidden", background: "#e8e8ed", marginBottom: 16 }}>
                   {[{ key: "krw", label: "₩ 카드결제", disabled: false }, { key: "bank", label: "🏦 무통장입금", disabled: false }, { key: "syc", label: "SYC 코인", disabled: false }].map(m => (
@@ -2398,7 +2361,7 @@ export default function Home() {
                     )}
                   </div>
                 )}
-                <button onClick={() => { if (pay === "krw") { alert("카드결제는 현재 준비중입니다. 무통장입금 또는 SYC 코인을 이용해주세요."); setPay("bank"); return; } (pay === "bank" ? handleBankOrder : handlePayment)(); }} disabled={paymentLoading} style={{
+                <button onClick={() => { (pay === "bank" ? handleBankOrder : handlePayment)(); }} disabled={paymentLoading} style={{
                   width: "100%", padding: "clamp(12px,2vw,16px) 0", border: "none", borderRadius: 14,
                   background: pay === "syc" ? "linear-gradient(135deg, #7b5ea7, #3ee6c4)" : pay === "bank" ? "#0066b3" : "#1d1d1f",
                   color: "#fff", fontSize: "clamp(13px,2vw,16px)", fontWeight: 800, cursor: paymentLoading ? "wait" : "pointer", marginTop: 10,

@@ -12,47 +12,47 @@ function PaymentCompleteContent() {
 
   useEffect(() => {
     const verify = async () => {
-      // 포트원 V2 리다이렉트 후 쿼리 파라미터:
-      // 성공: ?payment_id=xxx&tx_id=xxx
-      // 실패: ?code=FAILURE_TYPE_PG&message=xxx&payment_id=xxx
-      const paymentId = searchParams.get("payment_id") || searchParams.get("paymentId");
-      const code = searchParams.get("code");
-      const txId = searchParams.get("tx_id"); // 포트원 트랜잭션 ID (로그용)
-      console.log("결제 리다이렉트:", { paymentId, code, txId });
+      // 아임포트 V1 리다이렉트 후 쿼리 파라미터:
+      // 성공: ?imp_uid=xxx&merchant_uid=xxx&imp_success=true
+      // 실패: ?imp_uid=xxx&merchant_uid=xxx&imp_success=false&error_msg=xxx
+      const impUid = searchParams.get("imp_uid");
+      const merchantUid = searchParams.get("merchant_uid");
+      const impSuccess = searchParams.get("imp_success");
+      const errorMsg = searchParams.get("error_msg");
+      const amount = searchParams.get("amount");
+      console.log("결제 리다이렉트:", { impUid, merchantUid, impSuccess });
 
       // 사용자가 결제를 취소하거나 실패한 경우
-      if (code) {
+      if (impSuccess === "false") {
         setStatus("fail");
-        setMessage(
-          code === "USER_CANCEL"
-            ? "결제가 취소되었습니다."
-            : `결제 실패: ${searchParams.get("message") || "알 수 없는 오류"}`
-        );
+        setMessage(errorMsg || "결제가 취소되었습니다.");
         sessionStorage.removeItem("pendingOrder");
         return;
       }
 
-      if (!paymentId) {
+      if (!impUid) {
         setStatus("fail");
         setMessage("결제 정보를 찾을 수 없습니다.");
         return;
       }
 
-      // sessionStorage에서 주문 정보 복원
+      // sessionStorage에서 주문 정보 복원 또는 URL 파라미터 사용
       const pendingRaw = sessionStorage.getItem("pendingOrder");
-      if (!pendingRaw) {
+      const totalAmount = pendingRaw ? JSON.parse(pendingRaw).totalAmount : (amount ? Number(amount) : null);
+
+      if (!totalAmount) {
         setStatus("fail");
         setMessage("주문 정보를 찾을 수 없습니다. 홈으로 돌아가주세요.");
         return;
       }
-      const pending = JSON.parse(pendingRaw);
+      const pending = pendingRaw ? JSON.parse(pendingRaw) : null;
 
       try {
         // 서버에서 결제 검증
         const verifyRes = await fetch("/api/payment/verify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ paymentId, totalAmount: pending.totalAmount }),
+          body: JSON.stringify({ imp_uid: impUid, merchant_uid: merchantUid, totalAmount }),
         });
         const verifyResult = await verifyRes.json();
 
@@ -83,14 +83,15 @@ function PaymentCompleteContent() {
 
         if (user) {
           await addDoc(collection(db, "users", user.uid, "orders"), {
-            paymentId,
-            totalAmount: pending.totalAmount,
-            orderName: pending.orderName,
-            items: pending.cartSnapshot,
-            delivery: pending.delivery,
-            deliveryFee: pending.deliveryFee,
-            address: pending.selectedAddrId || null,
-            truckRegion: pending.truckRegion || null,
+            paymentId: merchantUid || impUid,
+            impUid: impUid,
+            totalAmount,
+            orderName: pending?.orderName || "주문",
+            items: pending?.cartSnapshot || [],
+            delivery: pending?.delivery || "parcel",
+            deliveryFee: pending?.deliveryFee || 0,
+            address: pending?.selectedAddrId || null,
+            truckRegion: pending?.truckRegion || null,
             receiptUrl: verifyResult.payment?.receiptUrl || null,
             status: "paid",
             createdAt: serverTimestamp(),

@@ -47,8 +47,8 @@ export default function RootLayout({
     <html lang="ko">
       <body>
         {children}
-        {/* PortOne V2 결제 SDK */}
-        <Script src="https://cdn.portone.io/v2/browser-sdk.js" strategy="beforeInteractive" />
+        {/* 아임포트(포트원 V1) 결제 SDK */}
+        <Script src="https://cdn.iamport.kr/v1/iamport.js" strategy="beforeInteractive" />
       </body>
     </html>
   );
