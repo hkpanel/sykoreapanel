@@ -1921,7 +1921,7 @@ export default function Home() {
                 · 스윙도어: 배송완료까지 약 1~3영업일 (높이 2500 초과 시 7영업일~)<br />
                 · 행가도어: 배송완료까지 약 3~5영업일 (매장판 기준, 생산판 7영업일~)<br />
                 · 조립식판넬: 배송완료까지 약 2~5영업일<br />
-                · 정확한 예상 납기는 장바구니에서 자동 계산됩니다<br />
+                · 정확한 제작 소요기간은 장바구니에서 자동 계산됩니다<br />
                 · 배송방법: 용차(1톤/5톤) 또는 직접수령
               </div>
             </div>
@@ -2216,7 +2216,7 @@ export default function Home() {
                           min={minStr}
                           onChange={e => {
                             if (e.target.value && e.target.value < minStr) {
-                              alert(`예상 소요기간(${daysToAdd}일) 이후부터 지정 가능합니다.`);
+                              alert(`제작 소요기간(${daysToAdd}일) 이후부터 지정 가능합니다.`);
                               setPreferredDate(minStr);
                             } else {
                               setPreferredDate(e.target.value);
@@ -2225,7 +2225,7 @@ export default function Home() {
                           style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid #d2d2d7",
                             fontSize: 13, marginBottom: 4, boxSizing: "border-box" }} />
                         <div style={{ fontSize: 11, color: "#e74c3c", fontWeight: 600, marginBottom: 8 }}>
-                          ※ 예상 소요기간({daysToAdd}일) 이후부터 지정 가능합니다
+                          ※ 제작 소요기간({daysToAdd}일) 이후부터 지정 가능합니다
                         </div>
                       </div>
                     );
@@ -2240,7 +2240,7 @@ export default function Home() {
                 {deliveryEstimate.lines.length > 0 && (
                   <div style={{ marginBottom: 16, padding: "14px 16px", borderRadius: 12, background: deliveryEstimate.needsInquiry ? "#fff8f0" : "#f0fdf4", border: `1px solid ${deliveryEstimate.needsInquiry ? "#fed7aa" : "#bbf7d0"}` }}>
                     <div style={{ fontSize: 13, fontWeight: 800, color: deliveryEstimate.needsInquiry ? "#c2410c" : "#16a34a", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
-                      ⏱ 예상 소요기간: {deliveryEstimate.needsInquiry
+                      ⏱ 제작 소요기간: {deliveryEstimate.needsInquiry
                         ? "납기 확인 필요"
                         : `약 ${deliveryEstimate.totalDays}일`}
                     </div>
@@ -2261,7 +2261,7 @@ export default function Home() {
                     )}
                     {!deliveryEstimate.needsInquiry && (
                       <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 6, lineHeight: 1.4 }}>
-                        ※ 예상 소요기간은 입금 확인 후 기준이며, 주문 상황에 따라 변동될 수 있습니다.
+                        ※ 제작 소요기간은 입금 확인 후 기준이며, 주문 상황에 따라 변동될 수 있습니다.
                       </div>
                     )}
                   </div>
@@ -2269,7 +2269,7 @@ export default function Home() {
 
                 {/* 결제방식 */}
                 <div style={{ display: "flex", borderRadius: 12, overflow: "hidden", background: "#e8e8ed", marginBottom: 16 }}>
-                  {[{ key: "krw", label: "₩ 카드결제", disabled: false }, { key: "bank", label: "🏦 무통장입금", disabled: false }, { key: "syc", label: "SYC 코인", disabled: false }].map(m => (
+                  {[{ key: "krw", label: "💳 카드결제", disabled: false }, { key: "bank", label: "🏦 무통장입금", disabled: false }, { key: "syc", label: "SYC 코인", disabled: false }].map(m => (
                     <button key={m.key} onClick={() => !m.disabled && setPay(m.key)} style={{
                       flex: 1, padding: "10px 0", border: "none", cursor: m.disabled ? "not-allowed" : "pointer", fontSize: 12, fontWeight: 700, transition: "all 0.2s",
                       background: m.disabled ? "#d1d1d6" : pay === m.key ? (m.key === "syc" ? "linear-gradient(135deg, #7b5ea7, #3ee6c4)" : m.key === "bank" ? "#0066b3" : "#1d1d1f") : "transparent",
