@@ -269,14 +269,6 @@ export default function SycPage() {
             }}>
               📄 백서 다운로드
             </a>
-            <a href="https://syai.co.kr" target="_blank" rel="noopener noreferrer" style={{
-              padding: "14px 32px", borderRadius: 14, fontSize: 15, fontWeight: 800,
-              background: "linear-gradient(135deg, #FF6B35, #FF2E63)", color: "#fff",
-              textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8,
-              boxShadow: "0 8px 30px rgba(255,107,53,0.3)",
-            }}>
-              🤖 SY.ai 바로가기
-            </a>
           </div>
         </div>
       </section>
@@ -715,6 +707,14 @@ export default function SycPage() {
             }}>
               🏠 쇼핑몰 둘러보기
             </Link>
+            <a href="https://syai.co.kr" target="_blank" rel="noopener noreferrer" style={{
+              padding: "clamp(12px,2vw,16px) clamp(20px,3vw,36px)", borderRadius: 14, fontSize: "clamp(13px,2vw,16px)", fontWeight: 800,
+              background: "linear-gradient(135deg, #FF6B35, #FF2E63)", color: "#fff",
+              textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8,
+              boxShadow: "0 8px 30px rgba(255,107,53,0.3)",
+            }}>
+              🤖 SY.ai 바로가기
+            </a>
           </div>
         </div>
       </section>
