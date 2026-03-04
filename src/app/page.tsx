@@ -79,34 +79,34 @@ function ProductCard({ product, onClick }: { product: FlashingProduct; onClick: 
         boxShadow: h ? "0 24px 48px rgba(0,0,0,0.12)" : "0 2px 12px rgba(0,0,0,0.04)",
       }}>
       <div className="product-card-img" style={{
-        height: 220, display: "flex", alignItems: "center", justifyContent: "center",
+        height: 180, display: "flex", alignItems: "center", justifyContent: "center",
         background: "linear-gradient(145deg, #f5f5f7, #e8e8ed)", overflow: "hidden",
         transition: "transform 0.4s", transform: h ? "scale(1.05)" : "scale(1)",
       }}>
         <Image src={product.image} alt={product.name} width={200} height={200}
-          style={{ objectFit: "contain", width: "70%", height: "70%" }} />
+          style={{ objectFit: "contain", width: "65%", height: "65%" }} />
       </div>
-      <div className="product-card-info" style={{ padding: "20px 24px 24px" }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: "#6e6e73", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>
+      <div className="product-card-info" style={{ padding: "14px 16px 18px" }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: "#6e6e73", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>
           {product.category}
         </div>
-        <div className="product-card-name" style={{ fontSize: 18, fontWeight: 700, color: "#1d1d1f", marginBottom: 4 }}>{product.name}</div>
-        <div className="product-card-desc" style={{ fontSize: 13, color: "#86868b", marginBottom: 16, lineHeight: 1.5, minHeight: 40 }}>{product.desc}</div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+        <div className="product-card-name" style={{ fontSize: 15, fontWeight: 700, color: "#1d1d1f", marginBottom: 2 }}>{product.name}</div>
+        <div className="product-card-desc" style={{ fontSize: 12, color: "#86868b", marginBottom: 12, lineHeight: 1.4 }}>{product.desc}</div>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
           <div>
-            <span style={{ fontSize: 13, color: "#86868b" }}>최저 </span>
-            <span className="product-card-price" style={{ fontSize: 22, fontWeight: 800, color: "#1d1d1f" }}>₩{minPrice.toLocaleString()}</span>
+            <span style={{ fontSize: 11, color: "#86868b" }}>최저 </span>
+            <span className="product-card-price" style={{ fontSize: 18, fontWeight: 800, color: "#1d1d1f" }}>₩{minPrice.toLocaleString()}</span>
           </div>
-          <div style={{ fontSize: 12, color: "#86868b" }}>
+          <div className="product-card-spec" style={{ fontSize: 11, color: "#aeaeb2", whiteSpace: "nowrap" }}>
             {product.sizes.length}규격 · {product.availableColors.reduce((sum, c) => {
               const ci = COLOR_DETAILS[c];
               return sum + (ci?.subColors ? ci.subColors.length : 1);
-            }, 0)}색상
+            }, 0)}색
           </div>
         </div>
         <button className="product-card-btn" style={{
-          width: "100%", padding: "13px 0", border: "none", borderRadius: 12, color: "#fff",
-          fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.3s",
+          width: "100%", padding: "11px 0", border: "none", borderRadius: 10, color: "#fff",
+          fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.3s",
           background: h ? "linear-gradient(135deg, #7b5ea7, #3ee6c4)" : "#1d1d1f",
         }}>옵션 선택하기</button>
       </div>
@@ -1530,8 +1530,9 @@ export default function Home() {
           .product-card-img { height: 160px !important; }
           .product-card-info { padding: 10px 12px 14px !important; }
           .product-card-name { font-size: 13px !important; }
-          .product-card-desc { font-size: 10px !important; min-height: 24px !important; margin-bottom: 6px !important; }
+          .product-card-desc { font-size: 10px !important; min-height: unset !important; margin-bottom: 6px !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
           .product-card-price { font-size: 15px !important; }
+          .product-card-spec { font-size: 9px !important; }
           .product-card-btn { padding: 9px 0 !important; font-size: 11px !important; border-radius: 8px !important; }
           .custom-card-hero { aspect-ratio: auto !important; padding: 24px 12px !important; }
           .custom-card-hero .custom-title { font-size: 18px !important; }
