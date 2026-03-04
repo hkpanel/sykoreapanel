@@ -2224,7 +2224,7 @@ export default function Home() {
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: "#1d1d1f", marginBottom: 8 }}>📝 배송 요청사항</div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-                    {["가능한 빨리", "희망일 지정"].map(opt => (
+                    {["가능한 빨리" /*, "희망일 지정" — 예약보증보험 이슈로 임시 숨김 */].map(opt => (
                       <button key={opt} onClick={() => setDeliveryNote(opt)} style={{
                         padding: "7px 14px", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer",
                         border: deliveryNote === opt ? "2px solid #7b5ea7" : "1px solid #e8e8ed",
