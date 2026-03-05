@@ -6,7 +6,6 @@ import {
   signInWithEmail,
   signUpWithEmail,
   signInWithKakao,
-  signInWithNaver,
   getAuthErrorMessage,
 } from "@/lib/auth";
 
@@ -58,10 +57,6 @@ export default function AuthModal({ onClose, onLogin }: AuthModalProps) {
     signInWithKakao(); // 카카오 페이지로 리다이렉트
   };
 
-  const handleNaver = () => {
-    setLoading(true);
-    signInWithNaver(); // 네이버 페이지로 리다이렉트
-  };
 
   const inputStyle = {
     width: "100%", padding: "12px 16px", borderRadius: 12,
@@ -108,11 +103,6 @@ export default function AuthModal({ onClose, onLogin }: AuthModalProps) {
               Google로 {mode === "login" ? "로그인" : "시작하기"}
             </button>
             )}
-            <button onClick={handleNaver} disabled={loading}
-              style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: "#03C75A", color: "#fff", transition: "opacity 0.2s" }}>
-              <svg width="20" height="20" viewBox="0 0 24 24"><path d="M16.27 3H7.73L3 12l4.73 9h8.54L21 12l-4.73-9zM13.1 14.74L10.43 12v2.74H8.57V7.26h1.86V10l2.67-2.74h2.33L12.67 12l2.76 2.74h-2.33z" fill="#fff"/></svg>
-              네이버로 {mode === "login" ? "로그인" : "시작하기"}
-            </button>
           </div>
 
           {/* 구분선 */}
