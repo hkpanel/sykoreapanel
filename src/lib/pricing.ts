@@ -9,7 +9,7 @@ import { db } from "./firebase";
 
 // 기본값
 export const DEFAULT_AL_KG_PRICE = 7700;
-export const DEFAULT_RETAIL_MULTIPLIER = 1.3;
+export const DEFAULT_RETAIL_MULTIPLIER = 1.5;
 
 // 가격 오버라이드 타입: { [productId]: { [sizeLabel]: { [color]: number } } }
 export type PriceOverrides = Record<string, Record<string, Record<string, number>>>;
