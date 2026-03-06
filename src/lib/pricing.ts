@@ -67,12 +67,13 @@ export async function loadPricingSettings(): Promise<PricingSettings> {
       return {
         alKgPrice: data.alKgPrice ?? DEFAULT_AL_KG_PRICE,
         retailMultiplier: data.retailMultiplier ?? DEFAULT_RETAIL_MULTIPLIER,
+        flashingPrices: {},
       };
     }
   } catch (err) {
     console.error("가격 설정 로드 실패:", err);
   }
-  return { alKgPrice: DEFAULT_AL_KG_PRICE, retailMultiplier: DEFAULT_RETAIL_MULTIPLIER };
+  return { alKgPrice: DEFAULT_AL_KG_PRICE, retailMultiplier: DEFAULT_RETAIL_MULTIPLIER, flashingPrices: {} };
 }
 
 // ─── 알루미늄 kg당 단가 저장 ───
