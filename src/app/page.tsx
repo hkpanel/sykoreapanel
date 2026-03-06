@@ -67,9 +67,9 @@ function AnimatedNumber({ value, suffix = "" }: { value: number; suffix?: string
   return <span>{d.toLocaleString()}{suffix}</span>;
 }
 
-function ProductCard({ product, onClick }: { product: FlashingProduct; onClick: () => void }) {
+function ProductCard({ product, onClick, getPrice }: { product: FlashingProduct; onClick: () => void; getPrice: (p: FlashingProduct) => number }) {
   const [h, setH] = useState(false);
-  const minPrice = getMinRetailPrice(product);
+  const minPrice = getPrice(product);
   return (
     <div onClick={onClick} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
       style={{
@@ -114,9 +114,11 @@ function ProductCard({ product, onClick }: { product: FlashingProduct; onClick: 
   );
 }
 
-function ProductDetail({ product, onClose, onAddCart }: {
+function ProductDetail({ product, onClose, onAddCart, getWholesale, getRetail }: {
   product: FlashingProduct; onClose: () => void;
   onAddCart: (item: CartItem) => void;
+  getWholesale: (pid: string, sLabel: string, c: string, base: number) => number;
+  getRetail: (w: number) => number;
 }) {
   const [sizeIdx, setSizeIdx] = useState(0);
   const [color, setColor] = useState(product.availableColors[0]);
@@ -124,8 +126,8 @@ function ProductDetail({ product, onClose, onAddCart }: {
   const [qty, setQty] = useState(1);
 
   const size = product.sizes[sizeIdx];
-  const wholesale = size.wholesale[color] || 0;
-  const retail = getRetailPrice(wholesale);
+  const wholesale = getWholesale(product.id, size.label, color, size.wholesale[color] || 0);
+  const retail = getRetail(wholesale);
   const sycPrice = Math.round(retail / 100);
   const colorInfo = COLOR_DETAILS[color];
 
@@ -709,7 +711,12 @@ export default function Home() {
 
   // ═══ SYC 코인 결제 상태 ═══
   // 알루미늄 kg당 단가 (Firestore 실시간 동기화)
-  const { alKgPrice } = usePricingSettings();
+  const { alKgPrice, flashingPrices, retailMultiplier } = usePricingSettings();
+
+  // 후레싱 도매가 조회 (Firestore 오버라이드 > 코드 기본값)
+  const getW = (pid: string, sLabel: string, c: string, base: number) =>
+    flashingPrices?.[pid]?.[sLabel]?.[c] ?? base;
+  const getR = (w: number) => Math.round(w * retailMultiplier / 100) * 100;
 
   //
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
@@ -1829,7 +1836,17 @@ export default function Home() {
               </div>
             </div>
           )}
-          {filtered.map(p => <ProductCard key={p.id} product={p} onClick={() => setDetail(p)} />)}
+          {filtered.map(p => <ProductCard key={p.id} product={p} onClick={() => setDetail(p)} getPrice={(prod) => {
+            let min = Infinity;
+            for (const s of prod.sizes) {
+              for (const c of Object.keys(s.wholesale)) {
+                const w = getW(prod.id, s.label, c, s.wholesale[c]);
+                const r = getR(w);
+                if (r < min) min = r;
+              }
+            }
+            return min;
+          }} />)}
         </div>
         {filtered.length === 0 && (
           <div style={{ textAlign: "center", padding: "60px 0", color: "#86868b" }}>
@@ -2404,7 +2421,7 @@ export default function Home() {
         </div>
       )}
 
-      {detail && <ProductDetail product={detail} onClose={() => setDetail(null)} onAddCart={addToCart} />}
+      {detail && <ProductDetail product={detail} onClose={() => setDetail(null)} onAddCart={addToCart} getWholesale={getW} getRetail={getR} />}
       {showCustom && <CustomFlashingModal onClose={() => setShowCustom(false)} onAddCart={(item) => { addToCart(item); setShowCustom(false); }} />}
       {showAuth && !user && <AuthModal onClose={() => setShowAuth(false)} onLogin={() => setShowAuth(false)} />}
       {showMyPage && user && <MyPageModal user={user} initialTab={showMyPage} onClose={() => setShowMyPage(false)} />}
