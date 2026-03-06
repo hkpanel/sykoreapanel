@@ -18,6 +18,7 @@ export interface PricingSettings {
   alKgPrice: number;
   retailMultiplier: number;
   flashingPrices: PriceOverrides;
+  customFlashingPrices: Record<string, number>;
 }
 
 const PRICING_DOC = doc(db, "settings", "pricing");
@@ -29,6 +30,7 @@ export function usePricingSettings(): PricingSettings & { loading: boolean } {
     alKgPrice: DEFAULT_AL_KG_PRICE,
     retailMultiplier: DEFAULT_RETAIL_MULTIPLIER,
     flashingPrices: {},
+    customFlashingPrices: {},
   });
   const [loading, setLoading] = useState(true);
 
@@ -40,6 +42,7 @@ export function usePricingSettings(): PricingSettings & { loading: boolean } {
           ...prev,
           alKgPrice: data.alKgPrice ?? DEFAULT_AL_KG_PRICE,
           retailMultiplier: data.retailMultiplier ?? DEFAULT_RETAIL_MULTIPLIER,
+          customFlashingPrices: data.customFlashingPrices ?? {},
         }));
       }
       setLoading(false);
@@ -68,12 +71,13 @@ export async function loadPricingSettings(): Promise<PricingSettings> {
         alKgPrice: data.alKgPrice ?? DEFAULT_AL_KG_PRICE,
         retailMultiplier: data.retailMultiplier ?? DEFAULT_RETAIL_MULTIPLIER,
         flashingPrices: {},
+        customFlashingPrices: data.customFlashingPrices ?? {},
       };
     }
   } catch (err) {
     console.error("가격 설정 로드 실패:", err);
   }
-  return { alKgPrice: DEFAULT_AL_KG_PRICE, retailMultiplier: DEFAULT_RETAIL_MULTIPLIER, flashingPrices: {} };
+  return { alKgPrice: DEFAULT_AL_KG_PRICE, retailMultiplier: DEFAULT_RETAIL_MULTIPLIER, flashingPrices: {}, customFlashingPrices: {} };
 }
 
 // ─── 알루미늄 kg당 단가 저장 ───

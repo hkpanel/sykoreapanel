@@ -256,17 +256,22 @@ function ProductDetail({ product, onClose, onAddCart, getWholesale, getRetail }:
   );
 }
 
-const CUSTOM_COLORS = [
-  { id: "ivory", name: "아이보리", price: 35, hex: "#F5F0E1", jjambap: true, hasSide: true, coilW: 1040 },
-  { id: "standard", name: "기성단색", price: 40, hex: "#607D8B", sub: ["은회색", "백색", "군청색"], jjambap: true, hasSide: true, coilW: 1219 },
-  { id: "special", name: "특이단색", price: 45, hex: "#424242", sub: ["진회색", "티타늄실버"], jjambap: true, hasSide: true, coilW: 1219 },
-  { id: "print", name: "프린트", price: 50, hex: "#2C2C2C", sub: ["징크블랙", "리얼징크", "유니스톤"], jjambap: true, hasSide: true, coilW: 1219 },
-  { id: "galv10", name: "아연 1.0T", price: 70, hex: "#B0BEC5", jjambap: false, hasSide: false, coilW: 1219 },
-  { id: "galv12", name: "아연 1.2T", price: 90, hex: "#90A4AE", jjambap: false, hasSide: false, coilW: 1219 },
-  { id: "steel", name: "스틸 1.0T", price: 80, hex: "#546E7A", jjambap: false, hasSide: true, coilW: 1219 },
+const CUSTOM_COLORS_BASE = [
+  { id: "ivory", name: "아이보리", key: "아이보리", defaultPrice: 26, hex: "#F5F0E1", jjambap: true, hasSide: true, coilW: 1040 },
+  { id: "standard", name: "기성단색", key: "기성단색", defaultPrice: 28, hex: "#607D8B", sub: ["은회색", "백색", "군청색"], jjambap: true, hasSide: true, coilW: 1219 },
+  { id: "special", name: "특이단색", key: "특이단색", defaultPrice: 30.8, hex: "#424242", sub: ["진회색", "티타늄실버"], jjambap: true, hasSide: true, coilW: 1219 },
+  { id: "print", name: "프린트", key: "프린트", defaultPrice: 37, hex: "#2C2C2C", sub: ["징크블랙", "리얼징크", "유니스톤"], jjambap: true, hasSide: true, coilW: 1219 },
+  { id: "galv10", name: "아연 1.0T", key: "아연1.0T", defaultPrice: 54, hex: "#B0BEC5", jjambap: false, hasSide: false, coilW: 1219 },
+  { id: "galv12", name: "아연 1.2T", key: "아연1.2T", defaultPrice: 64.8, hex: "#90A4AE", jjambap: false, hasSide: false, coilW: 1219 },
+  { id: "steel", name: "스틸 1.0T", key: "스틸1.0T", defaultPrice: 64, hex: "#546E7A", jjambap: false, hasSide: true, coilW: 1219 },
 ];
 
-function CustomFlashingModal({ onClose, onAddCart }: { onClose: () => void; onAddCart: (item: CartItem) => void }) {
+function CustomFlashingModal({ onClose, onAddCart, customPrices }: { onClose: () => void; onAddCart: (item: CartItem) => void; customPrices?: Record<string, number> }) {
+  // Firestore 단가 적용
+  const CUSTOM_COLORS = CUSTOM_COLORS_BASE.map(c => ({
+    ...c,
+    price: customPrices?.[c.key] ?? c.defaultPrice,
+  }));
   const [step, setStep] = useState(0);
   const [pts, setPts] = useState<{x:number;y:number}[]>([]);
   const [dims, setDims] = useState<string[]>([]);
@@ -711,7 +716,7 @@ export default function Home() {
 
   // ═══ SYC 코인 결제 상태 ═══
   // 알루미늄 kg당 단가 (Firestore 실시간 동기화)
-  const { alKgPrice, flashingPrices, retailMultiplier } = usePricingSettings();
+  const { alKgPrice, flashingPrices, retailMultiplier, customFlashingPrices } = usePricingSettings();
 
   // 후레싱 도매가 조회 (Firestore 오버라이드 > 코드 기본값)
   const getW = (pid: string, sLabel: string, c: string, base: number) =>
@@ -2422,7 +2427,7 @@ export default function Home() {
       )}
 
       {detail && <ProductDetail product={detail} onClose={() => setDetail(null)} onAddCart={addToCart} getWholesale={getW} getRetail={getR} />}
-      {showCustom && <CustomFlashingModal onClose={() => setShowCustom(false)} onAddCart={(item) => { addToCart(item); setShowCustom(false); }} />}
+      {showCustom && <CustomFlashingModal onClose={() => setShowCustom(false)} onAddCart={(item) => { addToCart(item); setShowCustom(false); }} customPrices={customFlashingPrices} />}
       {showAuth && !user && <AuthModal onClose={() => setShowAuth(false)} onLogin={() => setShowAuth(false)} />}
       {showMyPage && user && <MyPageModal user={user} initialTab={showMyPage} onClose={() => setShowMyPage(false)} />}
 
