@@ -67,9 +67,9 @@ function AnimatedNumber({ value, suffix = "" }: { value: number; suffix?: string
   return <span>{d.toLocaleString()}{suffix}</span>;
 }
 
-function ProductCard({ product, onClick, getPrice }: { product: FlashingProduct; onClick: () => void; getPrice: (p: FlashingProduct) => number }) {
+function ProductCard({ product, onClick, getPrice, loading }: { product: FlashingProduct; onClick: () => void; getPrice: (p: FlashingProduct) => number; loading?: boolean }) {
   const [h, setH] = useState(false);
-  const minPrice = getPrice(product);
+  const minPrice = loading ? 0 : getPrice(product);
   return (
     <div onClick={onClick} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
       style={{
@@ -95,7 +95,7 @@ function ProductCard({ product, onClick, getPrice }: { product: FlashingProduct;
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
           <div>
             <span style={{ fontSize: 11, color: "#86868b" }}>최저 </span>
-            <span className="product-card-price" style={{ fontSize: 18, fontWeight: 800, color: "#1d1d1f" }}>₩{minPrice.toLocaleString()}</span>
+            <span className="product-card-price" style={{ fontSize: 18, fontWeight: 800, color: "#1d1d1f" }}>{loading ? "···" : `₩${minPrice.toLocaleString()}`}</span>
           </div>
           <div className="product-card-spec" style={{ fontSize: 11, color: "#aeaeb2", whiteSpace: "nowrap" }}>
             {product.sizes.length}규격 · {product.availableColors.reduce((sum, c) => {
@@ -716,7 +716,7 @@ export default function Home() {
 
   // ═══ SYC 코인 결제 상태 ═══
   // 알루미늄 kg당 단가 (Firestore 실시간 동기화)
-  const { alKgPrice, flashingPrices, retailMultiplier, customFlashingPrices } = usePricingSettings();
+  const { alKgPrice, flashingPrices, retailMultiplier, customFlashingPrices, loading: pricingLoading } = usePricingSettings();
 
   // 후레싱 도매가 조회 (Firestore 오버라이드 > 코드 기본값)
   const getW = (pid: string, sLabel: string, c: string, base: number) =>
@@ -1841,7 +1841,7 @@ export default function Home() {
               </div>
             </div>
           )}
-          {filtered.map(p => <ProductCard key={p.id} product={p} onClick={() => setDetail(p)} getPrice={(prod) => {
+          {filtered.map(p => <ProductCard key={p.id} product={p} onClick={() => setDetail(p)} loading={pricingLoading} getPrice={(prod) => {
             let min = Infinity;
             for (const s of prod.sizes) {
               for (const c of Object.keys(s.wholesale)) {
